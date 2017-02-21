@@ -971,10 +971,10 @@ type CSSProperties =
         | String of string
 
         static member ToString tag =
-            let format tag (props : HtmlProperties list) (children : HtmlElement list) =
+            let rec format tag (props : HtmlProperties list) (children : HtmlElement list) level =
                 let cnt =
                     if children.Length > 0 then
-                        "\n" + (children |> List.map (HtmlElement.ToString) |> String.concat "\n") + "\n"
+                        "\n" + (String.replicate level "  ") + (children |> List.map (helper (level + 1)) |> String.concat "\n")  + "\n" + (String.replicate (level - 1) "  ")
                     else ""
 
                 let attrs =
@@ -983,140 +983,142 @@ type CSSProperties =
                     else ""
                 sprintf "<%s%s>%s</%s>" tag attrs cnt tag
 
+            and helper level tag =
+                match tag with
+                | A (props, children) -> format "a" props children level
+                | Abbr (props, children) -> format "abbr" props children level
+                | Address (props, children) -> format "address" props children level
+                | Area (props, children) -> format "area" props children level
+                | Article (props, children) -> format "article" props children level
+                | Aside (props, children) -> format "aside" props children level
+                | Audio (props, children) -> format "audio" props children level
+                | B (props, children) -> format "b" props children level
+                | Base (props, children) -> format "base" props children level
+                | Bdi (props, children) -> format "bdi" props children level
+                | Bdo (props, children) -> format "bdo" props children level
+                | Big (props, children) -> format "big" props children level
+                | Blockquote (props, children) -> format "blockquote" props children level
+                | Body (props, children) -> format "body" props children level
+                | Br (props, children) -> format "br" props children level
+                | Button (props, children) -> format "button" props children level
+                | Canvas (props, children) -> format "canvas" props children level
+                | Caption (props, children) -> format "caption" props children level
+                | Cite (props, children) -> format "cite" props children level
+                | Code (props, children) -> format "code" props children level
+                | Col (props, children) -> format "col" props children level
+                | Colgroup (props, children) -> format "colgroup" props children level
+                | Data (props, children) -> format "data" props children level
+                | Datalist (props, children) -> format "datalist" props children level
+                | Dd (props, children) -> format "dd" props children level
+                | Del (props, children) -> format "del" props children level
+                | Details (props, children) -> format "details" props children level
+                | Dfn (props, children) -> format "dfn" props children level
+                | Dialog (props, children) -> format "dialog" props children level
+                | Div (props, children) -> format "div" props children level
+                | Dl (props, children) -> format "dl" props children level
+                | Dt (props, children) -> format "dt" props children level
+                | Em (props, children) -> format "em" props children level
+                | Embed (props, children) -> format "embed" props children level
+                | Fieldset (props, children) -> format "fieldset" props children level
+                | Figcaption (props, children) -> format "figcaption" props children level
+                | Figure (props, children) -> format "figure" props children level
+                | Footer (props, children) -> format "footer" props children level
+                | Form (props, children) -> format "form" props children level
+                | H1 (props, children) -> format "" props children level
+                | H2 (props, children) -> format "" props children level
+                | H3 (props, children) -> format "" props children level
+                | H4 (props, children) -> format "" props children level
+                | H5 (props, children) -> format "" props children level
+                | H6 (props, children) -> format "" props children level
+                | Head (props, children) -> format "head" props children level
+                | Header (props, children) -> format "header" props children level
+                | Hgroup (props, children) -> format "hgroup" props children level
+                | Hr (props, children) -> format "hr" props children level
+                | Html (props, children) -> format "html" props children level
+                | I (props, children) -> format "i" props children level
+                | Iframe (props, children) -> format "iframe" props children level
+                | Img (props, children) -> format "img" props children level
+                | Input (props, children) -> format "input" props children level
+                | Ins (props, children) -> format "ins" props children level
+                | Kbd (props, children) -> format "kbd" props children level
+                | Keygen (props, children) -> format "keygen" props children level
+                | Label (props, children) -> format "label" props children level
+                | Legend (props, children) -> format "legend" props children level
+                | Li (props, children) -> format "li" props children level
+                | Link (props, children) -> format "link" props children level
+                | Main (props, children) -> format "main" props children level
+                | Map (props, children) -> format "map" props children level
+                | Mark (props, children) -> format "mark" props children level
+                | Menu (props, children) -> format "menu" props children level
+                | Menuitem (props, children) -> format "menuitem" props children level
+                | Meta (props, children) -> format "meta" props children level
+                | Meter (props, children) -> format "meter" props children level
+                | Nav (props, children) -> format "nav" props children level
+                | Noscript (props, children) -> format "noscript" props children level
+                | Object (props, children) -> format "object" props children level
+                | Ol (props, children) -> format "ol" props children level
+                | Optgroup (props, children) -> format "optgroup" props children level
+                | Option (props, children) -> format "option" props children level
+                | Output (props, children) -> format "output" props children level
+                | P (props, children) -> format "p" props children level
+                | Param (props, children) -> format "param" props children level
+                | Picture (props, children) -> format "picture" props children level
+                | Pre (props, children) -> format "pre" props children level
+                | Progress (props, children) -> format "progress" props children level
+                | Q (props, children) -> format "q" props children level
+                | Rp (props, children) -> format "rp" props children level
+                | Rt (props, children) -> format "rt" props children level
+                | Ruby (props, children) -> format "ruby" props children level
+                | S (props, children) -> format "s" props children level
+                | Samp (props, children) -> format "samp" props children level
+                | Script (props, children) -> format "script" props children level
+                | Section (props, children) -> format "section" props children level
+                | Select (props, children) -> format "select" props children level
+                | Small (props, children) -> format "small" props children level
+                | Source (props, children) -> format "source" props children level
+                | Span (props, children) -> format "span" props children level
+                | Strong (props, children) -> format "strong" props children level
+                | Style (props, children) -> format "style" props children level
+                | Sub (props, children) -> format "sub" props children level
+                | Summary (props, children) -> format "summary" props children level
+                | Sup (props, children) -> format "sup" props children level
+                | Table (props, children) -> format "table" props children level
+                | Tbody (props, children) -> format "tbody" props children level
+                | Td (props, children) -> format "td" props children level
+                | Textarea (props, children) -> format "textarea" props children level
+                | Tfoot (props, children) -> format "tfoot" props children level
+                | Th (props, children) -> format "th" props children level
+                | Thead (props, children) -> format "thead" props children level
+                | Time (props, children) -> format "time" props children level
+                | Title (props, children) -> format "title" props children level
+                | Tr (props, children) -> format "tr" props children level
+                | Track (props, children) -> format "track" props children level
+                | U (props, children) -> format "u" props children level
+                | Ul (props, children) -> format "ul" props children level
+                | Var (props, children) -> format "var" props children level
+                | Video (props, children) -> format "video" props children level
+                | Wbr (props, children) -> format "wbr" props children level
+                | Svg (props, children) -> format "svg" props children level
+                | Circle (props, children) -> format "circle" props children level
+                | Defs (props, children) -> format "defs" props children level
+                | Ellipse (props, children) -> format "ellipse" props children level
+                | G (props, children) -> format "g" props children level
+                | Image (props, children) -> format "image" props children level
+                | Line (props, children) -> format "line" props children level
+                | LinearGradient (props, children) -> format "radient" props children level
+                | Mask (props, children) -> format "mask" props children level
+                | Path (props, children) -> format "path" props children level
+                | Pattern (props, children) -> format "pattern" props children level
+                | Polygon (props, children) -> format "polygon" props children level
+                | Polyline (props, children) -> format "polyline" props children level
+                | RadialGradient (props, children) -> format "radient" props children level
+                | Rect (props, children) -> format "rect" props children level
+                | Stop (props, children) -> format "stop" props children level
+                | Text (props, children) -> format "text" props children level
+                | Tspan (props, children) -> format "tspan" props children level
+                | String str -> str
 
-            match tag with
-            | A (props, children) -> format "a" props children
-            | Abbr (props, children) -> format "abbr" props children
-            | Address (props, children) -> format "address" props children
-            | Area (props, children) -> format "area" props children
-            | Article (props, children) -> format "article" props children
-            | Aside (props, children) -> format "aside" props children
-            | Audio (props, children) -> format "audio" props children
-            | B (props, children) -> format "b" props children
-            | Base (props, children) -> format "base" props children
-            | Bdi (props, children) -> format "bdi" props children
-            | Bdo (props, children) -> format "bdo" props children
-            | Big (props, children) -> format "big" props children
-            | Blockquote (props, children) -> format "blockquote" props children
-            | Body (props, children) -> format "body" props children
-            | Br (props, children) -> format "br" props children
-            | Button (props, children) -> format "button" props children
-            | Canvas (props, children) -> format "canvas" props children
-            | Caption (props, children) -> format "caption" props children
-            | Cite (props, children) -> format "cite" props children
-            | Code (props, children) -> format "code" props children
-            | Col (props, children) -> format "col" props children
-            | Colgroup (props, children) -> format "colgroup" props children
-            | Data (props, children) -> format "data" props children
-            | Datalist (props, children) -> format "datalist" props children
-            | Dd (props, children) -> format "dd" props children
-            | Del (props, children) -> format "del" props children
-            | Details (props, children) -> format "details" props children
-            | Dfn (props, children) -> format "dfn" props children
-            | Dialog (props, children) -> format "dialog" props children
-            | Div (props, children) -> format "div" props children
-            | Dl (props, children) -> format "dl" props children
-            | Dt (props, children) -> format "dt" props children
-            | Em (props, children) -> format "em" props children
-            | Embed (props, children) -> format "embed" props children
-            | Fieldset (props, children) -> format "fieldset" props children
-            | Figcaption (props, children) -> format "figcaption" props children
-            | Figure (props, children) -> format "figure" props children
-            | Footer (props, children) -> format "footer" props children
-            | Form (props, children) -> format "form" props children
-            | H1 (props, children) -> format "" props children
-            | H2 (props, children) -> format "" props children
-            | H3 (props, children) -> format "" props children
-            | H4 (props, children) -> format "" props children
-            | H5 (props, children) -> format "" props children
-            | H6 (props, children) -> format "" props children
-            | Head (props, children) -> format "head" props children
-            | Header (props, children) -> format "header" props children
-            | Hgroup (props, children) -> format "hgroup" props children
-            | Hr (props, children) -> format "hr" props children
-            | Html (props, children) -> format "html" props children
-            | I (props, children) -> format "i" props children
-            | Iframe (props, children) -> format "iframe" props children
-            | Img (props, children) -> format "img" props children
-            | Input (props, children) -> format "input" props children
-            | Ins (props, children) -> format "ins" props children
-            | Kbd (props, children) -> format "kbd" props children
-            | Keygen (props, children) -> format "keygen" props children
-            | Label (props, children) -> format "label" props children
-            | Legend (props, children) -> format "legend" props children
-            | Li (props, children) -> format "li" props children
-            | Link (props, children) -> format "link" props children
-            | Main (props, children) -> format "main" props children
-            | Map (props, children) -> format "map" props children
-            | Mark (props, children) -> format "mark" props children
-            | Menu (props, children) -> format "menu" props children
-            | Menuitem (props, children) -> format "menuitem" props children
-            | Meta (props, children) -> format "meta" props children
-            | Meter (props, children) -> format "meter" props children
-            | Nav (props, children) -> format "nav" props children
-            | Noscript (props, children) -> format "noscript" props children
-            | Object (props, children) -> format "object" props children
-            | Ol (props, children) -> format "ol" props children
-            | Optgroup (props, children) -> format "optgroup" props children
-            | Option (props, children) -> format "option" props children
-            | Output (props, children) -> format "output" props children
-            | P (props, children) -> format "p" props children
-            | Param (props, children) -> format "param" props children
-            | Picture (props, children) -> format "picture" props children
-            | Pre (props, children) -> format "pre" props children
-            | Progress (props, children) -> format "progress" props children
-            | Q (props, children) -> format "q" props children
-            | Rp (props, children) -> format "rp" props children
-            | Rt (props, children) -> format "rt" props children
-            | Ruby (props, children) -> format "ruby" props children
-            | S (props, children) -> format "s" props children
-            | Samp (props, children) -> format "samp" props children
-            | Script (props, children) -> format "script" props children
-            | Section (props, children) -> format "section" props children
-            | Select (props, children) -> format "select" props children
-            | Small (props, children) -> format "small" props children
-            | Source (props, children) -> format "source" props children
-            | Span (props, children) -> format "span" props children
-            | Strong (props, children) -> format "strong" props children
-            | Style (props, children) -> format "style" props children
-            | Sub (props, children) -> format "sub" props children
-            | Summary (props, children) -> format "summary" props children
-            | Sup (props, children) -> format "sup" props children
-            | Table (props, children) -> format "table" props children
-            | Tbody (props, children) -> format "tbody" props children
-            | Td (props, children) -> format "td" props children
-            | Textarea (props, children) -> format "textarea" props children
-            | Tfoot (props, children) -> format "tfoot" props children
-            | Th (props, children) -> format "th" props children
-            | Thead (props, children) -> format "thead" props children
-            | Time (props, children) -> format "time" props children
-            | Title (props, children) -> format "title" props children
-            | Tr (props, children) -> format "tr" props children
-            | Track (props, children) -> format "track" props children
-            | U (props, children) -> format "u" props children
-            | Ul (props, children) -> format "ul" props children
-            | Var (props, children) -> format "var" props children
-            | Video (props, children) -> format "video" props children
-            | Wbr (props, children) -> format "wbr" props children
-            | Svg (props, children) -> format "svg" props children
-            | Circle (props, children) -> format "circle" props children
-            | Defs (props, children) -> format "defs" props children
-            | Ellipse (props, children) -> format "ellipse" props children
-            | G (props, children) -> format "g" props children
-            | Image (props, children) -> format "image" props children
-            | Line (props, children) -> format "line" props children
-            | LinearGradient (props, children) -> format "radient" props children
-            | Mask (props, children) -> format "mask" props children
-            | Path (props, children) -> format "path" props children
-            | Pattern (props, children) -> format "pattern" props children
-            | Polygon (props, children) -> format "polygon" props children
-            | Polyline (props, children) -> format "polyline" props children
-            | RadialGradient (props, children) -> format "radient" props children
-            | Rect (props, children) -> format "rect" props children
-            | Stop (props, children) -> format "stop" props children
-            | Text (props, children) -> format "text" props children
-            | Tspan (props, children) -> format "tspan" props children
-            | String str -> str
+            helper 1 tag
 
     module Html =
         let a (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.A(props,children)
