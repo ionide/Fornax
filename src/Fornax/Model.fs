@@ -968,12 +968,20 @@ type CSSProperties =
         | Stop of props: HtmlProperties list * children: HtmlElement list
         | Text of props: HtmlProperties list * children: HtmlElement list
         | Tspan of props: HtmlProperties list * children: HtmlElement list
+        | String of string
 
         static member ToString tag =
-            let format tag props children =
-                let cnt = children |> List.map (HtmlElement.ToString) |> String.concat "\n"
-                let attrs = props |> List.map (HtmlProperties.ToString) |> String.concat " "
-                sprintf "<%s %s>%s</%s>" tag attrs cnt tag
+            let format tag (props : HtmlProperties list) (children : HtmlElement list) =
+                let cnt =
+                    if children.Length > 0 then
+                        "\n" + (children |> List.map (HtmlElement.ToString) |> String.concat "\n") + "\n"
+                    else ""
+
+                let attrs =
+                    if props.Length > 0 then
+                        " " + (props |> List.map (HtmlProperties.ToString) |> String.concat " ")
+                    else ""
+                sprintf "<%s%s>%s</%s>" tag attrs cnt tag
 
 
             match tag with
@@ -1108,6 +1116,7 @@ type CSSProperties =
             | Stop (props, children) -> format "stop" props children
             | Text (props, children) -> format "text" props children
             | Tspan (props, children) -> format "tspan" props children
+            | String str -> str
 
     module Html =
         let a (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.A(props,children)
@@ -1241,5 +1250,8 @@ type CSSProperties =
         let stop (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Stop(props,children)
         let text (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Text(props,children)
         let tspan (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Tspan(props,children)
+        let string str = HtmlElement.String str
 
+
+    type Generator<'a> = 'a -> HtmlElement
 

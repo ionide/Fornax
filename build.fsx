@@ -10,11 +10,8 @@ let deployDir = "./deploy/"
 
 // Filesets
 let appReferences  =
-    !! "/**/*.csproj"
-    ++ "/**/*.fsproj"
+    !!  "/**/*.fsproj"
 
-// version info
-let version = "0.1"  // or retrieve from CI server
 
 // Targets
 Target "Clean" (fun _ ->
@@ -30,7 +27,7 @@ Target "Build" (fun _ ->
 Target "Deploy" (fun _ ->
     !! (buildDir + "/**/*.*")
     -- "*.zip"
-    |> Zip buildDir (deployDir + "ApplicationName." + version + ".zip")
+    |> Zip buildDir (deployDir + "ApplicationName.zip")
 )
 
 // Build order
