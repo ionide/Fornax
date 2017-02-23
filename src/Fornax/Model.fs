@@ -974,7 +974,7 @@ type CSSProperties =
             let rec format tag (props : HtmlProperties list) (children : HtmlElement list) level =
                 let cnt =
                     if children.Length > 0 then
-                        "\n" + (String.replicate level "  ") + (children |> List.map (helper (level + 1)) |> String.concat "\n")  + "\n" + (String.replicate (level - 1) "  ")
+                        "\n" + (children |> List.map (fun n -> (String.replicate level "  ")  + helper (level + 1) n) |> String.concat "\n")  + "\n" + (String.replicate (level - 1) "  ")
                     else ""
 
                 let attrs =
