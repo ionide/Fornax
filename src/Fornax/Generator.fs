@@ -86,10 +86,10 @@ module Evaluator =
         let modelType, errs = fsi.EvalExpressionNonThrowing "typeof<Model>"
         if errs.Length > 0 then printfn "[ERROR 3] Get model Errors : %A" errs
 
-        let siteModelType, errs = fsi.EvalExpressionNonThrowing "typeof<SiteMode>"
+        let siteModelType, errs = fsi.EvalExpressionNonThrowing "typeof<SiteModel.SiteModel>"
         if errs.Length > 0 then printfn "[ERROR 4] Get site model Errors : %A" errs
 
-        let funType,errs = fsi.EvalExpressionNonThrowing "<@@ fun a b -> (generate a b) |> HtmlElement.ToString @@>"
+        let funType,errs = fsi.EvalExpressionNonThrowing "<@@ fun a b c -> (generate a b c) |> HtmlElement.ToString @@>"
         if errs.Length > 0 then printfn "[ERROR 5] Get template Errors : %A" errs
 
         match modelType, siteModelType, funType with
@@ -97,7 +97,7 @@ module Evaluator =
             let modelInput = createInstance mt model
             let siteInput = createInstance smt siteModel
             let generator = compileExpression ft
-            invokeFunction generator [modelInput; siteInput; box body]
+            invokeFunction generator [siteInput; modelInput; box body]
         | _ -> None
 
 module ContentParser =

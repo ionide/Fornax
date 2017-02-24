@@ -1253,6 +1253,8 @@ type CSSProperties =
         let text (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Text(props,children)
         let tspan (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Tspan(props,children)
         let string str = HtmlElement.String str
+        let (!!) str = HtmlElement.String str
+
 
 
     type Generator<'a> = 'a -> HtmlElement
