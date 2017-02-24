@@ -125,4 +125,15 @@
       </ItemGroup>
     </When>
   </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.6'">
+      <ItemGroup>
+        <Reference Include="YamlDotNet">
+          <HintPath>..\..\packages\YamlDotNet\lib\net35\YamlDotNet.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
 </Project>

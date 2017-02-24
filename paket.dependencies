@@ -6,3 +6,4 @@ nuget FSharp.Core 4.0.0.1
 nuget FSharp.Compiler.Service
 nuget FSharp.Quotations.Evaluator
 nuget CommonMark.NET
+nuget YamlDotNet

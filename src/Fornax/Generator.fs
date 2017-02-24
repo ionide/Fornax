@@ -101,17 +101,21 @@ module Evaluator =
         | _ -> None
 
 module ContentParser =
+    open YamlDotNet.Serialization
 
     let isSeparator (input : string) =
         input.StartsWith "---"
 
     ///`contentPath` - absolute path to `.md` file containing the page content
-    let parse contentPath =
+    let parse contentPath (modelType : Type) =
         let fileContent = File.ReadAllLines contentPath |> Array.skip 1 //First line must be ---
         let indexOfSeperator = fileContent |> Array.findIndex isSeparator
         let config, content = fileContent |> Array.splitAt indexOfSeperator
         let content = content |> Array.skip 1 |> String.concat "\n"
+        let config = config |> String.concat "\n"
         let contentOutput = CommonMark.CommonMarkConverter.Convert content
-        config, contentOutput
+        let deserializer = Deserializer()
+        let configtOutput = deserializer.Deserialize(config, modelType)
+        configtOutput, contentOutput
 
 
