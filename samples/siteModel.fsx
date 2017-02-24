@@ -1,0 +1,3 @@
+type SiteModel = {
+    SomeGlobalValue : string
+}

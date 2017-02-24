@@ -1,15 +1,19 @@
 #r "../build/Fornax.dll"
+#load "siteModel.fsx"
 
 open Html
+open SiteModel
 
 type Model = {
     Name : string
     Surname : string
 }
 
-let generate mdl =
+let generate (siteModel : SiteModel) (mdl : Model) (content : string) =
     html [] [
         div [] [
-            span [] [ string ("Hello world" + mdl.Name) ]
+            span [] [ !! ("Hello world " + mdl.Name) ]
+            span [] [ !! content ]
+            span [] [ !! siteModel.SomeGlobalValue ]
         ]
     ]
