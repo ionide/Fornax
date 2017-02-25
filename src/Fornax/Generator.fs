@@ -71,10 +71,10 @@ module Evaluator =
         QuotationEvaluator.CompileUntyped genExpr
 
     ///`templatePath` - absolute path to `.fsx` file containing the template
-    ///`siteModel` - map cointaining input parameters for whole website
-    ///`model` - map cointaining input parameters for given page
+    ///`getSiteModel` - function generating instance of site settings model of given type
+    ///`getContentModel` - function generating instance of page mode of given type
     ///`body` - content of the post (in html)
-    let evaluate (templatePath : string) (siteModel : Map<string, obj>) (model : Map<string, obj>) (body : string) =
+    let evaluate (templatePath : string) (getSiteModel : System.Type -> obj) (getContentModel : System.Type -> obj) (body : string) =
         let filename = getOpen templatePath
         let load = getLoad templatePath
 
@@ -95,8 +95,8 @@ module Evaluator =
 
         match modelType, siteModelType, funType with
         | Choice1Of2 (Some mt), Choice1Of2 (Some smt), Choice1Of2 (Some ft) ->
-            let modelInput = createInstance mt model
-            let siteInput = createInstance smt siteModel
+            let modelInput = getContentModel (mt.ReflectionValue :?> Type)
+            let siteInput = getSiteModel (smt.ReflectionValue :?> Type)
             let generator = compileExpression ft
             invokeFunction generator [siteInput; modelInput; box body]
         | _ -> None
@@ -104,17 +104,37 @@ module Evaluator =
 module ContentParser =
     open FsYaml
 
-    let isSeparator (input : string) =
+    let private isSeparator (input : string) =
         input.StartsWith "---"
 
+    let private isLayout (input : string) =
+        input.StartsWith "layout:"
+
     ///`contentPath` - absolute path to `.md` file containing the page content
+    ///`modelType` - `System.Type` representing type used as model of the page
+    /// returns tupple of:
+    /// - instance of model record
+    /// - transformed to HTML page content
+    /// - name of template that will be used for this page
     let parse contentPath (modelType : Type) =
         let fileContent = File.ReadAllLines contentPath |> Array.skip 1 //First line must be ---
         let indexOfSeperator = fileContent |> Array.findIndex isSeparator
         let config, content = fileContent |> Array.splitAt indexOfSeperator
+        let layout = fileContent |> Array.find isLayout |> fun n -> n.Replace("layout:", "").Trim()
+
         let content = content |> Array.skip 1 |> String.concat "\n"
         let config = config |> String.concat "\n"
         let contentOutput = CommonMark.CommonMarkConverter.Convert content
-        let configtOutput = Yaml.loadUntyped modelType config
-        configtOutput, contentOutput
+        let configOutput = Yaml.loadUntyped modelType config
+        configOutput, contentOutput, layout
+
+module SiteSettingsParser =
+    open FsYaml
+
+    ///`siteSettingsPath` - absolute path to `.yml` file containing the global site settings
+    ///`modelType` - `System.Type` representing type used as model of the global site settings
+    let parse siteSettingsPath (modelType : Type) =
+        let fileContent = File.ReadAllText siteSettingsPath
+        Yaml.loadUntyped modelType fileContent
+
 
