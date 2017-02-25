@@ -110,14 +110,14 @@ module ContentParser =
     let private isLayout (input : string) =
         input.StartsWith "layout:"
 
-    ///`contentPath` - absolute path to `.md` file containing the page content
+    ///`fileContent` - content of page to parse. Usually whole content of `.md` file
     ///`modelType` - `System.Type` representing type used as model of the page
     /// returns tupple of:
     /// - instance of model record
     /// - transformed to HTML page content
     /// - name of template that will be used for this page
-    let parse contentPath (modelType : Type) =
-        let fileContent = File.ReadAllLines contentPath |> Array.skip 1 //First line must be ---
+    let parse fileContent (modelType : Type) =
+        let fileContent = fileContent |> Array.skip 1 //First line must be ---
         let indexOfSeperator = fileContent |> Array.findIndex isSeparator
         let config, content = fileContent |> Array.splitAt indexOfSeperator
         let layout = fileContent |> Array.find isLayout |> fun n -> n.Replace("layout:", "").Trim()
@@ -131,10 +131,9 @@ module ContentParser =
 module SiteSettingsParser =
     open FsYaml
 
-    ///`siteSettingsPath` - absolute path to `.yml` file containing the global site settings
+    ///`fileContent` - site settings to parse. Usually whole content of `site.yml` file
     ///`modelType` - `System.Type` representing type used as model of the global site settings
-    let parse siteSettingsPath (modelType : Type) =
-        let fileContent = File.ReadAllText siteSettingsPath
+    let parse fileContent (modelType : Type) =
         Yaml.loadUntyped modelType fileContent
 
 
