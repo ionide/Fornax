@@ -7,6 +7,8 @@ let private contentParser : string -> System.Type -> obj * string  = ParserUtils
 let private settingsParser : string -> System.Type -> obj = ParserUtils.memoizeParser Generator.SiteSettingsParser.parse
 let private getLayout : string -> string = ParserUtils.memoize  Generator.ContentParser.getLayout
 
+///`projectRoot` - path to the root of website
+///`page` - path to page that should be generated
 let generate (projectRoot : string) (page : string) =
     let contetPath = Path.Combine(projectRoot, page)
     let settingsPath = Path.Combine(projectRoot, "site.yaml")
@@ -36,3 +38,8 @@ let generate (projectRoot : string) (page : string) =
     | None ->
         let endTime = DateTime.Now
         printfn "[%s] '%s' generation failed" (endTime.ToString("HH:mm:ss")) outputPath
+
+///`projectRoot` - path to the root of website
+let generateFolder (projectRoot : string) =
+    Directory.GetFiles(projectRoot, "*.md", SearchOption.AllDirectories)
+    |> Array.iter (generate projectRoot)
