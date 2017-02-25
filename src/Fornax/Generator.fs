@@ -1,3 +1,4 @@
+[<AutoOpen>]
 module Generator
 
 open System
@@ -101,7 +102,7 @@ module Evaluator =
         | _ -> None
 
 module ContentParser =
-    open YamlDotNet.Serialization
+    open FsYaml
 
     let isSeparator (input : string) =
         input.StartsWith "---"
@@ -114,8 +115,6 @@ module ContentParser =
         let content = content |> Array.skip 1 |> String.concat "\n"
         let config = config |> String.concat "\n"
         let contentOutput = CommonMark.CommonMarkConverter.Convert content
-        let deserializer = Deserializer()
-        let configtOutput = deserializer.Deserialize(config, modelType)
+        let configtOutput = Yaml.loadUntyped modelType config
         configtOutput, contentOutput
-
 

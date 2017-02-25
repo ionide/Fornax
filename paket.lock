@@ -6,9 +6,24 @@ NUGET
     FSharp.Compiler.Service (10.0.3)
       System.Collections.Immutable (>= 1.2)
       System.Reflection.Metadata (>= 1.4.1-beta-24227-04)
+    FSharp.Configuration (0.6.4)
     FSharp.Core (4.0.0.1)
     FSharp.Quotations.Evaluator (1.0.7)
     System.Collections.Immutable (1.3.1)
     System.Reflection.Metadata (1.4.2)
       System.Collections.Immutable (>= 1.3.1)
     YamlDotNet (4.1)
+  remote: paket-files/github.com/Krzysztof-Cieslak/FsYaml/bin
+    FsYaml (2.1.0)
+      FSharp.Configuration (>= 0.4.10)
+      YamlDotNet (>= 3.8)
+GIT
+  remote: https://github.com/Krzysztof-Cieslak/FsYaml.git
+     (c8ebda2c3c9d8d86f1a1580685b26ccf6b3dc26c)
+      build: build.cmd BuildPackage
+      path: /bin/
+      os: windows
+     (c8ebda2c3c9d8d86f1a1580685b26ccf6b3dc26c)
+      build: build.sh BuildPackage
+      path: /bin/
+      os: mono

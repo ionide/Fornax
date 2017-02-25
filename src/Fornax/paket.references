@@ -2,4 +2,4 @@ FSharp.Core
 FSharp.Compiler.Service
 FSharp.Quotations.Evaluator
 CommonMark.NET
-YamlDotNet
+FsYaml
