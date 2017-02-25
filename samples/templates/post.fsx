@@ -1,4 +1,4 @@
-#r "../../build/Fornax.dll"
+#r "../../build/Fornax.Core.dll"
 #load "../siteModel.fsx"
 
 open Html
