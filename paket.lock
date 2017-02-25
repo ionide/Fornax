@@ -1,6 +1,7 @@
 FRAMEWORK: NET46
 NUGET
   remote: https://www.nuget.org/api/v2
+    Argu (3.7)
     CommonMark.NET (0.15.1)
     FAKE (4.50.1)
     FSharp.Compiler.Service (10.0.3)
