@@ -204,5 +204,14 @@ let generate (projectRoot : string) (page : string) =
 
 ///`projectRoot` - path to the root of website
 let generateFolder (projectRoot : string) =
+    let relative toPath fromPath =
+        let toUri = Uri(toPath)
+        let fromUri = Uri(fromPath)
+        toUri.MakeRelativeUri(fromUri).OriginalString
+
+    let projectRoot =
+        if projectRoot.EndsWith (string Path.DirectorySeparatorChar) then projectRoot
+        else projectRoot + (string Path.DirectorySeparatorChar)
+
     Directory.GetFiles(projectRoot, "*.md", SearchOption.AllDirectories)
-    |> Array.iter (generate projectRoot)
+    |> Array.iter (fun n -> n |> relative projectRoot |> generate projectRoot)
