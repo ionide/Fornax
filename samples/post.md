@@ -1,10 +1,7 @@
 ---
 layout: post
-title: "Using Node.js and NPM with Paket and FAKE"
-description: "Using Node.js and NPM with Paket and FAKE"
-modified: 2016-03-01
-tags: [F#, Paket, FAKE]
-banner_image: landscape_2.jpg
+Name: Ja
+Surname: Ja2
 ---
 # Introduction
 

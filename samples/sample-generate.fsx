@@ -1,5 +1,6 @@
 #load "../paket-files/include-scripts/net46/include.main.group.fsx"
 #r "../build/Fornax.dll"
+#load "sample.fsx"
 let ctn = [("Name", unbox<obj> "Ja"); ("Surname", unbox "Ja2")] |> Map.ofSeq
 let siteModel =  [("SomeGlobalValue", unbox<obj> "ValueFromSiteModel")] |> Map.ofSeq
 let path = System.IO.Path.GetFullPath "samples/sample.fsx"
@@ -10,6 +11,6 @@ res
 // --------------------------------
 
 let contentPath = System.IO.Path.GetFullPath "samples/post.md"
-Generator.ContentParser.parse contentPath
+Generator.ContentParser.parse contentPath (typeof<Sample.Model>)
 
 
