@@ -74,7 +74,7 @@ module Evaluator =
     ///`getSiteModel` - function generating instance of site settings model of given type
     ///`getContentModel` - function generating instance of page mode of given type
     ///`body` - content of the post (in html)
-    let evaluate (templatePath : string) (getSiteModel : System.Type -> obj) (getContentModel : System.Type -> obj) (body : string) =
+    let evaluate (templatePath : string) (getSiteModel : System.Type -> obj) (getContentModel : System.Type -> obj * string) =
         let filename = getOpen templatePath
         let load = getLoad templatePath
 
@@ -95,10 +95,11 @@ module Evaluator =
 
         match modelType, siteModelType, funType with
         | Choice1Of2 (Some mt), Choice1Of2 (Some smt), Choice1Of2 (Some ft) ->
-            let modelInput = getContentModel (mt.ReflectionValue :?> Type)
+            let modelInput, body = getContentModel (mt.ReflectionValue :?> Type)
             let siteInput = getSiteModel (smt.ReflectionValue :?> Type)
             let generator = compileExpression ft
             invokeFunction generator [siteInput; modelInput; box body]
+            |> Option.bind (tryUnbox<string>)
         | _ -> None
 
 module ContentParser =
@@ -115,18 +116,24 @@ module ContentParser =
     /// returns tupple of:
     /// - instance of model record
     /// - transformed to HTML page content
-    /// - name of template that will be used for this page
-    let parse fileContent (modelType : Type) =
+    let parse (fileContent : string) (modelType : Type) =
+        let fileContent = fileContent.Split '\n'
         let fileContent = fileContent |> Array.skip 1 //First line must be ---
         let indexOfSeperator = fileContent |> Array.findIndex isSeparator
         let config, content = fileContent |> Array.splitAt indexOfSeperator
-        let layout = fileContent |> Array.find isLayout |> fun n -> n.Replace("layout:", "").Trim()
 
         let content = content |> Array.skip 1 |> String.concat "\n"
         let config = config |> String.concat "\n"
         let contentOutput = CommonMark.CommonMarkConverter.Convert content
         let configOutput = Yaml.loadUntyped modelType config
-        configOutput, contentOutput, layout
+        configOutput, contentOutput
+
+    ///`fileContent` - content of page to parse. Usually whole content of `.md` file
+    ///returns name of template that should be used for the page
+    let getLayout (fileContent : string) =
+        fileContent.Split '\n'
+        |> Array.find isLayout
+        |> fun n -> n.Replace("layout:", "").Trim()
 
 module SiteSettingsParser =
     open FsYaml
@@ -135,5 +142,27 @@ module SiteSettingsParser =
     ///`modelType` - `System.Type` representing type used as model of the global site settings
     let parse fileContent (modelType : Type) =
         Yaml.loadUntyped modelType fileContent
+
+module internal ParserUtils =
+    let memoizeParser f =
+        let cache = ref Map.empty
+        fun (x : string) (y : System.Type) ->
+            let input = (x,y.GetHashCode())
+            match (!cache).TryFind(input) with
+            | Some res -> res
+            | None ->
+                let res = f x y
+                cache := (!cache).Add(input,res)
+                res
+
+    let memoize f =
+        let cache = ref Map.empty
+        fun x ->
+            match (!cache).TryFind(x) with
+            | Some res -> res
+            | None ->
+                let res = f x
+                cache := (!cache).Add(x,res)
+                res
 
 
