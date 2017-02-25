@@ -1,5 +1,5 @@
-#r "../build/Fornax.dll"
-#load "siteModel.fsx"
+#r "../../build/Fornax.dll"
+#load "../siteModel.fsx"
 
 open Html
 open SiteModel

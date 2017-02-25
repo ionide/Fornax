@@ -27,6 +27,8 @@ let generate (projectRoot : string) (page : string) =
 
     match result with
     | Some r ->
+        let dir = Path.GetDirectoryName outputPath
+        if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
         File.WriteAllText(outputPath, r)
         let endTime = DateTime.Now
         let ms = (endTime - startTime).Milliseconds
