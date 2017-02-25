@@ -1,4 +1,4 @@
 #load "../paket-files/include-scripts/net46/include.main.group.fsx"
-#r "../build/Fornax.dll"
+#r "../build/Fornax.Core.dll"
 let path = System.IO.Path.GetFullPath "samples"
-Fornax.generateFolder path
+Generator.generateFolder path
