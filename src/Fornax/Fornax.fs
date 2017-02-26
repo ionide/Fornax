@@ -4,12 +4,11 @@ open System
 open System.IO
 open Argu
 
-type Arguments =
+type [<CliPrefixAttribute("")>] Arguments =
     | New
     | Build
     | Watch
     | Version
-    | Help
 with
     interface IArgParserTemplate with
         member s.Usage =
@@ -18,14 +17,12 @@ with
             | Build -> "Build web site"
             | Watch -> "Start watch mode rebuilding "
             | Version -> "Print version"
-            | Help -> "Print help"
 
 let toArguments (result : ParseResults<Arguments>) =
     if result.Contains <@ New @> then Some New
     elif result.Contains <@ Build @> then Some Build
     elif result.Contains <@ Watch @> then Some Watch
     elif result.Contains <@ Version @> then Some Version
-    elif result.Contains <@ Help @> then Some Help
     else None
 
 let createFileWatcher dir handler =
@@ -69,9 +66,6 @@ let main argv =
             0
         | Some Version ->
             printfn "%s" AssemblyVersionInformation.AssemblyVersion
-            0
-        | Some Help ->
-            printfn "%s" <| parser.PrintUsage()
             0
         | None ->
             printfn "Unknown argument"
