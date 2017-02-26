@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Name>Fornax</Name>
@@ -39,6 +39,13 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Fornax.Core\Fornax.Core.fsproj">
+      <Name>Fornax.Core.fsproj</Name>
+      <Project>{f81ec20c-1ca6-41d6-ae03-d22c3c6b2272}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Fornax.fs" />
     <None Include="App.config" />
   </ItemGroup>
