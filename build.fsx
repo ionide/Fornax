@@ -1,20 +1,30 @@
-// include Fake libs
 #r "./packages/FAKE/tools/FakeLib.dll"
 
+open System
+open System.IO
 open Fake
 open Fake.AssemblyInfoFile
 open Fake.ReleaseNotesHelper
+open Fake.Testing.Expecto
 
 let project = "Fornax"
 let summary = "Fornax is a static site generator using type safe F# DSL to define page templates"
 let release = LoadReleaseNotes "CHANGELOG.md"
-let buildDir  = "./build/"
+let buildDir  = "./temp/build/"
 let appReferences = !!  "src/**/*.fsproj"
+let releaseDir  = "./temp/release/"
+let releaseBinDir = "./temp/release/bin/"
+let releaseReferences = !! "src/**/Fornax.fsproj"
+
+let buildTestDir  = "./temp/build_test/"
+let testReferences = !!  "test/**/*.fsproj"
+
+let testExecutables = !! (buildTestDir + "*.Tests.exe")
 
 
 // Targets
 Target "Clean" (fun _ ->
-    CleanDirs [buildDir;]
+    CleanDirs [buildDir; releaseDir; releaseBinDir; buildTestDir]
 )
 
 let (|Fsproj|Csproj|Vbproj|) (projFileName:string) =
@@ -53,15 +63,38 @@ Target "AssemblyInfo" (fun _ ->
 
 
 Target "Build" (fun _ ->
-    // compile all projects below src/app/
     MSBuildDebug buildDir "Build" appReferences
     |> Log "AppBuild-Output: "
+)
+
+Target "BuildTest" (fun _ ->
+    MSBuildDebug buildTestDir "Build" testReferences
+    |> Log "AppBuild-Output: "
+)
+
+Target "RunTest" (fun _ ->
+    testExecutables
+    |> Expecto id
+)
+
+
+Target "BuildRelease" (fun _ ->
+    MSBuildRelease releaseDir "Build" releaseReferences
+    |> Log "AppBuild-Output: "
+
+    !! (releaseDir + "*.xml")
+    ++ (releaseDir + "*.pdb")
+    |> DeleteFiles
+
+    !! (releaseDir + "*.dll")
+    |> Seq.iter (MoveFile releaseBinDir)
 )
 
 // Build order
 "Clean"
   ==> "AssemblyInfo"
   ==> "Build"
+  ==> "BuildRelease"
 
 // start build
-RunTargetOrDefault "Build"
+RunTargetOrDefault "BuildRelease"
