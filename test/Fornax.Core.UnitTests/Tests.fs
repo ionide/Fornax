@@ -54,4 +54,21 @@ let modelTests =
             "Html element with multiple properties and no children"
             |> Expect.equal actual expected
 
+        testCase "Html element - one child" <| fun _ ->
+            let actual = Html.a [] [ Html.span [] [] ] |> HtmlElement.ToString
+            let expected = "<a>\n  <span></span>\n</a>"
+            "Html element with no properties and one child"
+            |> Expect.equal actual expected
+
+        testCase "Html element - multiple children" <| fun _ ->
+            let actual = Html.a [] [ Html.span [] []; Html.div [] [] ] |> HtmlElement.ToString
+            let expected = "<a>\n  <span></span>\n  <div></div>\n</a>"
+            "Html element with no properties and multiple children"
+            |> Expect.equal actual expected
+
+        testCase "Html element - multiple properites and children" <| fun _ ->
+            let actual = Html.a [ Href "index.html"; Hidden true] [ Html.span [] []; Html.div [] [] ] |> HtmlElement.ToString
+            let expected = "<a href=\"index.html\" hidden=\"true\">\n  <span></span>\n  <div></div>\n</a>"
+            "Html element with multiple properties and multiple children"
+            |> Expect.equal actual expected
     ]
