@@ -693,147 +693,147 @@ type CSSProperties =
         | Unselectable of bool
 
         static member ToString = function
-            | DefaultChecked s -> sprintf "defaultChecked: %s;" (if s then "true" else "false")
-            | DefaultValue s -> sprintf "defaultValue: %s;" s
-            | Accept s -> sprintf "accept: %s;" s
-            | AcceptCharset s -> sprintf "acceptCharset: %s;" s
-            | AccessKey s -> sprintf "accessKey: %s;" s
-            | Action s -> sprintf "action: %s;" s
-            | AllowFullScreen s -> sprintf "allowFullScreen: %s;" (if s then "true" else "false")
-            | AllowTransparency s -> sprintf "allowTransparency: %s;" (if s then "true" else "false")
-            | Alt s -> sprintf "alt: %s;" s
-            | Async s -> sprintf "async: %s;" (if s then "true" else "false")
-            | AutoComplete s -> sprintf "autoComplete: %s;" s
-            | AutoFocus s -> sprintf "autoFocus: %s;" (if s then "true" else "false")
-            | AutoPlay s -> sprintf "autoPlay: %s;" (if s then "true" else "false")
-            | Capture s -> sprintf "capture: %s;" (if s then "true" else "false")
-            | CellPadding s -> sprintf "cellPadding: %s;" s
-            | CellSpacing s -> sprintf "cellSpacing: %s;" s
-            | CharSet s -> sprintf "charSet: %s;" s
-            | Challenge s -> sprintf "challenge: %s;" s
-            | Checked s -> sprintf "checked: %s;" (if s then "true" else "false")
-            | ClassID s -> sprintf "classID: %s;" s
-            | ClassName s -> sprintf "className: %s;" s
-            | Cols s -> sprintf "cols: %g;" s
-            | ColSpan s -> sprintf "colSpan: %g;" s
-            | Content s -> sprintf "content: %s;" s
-            | ContentEditable s -> sprintf "contentEditable: %s;" (if s then "true" else "false")
-            | ContextMenu s -> sprintf "contextMenu: %s;" s
-            | Controls s -> sprintf "controls: %s;" (if s then "true" else "false")
-            | Coords s -> sprintf "coords: %s;" s
-            | CrossOrigin s -> sprintf "crossOrigin: %s;" s
-            | Ddata s -> sprintf "ddata: %s;" s
-            | DateTime s -> sprintf "dateTime: %s;" s
-            | Default s -> sprintf "default: %s;" (if s then "true" else "false")
-            | Defer s -> sprintf "defer: %s;" (if s then "true" else "false")
-            | Dir s -> sprintf "dir: %s;" s
-            | Disabled s -> sprintf "disabled: %s;" (if s then "true" else "false")
-            | Download s -> sprintf "download: %s;" s
-            | Draggable s -> sprintf "draggable: %s;" (if s then "true" else "false")
-            | EncType s -> sprintf "encType: %s;" s
-            | Form s -> sprintf "form: %s;" s
-            | FormAction s -> sprintf "formAction: %s;" s
-            | FormEncType s -> sprintf "formEncType: %s;" s
-            | FormMethod s -> sprintf "formMethod: %s;" s
-            | FormNoValidate s -> sprintf "formNoValidate: %s;" (if s then "true" else "false")
-            | FormTarget s -> sprintf "formTarget: %s;" s
-            | FrameBorder s -> sprintf "frameBorder: %s;" s
-            | Headers s -> sprintf "headers: %s;" s
-            | Height s -> sprintf "height: %s;" s
-            | Hidden s -> sprintf "hidden: %s;" (if s then "true" else "false")
-            | High s -> sprintf "high: %g;" s
-            | Href s -> sprintf "href: %s;" s
-            | HrefLang s -> sprintf "hrefLang: %s;" s
-            | HtmlFor s -> sprintf "htmlFor: %s;" s
-            | HttpEquiv s -> sprintf "httpEquiv: %s;" s
-            | Icon s -> sprintf "icon: %s;" s
-            | Id s -> sprintf "id: %s;" s
-            | InputMode s -> sprintf "inputMode: %s;" s
-            | Integrity s -> sprintf "integrity: %s;" s
-            | Is s -> sprintf "is: %s;" s
-            | KeyParams s -> sprintf "keyParams: %s;" s
-            | KeyType s -> sprintf "keyType: %s;" s
-            | Kind s -> sprintf "kind: %s;" s
-            | Label s -> sprintf "label: %s;" s
-            | Lang s -> sprintf "lang: %s;" s
-            | List s -> sprintf "list: %s;" s
-            | Loop s -> sprintf "loop: %s;" (if s then "true" else "false")
-            | Low s -> sprintf "low: %g;" s
-            | Manifest s -> sprintf "manifest: %s;" s
-            | MarginHeight s -> sprintf "marginHeight: %g;" s
-            | MarginWidth s -> sprintf "marginWidth: %g;" s
-            | Max s -> sprintf "max: %s;" s
-            | MaxLength s -> sprintf "maxLength: %g;" s
-            | Media s -> sprintf "media: %s;" s
-            | MediaGroup s -> sprintf "mediaGroup: %s;" s
-            | Method s -> sprintf "method: %s;" s
-            | Min s -> sprintf "min: %s;" s
-            | MinLength s -> sprintf "minLength: %g;" s
-            | Multiple s -> sprintf "multiple: %s;" (if s then "true" else "false")
-            | Muted s -> sprintf "muted: %s;" (if s then "true" else "false")
-            | Name s -> sprintf "name: %s;" s
-            | NoValidate s -> sprintf "noValidate: %s;" (if s then "true" else "false")
-            | Open s -> sprintf "open: %s;" (if s then "true" else "false")
-            | Optimum s -> sprintf "optimum: %g;" s
-            | Pattern s -> sprintf "pattern: %s;" s
-            | Placeholder s -> sprintf "placeholder: %s;" s
-            | Poster s -> sprintf "poster: %s;" s
-            | Preload s -> sprintf "preload: %s;" s
-            | RadioGroup s -> sprintf "radioGroup: %s;" s
-            | ReadOnly s -> sprintf "readOnly: %s;" (if s then "true" else "false")
-            | Rel s -> sprintf "rel: %s;" s
-            | Required s -> sprintf "required: %s;" (if s then "true" else "false")
-            | Role s -> sprintf "role: %s;" s
-            | Rows s -> sprintf "rows: %g;" s
-            | RowSpan s -> sprintf "rowSpan: %g;" s
-            | Sandbox s -> sprintf "sandbox: %s;" s
-            | Scope s -> sprintf "scope: %s;" s
-            | Scoped s -> sprintf "scoped: %s;" (if s then "true" else "false")
-            | Scrolling s -> sprintf "scrolling: %s;" s
-            | Seamless s -> sprintf "seamless: %s;" (if s then "true" else "false")
-            | Selected s -> sprintf "selected: %s;" (if s then "true" else "false")
-            | Shape s -> sprintf "shape: %s;" s
-            | Size s -> sprintf "size: %g;" s
-            | Sizes s -> sprintf "sizes: %s;" s
-            | Span s -> sprintf "span: %g;" s
-            | SpellCheck s -> sprintf "spellCheck: %s;" (if s then "true" else "false")
-            | Src s -> sprintf "src: %s;" s
-            | SrcDoc s -> sprintf "srcDoc: %s;" s
-            | SrcLang s -> sprintf "srcLang: %s;" s
-            | SrcSet s -> sprintf "srcSet: %s;" s
-            | Start s -> sprintf "start: %g;" s
-            | Step s -> sprintf "step: %s;" s
-            | Style s -> sprintf "style: %s;" (s |> List.map(CSSProperties.ToString) |> String.concat " ")
-            | Summary s -> sprintf "summary: %s;" s
-            | TabIndex s -> sprintf "tabIndex: %g;" s
-            | Target s -> sprintf "target: %s;" s
-            | Title s -> sprintf "title: %s;" s
-            | Type s -> sprintf "type: %s;" s
-            | UseMap s -> sprintf "useMap: %s;" s
-            | Value s -> sprintf "value: %s;" s
-            | Width s -> sprintf "width: %s;" s
-            | Wmode s -> sprintf "wmode: %s;" s
-            | Wrap s -> sprintf "wrap: %s;" s
-            | About s -> sprintf "about: %s;" s
-            | Datatype s -> sprintf "datatype: %s;" s
-            | Inlist s -> sprintf "inlist: %s;" s
-            | Prefix s -> sprintf "prefix: %s;" s
-            | Property s -> sprintf "property: %s;" s
-            | Resource s -> sprintf "resource: %s;" s
-            | Typeof s -> sprintf "typeof: %s;" s
-            | Vocab s -> sprintf "vocab: %s;" s
-            | AutoCapitalize s -> sprintf "autoCapitalize: %s;" s
-            | AutoCorrect s -> sprintf "autoCorrect: %s;" s
-            | AutoSave s -> sprintf "autoSave: %s;" s
-            | Color s -> sprintf "color: %s;" s
-            | ItemProp s -> sprintf "itemProp: %s;" s
-            | ItemScope s -> sprintf "itemScope: %s;" (if s then "true" else "false")
-            | ItemType s -> sprintf "itemType: %s;" s
-            | ItemID s -> sprintf "itemID: %s;" s
-            | ItemRef s -> sprintf "itemRef: %s;" s
-            | Results s -> sprintf "results: %g;" s
-            | Security s -> sprintf "security: %s;" s
-            | Unselectable s -> sprintf "unselectable: %s;" (if s then "true" else "false")
+            | DefaultChecked s -> sprintf "defaultChecked=\"%s\"" (if s then "true" else "false")
+            | DefaultValue s -> sprintf "defaultValue=\"%s\"" s
+            | Accept s -> sprintf "accept=\"%s\"" s
+            | AcceptCharset s -> sprintf "acceptCharset=\"%s\"" s
+            | AccessKey s -> sprintf "accessKey=\"%s\"" s
+            | Action s -> sprintf "action=\"%s\"" s
+            | AllowFullScreen s -> sprintf "allowFullScreen=\"%s\"" (if s then "true" else "false")
+            | AllowTransparency s -> sprintf "allowTransparency=\"%s\"" (if s then "true" else "false")
+            | Alt s -> sprintf "alt=\"%s\"" s
+            | Async s -> sprintf "async=\"%s\"" (if s then "true" else "false")
+            | AutoComplete s -> sprintf "autoComplete=\"%s\"" s
+            | AutoFocus s -> sprintf "autoFocus=\"%s\"" (if s then "true" else "false")
+            | AutoPlay s -> sprintf "autoPlay=\"%s\"" (if s then "true" else "false")
+            | Capture s -> sprintf "capture=\"%s\"" (if s then "true" else "false")
+            | CellPadding s -> sprintf "cellPadding=\"%s\"" s
+            | CellSpacing s -> sprintf "cellSpacing=\"%s\"" s
+            | CharSet s -> sprintf "charSet=\"%s\"" s
+            | Challenge s -> sprintf "challenge=\"%s\"" s
+            | Checked s -> sprintf "checked=\"%s\"" (if s then "true" else "false")
+            | ClassID s -> sprintf "classID=\"%s\"" s
+            | ClassName s -> sprintf "className=\"%s\"" s
+            | Cols s -> sprintf "cols=\"%g\"" s
+            | ColSpan s -> sprintf "colSpan=\"%g\"" s
+            | Content s -> sprintf "content=\"%s\"" s
+            | ContentEditable s -> sprintf "contentEditable=\"%s\"" (if s then "true" else "false")
+            | ContextMenu s -> sprintf "contextMenu=\"%s\"" s
+            | Controls s -> sprintf "controls=\"%s\"" (if s then "true" else "false")
+            | Coords s -> sprintf "coords=\"%s\"" s
+            | CrossOrigin s -> sprintf "crossOrigin=\"%s\"" s
+            | Ddata s -> sprintf "ddata=\"%s\"" s
+            | DateTime s -> sprintf "dateTime=\"%s\"" s
+            | Default s -> sprintf "default=\"%s\"" (if s then "true" else "false")
+            | Defer s -> sprintf "defer=\"%s\"" (if s then "true" else "false")
+            | Dir s -> sprintf "dir=\"%s\"" s
+            | Disabled s -> sprintf "disabled=\"%s\"" (if s then "true" else "false")
+            | Download s -> sprintf "download=\"%s\"" s
+            | Draggable s -> sprintf "draggable=\"%s\"" (if s then "true" else "false")
+            | EncType s -> sprintf "encType=\"%s\"" s
+            | Form s -> sprintf "form=\"%s\"" s
+            | FormAction s -> sprintf "formAction=\"%s\"" s
+            | FormEncType s -> sprintf "formEncType=\"%s\"" s
+            | FormMethod s -> sprintf "formMethod=\"%s\"" s
+            | FormNoValidate s -> sprintf "formNoValidate=\"%s\"" (if s then "true" else "false")
+            | FormTarget s -> sprintf "formTarget=\"%s\"" s
+            | FrameBorder s -> sprintf "frameBorder=\"%s\"" s
+            | Headers s -> sprintf "headers=\"%s\"" s
+            | Height s -> sprintf "height=\"%s\"" s
+            | Hidden s -> sprintf "hidden=\"%s\"" (if s then "true" else "false")
+            | High s -> sprintf "high=\"%g\"" s
+            | Href s -> sprintf "href=\"%s\"" s
+            | HrefLang s -> sprintf "hrefLang=\"%s\"" s
+            | HtmlFor s -> sprintf "htmlFor=\"%s\"" s
+            | HttpEquiv s -> sprintf "httpEquiv=\"%s\"" s
+            | Icon s -> sprintf "icon=\"%s\"" s
+            | Id s -> sprintf "id=\"%s\"" s
+            | InputMode s -> sprintf "inputMode=\"%s\"" s
+            | Integrity s -> sprintf "integrity=\"%s\"" s
+            | Is s -> sprintf "is=\"%s\"" s
+            | KeyParams s -> sprintf "keyParams=\"%s\"" s
+            | KeyType s -> sprintf "keyType=\"%s\"" s
+            | Kind s -> sprintf "kind=\"%s\"" s
+            | Label s -> sprintf "label=\"%s\"" s
+            | Lang s -> sprintf "lang=\"%s\"" s
+            | List s -> sprintf "list=\"%s\"" s
+            | Loop s -> sprintf "loop=\"%s\"" (if s then "true" else "false")
+            | Low s -> sprintf "low=\"%g\"" s
+            | Manifest s -> sprintf "manifest=\"%s\"" s
+            | MarginHeight s -> sprintf "marginHeight=\"%g\"" s
+            | MarginWidth s -> sprintf "marginWidth=\"%g\"" s
+            | Max s -> sprintf "max=\"%s\"" s
+            | MaxLength s -> sprintf "maxLength=\"%g\"" s
+            | Media s -> sprintf "media=\"%s\"" s
+            | MediaGroup s -> sprintf "mediaGroup=\"%s\"" s
+            | Method s -> sprintf "method=\"%s\"" s
+            | Min s -> sprintf "min=\"%s\"" s
+            | MinLength s -> sprintf "minLength=\"%g\"" s
+            | Multiple s -> sprintf "multiple=\"%s\"" (if s then "true" else "false")
+            | Muted s -> sprintf "muted=\"%s\"" (if s then "true" else "false")
+            | Name s -> sprintf "name=\"%s\"" s
+            | NoValidate s -> sprintf "noValidate=\"%s\"" (if s then "true" else "false")
+            | Open s -> sprintf "open=\"%s\"" (if s then "true" else "false")
+            | Optimum s -> sprintf "optimum=\"%g\"" s
+            | Pattern s -> sprintf "pattern=\"%s\"" s
+            | Placeholder s -> sprintf "placeholder=\"%s\"" s
+            | Poster s -> sprintf "poster=\"%s\"" s
+            | Preload s -> sprintf "preload=\"%s\"" s
+            | RadioGroup s -> sprintf "radioGroup=\"%s\"" s
+            | ReadOnly s -> sprintf "readOnly=\"%s\"" (if s then "true" else "false")
+            | Rel s -> sprintf "rel=\"%s\"" s
+            | Required s -> sprintf "required=\"%s\"" (if s then "true" else "false")
+            | Role s -> sprintf "role=\"%s\"" s
+            | Rows s -> sprintf "rows=\"%g\"" s
+            | RowSpan s -> sprintf "rowSpan=\"%g\"" s
+            | Sandbox s -> sprintf "sandbox=\"%s\"" s
+            | Scope s -> sprintf "scope=\"%s\"" s
+            | Scoped s -> sprintf "scoped=\"%s\"" (if s then "true" else "false")
+            | Scrolling s -> sprintf "scrolling=\"%s\"" s
+            | Seamless s -> sprintf "seamless=\"%s\"" (if s then "true" else "false")
+            | Selected s -> sprintf "selected=\"%s\"" (if s then "true" else "false")
+            | Shape s -> sprintf "shape=\"%s\"" s
+            | Size s -> sprintf "size=\"%g\"" s
+            | Sizes s -> sprintf "sizes=\"%s\"" s
+            | Span s -> sprintf "span=\"%g\"" s
+            | SpellCheck s -> sprintf "spellCheck=\"%s\"" (if s then "true" else "false")
+            | Src s -> sprintf "src=\"%s\"" s
+            | SrcDoc s -> sprintf "srcDoc=\"%s\"" s
+            | SrcLang s -> sprintf "srcLang=\"%s\"" s
+            | SrcSet s -> sprintf "srcSet=\"%s\"" s
+            | Start s -> sprintf "start=\"%g\"" s
+            | Step s -> sprintf "step=\"%s\"" s
+            | Style s -> sprintf "style=\"%s\"" (s |> List.map(CSSProperties.ToString) |> String.concat " ")
+            | Summary s -> sprintf "summary=\"%s\"" s
+            | TabIndex s -> sprintf "tabIndex=\"%g\"" s
+            | Target s -> sprintf "target=\"%s\"" s
+            | Title s -> sprintf "title=\"%s\"" s
+            | Type s -> sprintf "type=\"%s\"" s
+            | UseMap s -> sprintf "useMap=\"%s\"" s
+            | Value s -> sprintf "value=\"%s\"" s
+            | Width s -> sprintf "width=\"%s\"" s
+            | Wmode s -> sprintf "wmode=\"%s\"" s
+            | Wrap s -> sprintf "wrap=\"%s\"" s
+            | About s -> sprintf "about=\"%s\"" s
+            | Datatype s -> sprintf "datatype=\"%s\"" s
+            | Inlist s -> sprintf "inlist=\"%s\"" s
+            | Prefix s -> sprintf "prefix=\"%s\"" s
+            | Property s -> sprintf "property=\"%s\"" s
+            | Resource s -> sprintf "resource=\"%s\"" s
+            | Typeof s -> sprintf "typeof=\"%s\"" s
+            | Vocab s -> sprintf "vocab=\"%s\"" s
+            | AutoCapitalize s -> sprintf "autoCapitalize=\"%s\"" s
+            | AutoCorrect s -> sprintf "autoCorrect=\"%s\"" s
+            | AutoSave s -> sprintf "autoSave=\"%s\"" s
+            | Color s -> sprintf "color=\"%s\"" s
+            | ItemProp s -> sprintf "itemProp=\"%s\"" s
+            | ItemScope s -> sprintf "itemScope=\"%s\"" (if s then "true" else "false")
+            | ItemType s -> sprintf "itemType=\"%s\"" s
+            | ItemID s -> sprintf "itemID=\"%s\"" s
+            | ItemRef s -> sprintf "itemRef=\"%s\"" s
+            | Results s -> sprintf "results=\"%g\"" s
+            | Security s -> sprintf "security=\"%s\"" s
+            | Unselectable s -> sprintf "unselectable=\"%s\"" (if s then "true" else "false")
 
     type HtmlElement =
         private
