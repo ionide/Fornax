@@ -19,7 +19,7 @@ let releaseReferences = !! "src/**/Fornax.fsproj"
 let buildTestDir  = "./temp/build_test/"
 let testReferences = !!  "test/**/*.fsproj"
 
-let testExecutables = !! (buildTestDir + "*.Tests.exe")
+let testExecutables = !! (buildTestDir + "*Tests.exe")
 
 
 // Targets
@@ -94,6 +94,8 @@ Target "BuildRelease" (fun _ ->
 "Clean"
   ==> "AssemblyInfo"
   ==> "Build"
+  ==> "BuildTest"
+  ==> "RunTest"
   ==> "BuildRelease"
 
 // start build

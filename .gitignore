@@ -393,3 +393,4 @@ paket-files/
 *.sln.iml
 
 _site
+temp/
