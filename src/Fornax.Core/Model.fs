@@ -276,23 +276,23 @@ type CSSProperties =
     | Custom of string * string
 
     static member ToString = function
-        | ColumnCount s -> sprintf "column-count: %f;" s
+        | ColumnCount s -> sprintf "column-count: %g;" s
         | Flex s ->  sprintf "flex: %s;" s
-        | FlexGrow s -> sprintf "flex-grow: %f;" s
-        | FlexShrink s -> sprintf "flex-shrink: %f;" s
+        | FlexGrow s -> sprintf "flex-grow: %g;" s
+        | FlexShrink s -> sprintf "flex-shrink: %g;" s
         | FontWeight s -> sprintf "font-weight: %s;" s
-        | LineClamp s -> sprintf "line-clamp: %f;" s
+        | LineClamp s -> sprintf "line-clamp: %g;" s
         | LineHeight s -> sprintf "line-height: %s;" s
-        | Opacity s -> sprintf "opacity: %f;" s
-        | Order s -> sprintf "order: %f;" s
-        | Orphans s ->  sprintf "orphans: %f;" s
-        | Widows s ->  sprintf "widows: %f;" s
-        | ZIndex s ->  sprintf "z-index: %f;" s
-        | Zoom s ->  sprintf "zoom: %f;" s
+        | Opacity s -> sprintf "opacity: %g;" s
+        | Order s -> sprintf "order: %g;" s
+        | Orphans s ->  sprintf "orphans: %g;" s
+        | Widows s ->  sprintf "widows: %g;" s
+        | ZIndex s ->  sprintf "z-index: %g;" s
+        | Zoom s ->  sprintf "zoom: %g;" s
         | FontSize s ->  sprintf "font-size: %s;" s
-        | FillOpacity s ->  sprintf "fill-opacity: %f;" s
-        | StrokeOpacity s ->  sprintf "stroke-opacity: %f;" s
-        | StrokeWidth s ->  sprintf "stroke-width: %f;" s
+        | FillOpacity s ->  sprintf "fill-opacity: %g;" s
+        | StrokeOpacity s ->  sprintf "stroke-opacity: %g;" s
+        | StrokeWidth s ->  sprintf "stroke-width: %g;" s
         | AlignContent s ->  sprintf "align-content: %s;" s
         | AlignItems s ->  sprintf "align-items: %s;" s
         | AlignSelf s ->  sprintf "align-self: %s;" s
@@ -714,8 +714,8 @@ type CSSProperties =
             | Checked s -> sprintf "checked: %s;" (if s then "true" else "false")
             | ClassID s -> sprintf "classID: %s;" s
             | ClassName s -> sprintf "className: %s;" s
-            | Cols s -> sprintf "cols: %f;" s
-            | ColSpan s -> sprintf "colSpan: %f;" s
+            | Cols s -> sprintf "cols: %g;" s
+            | ColSpan s -> sprintf "colSpan: %g;" s
             | Content s -> sprintf "content: %s;" s
             | ContentEditable s -> sprintf "contentEditable: %s;" (if s then "true" else "false")
             | ContextMenu s -> sprintf "contextMenu: %s;" s
@@ -741,7 +741,7 @@ type CSSProperties =
             | Headers s -> sprintf "headers: %s;" s
             | Height s -> sprintf "height: %s;" s
             | Hidden s -> sprintf "hidden: %s;" (if s then "true" else "false")
-            | High s -> sprintf "high: %f;" s
+            | High s -> sprintf "high: %g;" s
             | Href s -> sprintf "href: %s;" s
             | HrefLang s -> sprintf "hrefLang: %s;" s
             | HtmlFor s -> sprintf "htmlFor: %s;" s
@@ -758,23 +758,23 @@ type CSSProperties =
             | Lang s -> sprintf "lang: %s;" s
             | List s -> sprintf "list: %s;" s
             | Loop s -> sprintf "loop: %s;" (if s then "true" else "false")
-            | Low s -> sprintf "low: %f;" s
+            | Low s -> sprintf "low: %g;" s
             | Manifest s -> sprintf "manifest: %s;" s
-            | MarginHeight s -> sprintf "marginHeight: %f;" s
-            | MarginWidth s -> sprintf "marginWidth: %f;" s
+            | MarginHeight s -> sprintf "marginHeight: %g;" s
+            | MarginWidth s -> sprintf "marginWidth: %g;" s
             | Max s -> sprintf "max: %s;" s
-            | MaxLength s -> sprintf "maxLength: %f;" s
+            | MaxLength s -> sprintf "maxLength: %g;" s
             | Media s -> sprintf "media: %s;" s
             | MediaGroup s -> sprintf "mediaGroup: %s;" s
             | Method s -> sprintf "method: %s;" s
             | Min s -> sprintf "min: %s;" s
-            | MinLength s -> sprintf "minLength: %f;" s
+            | MinLength s -> sprintf "minLength: %g;" s
             | Multiple s -> sprintf "multiple: %s;" (if s then "true" else "false")
             | Muted s -> sprintf "muted: %s;" (if s then "true" else "false")
             | Name s -> sprintf "name: %s;" s
             | NoValidate s -> sprintf "noValidate: %s;" (if s then "true" else "false")
             | Open s -> sprintf "open: %s;" (if s then "true" else "false")
-            | Optimum s -> sprintf "optimum: %f;" s
+            | Optimum s -> sprintf "optimum: %g;" s
             | Pattern s -> sprintf "pattern: %s;" s
             | Placeholder s -> sprintf "placeholder: %s;" s
             | Poster s -> sprintf "poster: %s;" s
@@ -784,8 +784,8 @@ type CSSProperties =
             | Rel s -> sprintf "rel: %s;" s
             | Required s -> sprintf "required: %s;" (if s then "true" else "false")
             | Role s -> sprintf "role: %s;" s
-            | Rows s -> sprintf "rows: %f;" s
-            | RowSpan s -> sprintf "rowSpan: %f;" s
+            | Rows s -> sprintf "rows: %g;" s
+            | RowSpan s -> sprintf "rowSpan: %g;" s
             | Sandbox s -> sprintf "sandbox: %s;" s
             | Scope s -> sprintf "scope: %s;" s
             | Scoped s -> sprintf "scoped: %s;" (if s then "true" else "false")
@@ -793,19 +793,19 @@ type CSSProperties =
             | Seamless s -> sprintf "seamless: %s;" (if s then "true" else "false")
             | Selected s -> sprintf "selected: %s;" (if s then "true" else "false")
             | Shape s -> sprintf "shape: %s;" s
-            | Size s -> sprintf "size: %f;" s
+            | Size s -> sprintf "size: %g;" s
             | Sizes s -> sprintf "sizes: %s;" s
-            | Span s -> sprintf "span: %f;" s
+            | Span s -> sprintf "span: %g;" s
             | SpellCheck s -> sprintf "spellCheck: %s;" (if s then "true" else "false")
             | Src s -> sprintf "src: %s;" s
             | SrcDoc s -> sprintf "srcDoc: %s;" s
             | SrcLang s -> sprintf "srcLang: %s;" s
             | SrcSet s -> sprintf "srcSet: %s;" s
-            | Start s -> sprintf "start: %f;" s
+            | Start s -> sprintf "start: %g;" s
             | Step s -> sprintf "step: %s;" s
             | Style s -> sprintf "style: %s;" (s |> List.map(CSSProperties.ToString) |> String.concat " ")
             | Summary s -> sprintf "summary: %s;" s
-            | TabIndex s -> sprintf "tabIndex: %f;" s
+            | TabIndex s -> sprintf "tabIndex: %g;" s
             | Target s -> sprintf "target: %s;" s
             | Title s -> sprintf "title: %s;" s
             | Type s -> sprintf "type: %s;" s
@@ -831,7 +831,7 @@ type CSSProperties =
             | ItemType s -> sprintf "itemType: %s;" s
             | ItemID s -> sprintf "itemID: %s;" s
             | ItemRef s -> sprintf "itemRef: %s;" s
-            | Results s -> sprintf "results: %f;" s
+            | Results s -> sprintf "results: %g;" s
             | Security s -> sprintf "security: %s;" s
             | Unselectable s -> sprintf "unselectable: %s;" (if s then "true" else "false")
 
