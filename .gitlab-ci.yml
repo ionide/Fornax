@@ -1,0 +1,8 @@
+image: mono:latest
+
+before_script:
+  - chmod +x build.sh
+
+test:
+  script:
+    - sh build.sh
