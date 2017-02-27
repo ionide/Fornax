@@ -239,7 +239,8 @@ let copyStaticFile  (projectRoot : string) (path : string) =
 let generateFromLess (projectRoot : string) (path : string) =
     let startTime = DateTime.Now
     let inputPath = Path.Combine(projectRoot, path)
-    let outputPath = Path.Combine(projectRoot, "_site", path)
+    let path' = Path.ChangeExtension(path, ".css")
+    let outputPath = Path.Combine(projectRoot, "_site", path')
     let dir = Path.GetDirectoryName outputPath
     if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
     let res = inputPath |> File.ReadAllText |>parseLess
@@ -248,13 +249,11 @@ let generateFromLess (projectRoot : string) (path : string) =
     let ms = (endTime - startTime).Milliseconds
     printfn "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
 
-let private (|Ignored|Markdown|Less|Sass|StaticFile|) (filename : string) =
+let private (|Ignored|Markdown|Less|StaticFile|) (filename : string) =
     let ext = Path.GetExtension filename
     if filename.Contains "_site" || filename.Contains "_lib" || ext = ".yaml" || ext = ".fsx"  then Ignored
     elif ext = ".md" then Markdown
     elif ext = ".less" then Less
-    elif ext = ".sass" then Sass
-
     else StaticFile
 
 ///`projectRoot` - path to the root of website
@@ -273,7 +272,5 @@ let generateFolder (projectRoot : string) =
         match n with
         | Ignored -> ()
         | Markdown -> n |> relative projectRoot |> generate projectRoot
-        | Less ->
-        | Sass -> failwith "Not implemented"
-        | StaticFile -> n |> relative projectRoot |> copyStaticFile projectRoot
-        )
+        | Less -> n |> relative projectRoot |> generateFromLess projectRoot
+        | StaticFile -> n |> relative projectRoot |> copyStaticFile projectRoot )
