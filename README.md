@@ -2,6 +2,21 @@
 
 Fornax is a static site generator using type safe F# DSL to define page templates.
 
+## Working features
+
+* Defining templates in F# DSL
+* Creating pages using templates from `.md` files with `layout` entry
+* Creating plain pages without templates from `md` files without `layout` entry
+* Transforming `.less` files to `.css` files
+* Coping other static content to output directory
+
+## Plsnned features
+
+* Defining `.css` styles using F# DSL
+* Better performance (startup time in single build mode (`fornax build`) is bad)
+* Better handling of site settings (right now there is no access to post list etc.) (passing `SiteSettings<SiteModel>` to generator ?)
+* Handling site settings defined in multiple files (a la Jekyll's `_data` folder) (multiple models? unified model?)
+
 ## Installation.
 
 Project is in really early stage right now... let's call it RC3. Right now only way of installing Fornax is building it from source - clone repository, and run `build.cmd` (Windows) or `build.sh` (Linux / OSX). Compailed `Fornax.exe` will be in `.\temp\release` folder, `Fornax.Core.dll` in `.\temp\release\bin`. You can add `.\temp\release` to `PATH` - Fornax is desinged as globally installed tool.
