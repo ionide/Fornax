@@ -29,7 +29,7 @@ let createFileWatcher dir handler =
     let fileSystemWatcher = new FileSystemWatcher()
     fileSystemWatcher.Path <- dir
     fileSystemWatcher.EnableRaisingEvents <- true
-    fileSystemWatcher.IncludeSubdirectories <- false
+    fileSystemWatcher.IncludeSubdirectories <- true
     fileSystemWatcher.Created.Add handler
     fileSystemWatcher.Changed.Add handler
     fileSystemWatcher.Deleted.Add handler
@@ -59,7 +59,7 @@ let main argv =
             Generator.generateFolder cwd
             0
         | Some Watch ->
-            use watcher = createFileWatcher cwd (fun e -> if not (e.FullPath.Contains "_site") then  Generator.generateFolder cwd)
+            use watcher = createFileWatcher cwd (fun e -> Generator.generateFolder cwd)
             printfn "Watch mode started. Press any key to exit"
             Generator.generateFolder cwd
             let _ = Console.ReadKey()

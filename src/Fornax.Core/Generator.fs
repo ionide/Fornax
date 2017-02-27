@@ -135,6 +135,13 @@ module ContentParser =
         |> Array.find isLayout
         |> fun n -> n.Replace("layout:", "").Trim()
 
+    let containsLayout (fileContent : string) =
+        fileContent.Split '\n'
+        |> Array.exists isLayout
+
+    let compileMarkdown (fileContent : string) =
+        CommonMark.CommonMarkConverter.Convert fileContent
+
 module SiteSettingsParser =
     open FsYaml
 
@@ -142,6 +149,12 @@ module SiteSettingsParser =
     ///`modelType` - `System.Type` representing type used as model of the global site settings
     let parse fileContent (modelType : Type) =
         Yaml.loadUntyped modelType fileContent
+
+module StyleParser =
+
+    //`fileContent` - content of `.less` file to parse
+    let parseLess fileContent =
+        dotless.Core.Less.Parse fileContent
 
 module internal ParserUtils =
     let memoizeParser f =
@@ -169,6 +182,9 @@ module internal ParserUtils =
 let private contentParser : string -> System.Type -> obj * string  = ParserUtils.memoizeParser ContentParser.parse
 let private settingsParser : string -> System.Type -> obj = ParserUtils.memoizeParser SiteSettingsParser.parse
 let private getLayout : string -> string = ParserUtils.memoize  ContentParser.getLayout
+let private containsLayout : string -> bool = ParserUtils.memoize ContentParser.containsLayout
+let private compileMarkdown : string -> string = ParserUtils.memoize ContentParser.compileMarkdown
+let private parseLess : string -> string = ParserUtils.memoize StyleParser.parseLess
 
 ///`projectRoot` - path to the root of website
 ///`page` - path to page that should be generated
@@ -180,27 +196,66 @@ let generate (projectRoot : string) (page : string) =
         Path.Combine(projectRoot, "_site", p)
 
     let contentText = File.ReadAllText contetPath
-    let settingsText = File.ReadAllText settingsPath
-    let layout = getLayout contentText
 
-    let settingsLoader = settingsParser settingsText
-    let modelLoader = contentParser contentText
-    let templatePath = Path.Combine(projectRoot, "templates", layout + ".fsx")
+    if containsLayout contentText then
+        let settingsText = File.ReadAllText settingsPath
+        let layout = getLayout contentText
 
-    let startTime = DateTime.Now
-    let result = Evaluator.evaluate templatePath settingsLoader modelLoader
+        let settingsLoader = settingsParser settingsText
+        let modelLoader = contentParser contentText
+        let templatePath = Path.Combine(projectRoot, "templates", layout + ".fsx")
 
-    match result with
-    | Some r ->
+        let startTime = DateTime.Now
+        let result = Evaluator.evaluate templatePath settingsLoader modelLoader
+
+        match result with
+        | Some r ->
+            let dir = Path.GetDirectoryName outputPath
+            if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
+            File.WriteAllText(outputPath, r)
+            let endTime = DateTime.Now
+            let ms = (endTime - startTime).Milliseconds
+            printfn "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
+        | None ->
+            let endTime = DateTime.Now
+            printfn "[%s] '%s' generation failed" (endTime.ToString("HH:mm:ss")) outputPath
+    else
+        let r = compileMarkdown contentText
         let dir = Path.GetDirectoryName outputPath
         if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
         File.WriteAllText(outputPath, r)
-        let endTime = DateTime.Now
-        let ms = (endTime - startTime).Milliseconds
-        printfn "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
-    | None ->
-        let endTime = DateTime.Now
-        printfn "[%s] '%s' generation failed" (endTime.ToString("HH:mm:ss")) outputPath
+
+///`projectRoot` - path to the root of website
+///`path` - path to file that should be copied
+let copyStaticFile  (projectRoot : string) (path : string) =
+    let inputPath = Path.Combine(projectRoot, path)
+    let outputPath = Path.Combine(projectRoot, "_site", path)
+    let dir = Path.GetDirectoryName outputPath
+    if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
+    File.Copy(inputPath, outputPath, true)
+
+///`projectRoot` - path to the root of website
+///`path` - path to `.less` file that should be copied
+let generateFromLess (projectRoot : string) (path : string) =
+    let startTime = DateTime.Now
+    let inputPath = Path.Combine(projectRoot, path)
+    let outputPath = Path.Combine(projectRoot, "_site", path)
+    let dir = Path.GetDirectoryName outputPath
+    if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
+    let res = inputPath |> File.ReadAllText |>parseLess
+    File.WriteAllText(outputPath, res)
+    let endTime = DateTime.Now
+    let ms = (endTime - startTime).Milliseconds
+    printfn "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
+
+let private (|Ignored|Markdown|Less|Sass|StaticFile|) (filename : string) =
+    let ext = Path.GetExtension filename
+    if filename.Contains "_site" || filename.Contains "_lib" || ext = ".yaml" || ext = ".fsx"  then Ignored
+    elif ext = ".md" then Markdown
+    elif ext = ".less" then Less
+    elif ext = ".sass" then Sass
+
+    else StaticFile
 
 ///`projectRoot` - path to the root of website
 let generateFolder (projectRoot : string) =
@@ -213,5 +268,12 @@ let generateFolder (projectRoot : string) =
         if projectRoot.EndsWith (string Path.DirectorySeparatorChar) then projectRoot
         else projectRoot + (string Path.DirectorySeparatorChar)
 
-    Directory.GetFiles(projectRoot, "*.md", SearchOption.AllDirectories)
-    |> Array.iter (fun n -> n |> relative projectRoot |> generate projectRoot)
+    Directory.GetFiles(projectRoot, "*", SearchOption.AllDirectories)
+    |> Array.iter (fun n ->
+        match n with
+        | Ignored -> ()
+        | Markdown -> n |> relative projectRoot |> generate projectRoot
+        | Less ->
+        | Sass -> failwith "Not implemented"
+        | StaticFile -> n |> relative projectRoot |> copyStaticFile projectRoot
+        )
