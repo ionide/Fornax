@@ -4,6 +4,52 @@ module Generator
 open System
 open System.IO
 
+
+module internal Utils =
+    let memoizeParser f =
+        let cache = ref Map.empty
+        fun (x : string) (y : System.Type) ->
+            let input = (x,y.GetHashCode())
+            match (!cache).TryFind(input) with
+            | Some res -> res
+            | None ->
+                let res = f x y
+                cache := (!cache).Add(input,res)
+                res
+
+    let memoize f =
+        let cache = ref Map.empty
+        fun x ->
+            match (!cache).TryFind(x) with
+            | Some res -> res
+            | None ->
+                let res = f x
+                cache := (!cache).Add(x,res)
+                res
+
+    let memoizeScriptFile f =
+        let rec getContent f =
+            Map.empty
+
+        let resultCache = ref Map.empty
+        let contentCache = ref Map.empty
+        let ctn = getContent f
+        fun (x : string) ->
+            match (!resultCache).TryFind(x) with
+            | Some res ->
+                match (!contentCache).TryFind(x) with
+                | Some r when r = ctn -> res
+                | _ ->
+                    let res = f x
+                    resultCache := (!resultCache).Add(x,res)
+                    contentCache := (!contentCache).Add(x,ctn)
+                    res
+            | None ->
+                let res = f x
+                resultCache := (!resultCache).Add(x,res)
+                contentCache := (!contentCache).Add(x,ctn)
+                res
+
 module Evaluator =
     open System.Globalization
     open System.Text
@@ -11,10 +57,8 @@ module Evaluator =
     open FSharp.Quotations.Evaluator
     open FSharp.Reflection
 
-
     let private sbOut = StringBuilder()
     let private sbErr = StringBuilder()
-
     let private fsi =
         let inStream = new StringReader("")
         let outStream = new StringWriter(sbOut)
@@ -70,11 +114,7 @@ module Evaluator =
         let genExpr = input.ReflectionValue :?> Quotations.Expr
         QuotationEvaluator.CompileUntyped genExpr
 
-    ///`templatePath` - absolute path to `.fsx` file containing the template
-    ///`getSiteModel` - function generating instance of site settings model of given type
-    ///`getContentModel` - function generating instance of page mode of given type
-    ///`body` - content of the post (in html)
-    let evaluate (templatePath : string) (getSiteModel : System.Type -> obj) (getContentModel : System.Type -> obj * string) =
+    let getContentFromTemplate (templatePath : string) =
         let filename = getOpen templatePath
         let load = getLoad templatePath
 
@@ -95,6 +135,17 @@ module Evaluator =
 
         match modelType, siteModelType, funType with
         | Choice1Of2 (Some mt), Choice1Of2 (Some smt), Choice1Of2 (Some ft) ->
+            Some (mt, smt, ft)
+        | _ -> None
+
+
+    ///`templatePath` - absolute path to `.fsx` file containing the template
+    ///`getSiteModel` - function generating instance of site settings model of given type
+    ///`getContentModel` - function generating instance of page mode of given type
+    ///`body` - content of the post (in html)
+    let evaluate (templatePath : string) (getSiteModel : System.Type -> obj) (getContentModel : System.Type -> obj * string) =
+        match getContentFromTemplate templatePath with
+        |  Some (mt, smt, ft) ->
             let modelInput, body = getContentModel (mt.ReflectionValue :?> Type)
             let siteInput = getSiteModel (smt.ReflectionValue :?> Type)
             let generator = compileExpression ft
@@ -156,35 +207,14 @@ module StyleParser =
     let parseLess fileContent =
         dotless.Core.Less.Parse fileContent
 
-module internal ParserUtils =
-    let memoizeParser f =
-        let cache = ref Map.empty
-        fun (x : string) (y : System.Type) ->
-            let input = (x,y.GetHashCode())
-            match (!cache).TryFind(input) with
-            | Some res -> res
-            | None ->
-                let res = f x y
-                cache := (!cache).Add(input,res)
-                res
-
-    let memoize f =
-        let cache = ref Map.empty
-        fun x ->
-            match (!cache).TryFind(x) with
-            | Some res -> res
-            | None ->
-                let res = f x
-                cache := (!cache).Add(x,res)
-                res
 
 
-let private contentParser : string -> System.Type -> obj * string  = ParserUtils.memoizeParser ContentParser.parse
-let private settingsParser : string -> System.Type -> obj = ParserUtils.memoizeParser SiteSettingsParser.parse
-let private getLayout : string -> string = ParserUtils.memoize  ContentParser.getLayout
-let private containsLayout : string -> bool = ParserUtils.memoize ContentParser.containsLayout
-let private compileMarkdown : string -> string = ParserUtils.memoize ContentParser.compileMarkdown
-let private parseLess : string -> string = ParserUtils.memoize StyleParser.parseLess
+let private contentParser : string -> System.Type -> obj * string  = Utils.memoizeParser ContentParser.parse
+let private settingsParser : string -> System.Type -> obj = Utils.memoizeParser SiteSettingsParser.parse
+let private getLayout : string -> string = Utils.memoize  ContentParser.getLayout
+let private containsLayout : string -> bool = Utils.memoize ContentParser.containsLayout
+let private compileMarkdown : string -> string = Utils.memoize ContentParser.compileMarkdown
+let private parseLess : string -> string = Utils.memoize StyleParser.parseLess
 
 ///`projectRoot` - path to the root of website
 ///`page` - path to page that should be generated
