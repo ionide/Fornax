@@ -28,17 +28,22 @@ module internal Utils =
                 res
 
     let memoizeScriptFile f =
-
-
         let resultCache = ref Map.empty
         let contentCache = ref Map.empty
         fun (x : string) ->
-            let rec getContent f contentMap =
-                let content = File.ReadAllLines x
-                let contetnMap' = contentMap |> Map.add(x, content)
-
-                Map.empty
-            let ctn = getContent f Map.empty
+            let rec getContent f =
+                let dir = Path.GetDirectoryName f
+                let content = File.ReadAllLines f
+                let contetnMap' = [(f, content)]
+                let loads = content |> Array.where (fun n -> n.Contains "#load")
+                let relativeFiles = loads |> Array.map (fun n -> (n.Split '"').[1])
+                if relativeFiles.Length > 0 then
+                    relativeFiles
+                    |> Array.fold (fun acc e ->
+                        let pth = Path.Combine(dir, e)
+                        [yield! acc; yield! getContent pth ]) contetnMap'
+                else contetnMap'
+            let ctn = getContent x
 
             match (!resultCache).TryFind(x) with
             | Some res ->
@@ -119,7 +124,7 @@ module Evaluator =
         let genExpr = input.ReflectionValue :?> Quotations.Expr
         QuotationEvaluator.CompileUntyped genExpr
 
-    let getContentFromTemplate (templatePath : string) =
+    let private getContentFromTemplate' (templatePath : string) =
         let filename = getOpen templatePath
         let load = getLoad templatePath
 
@@ -142,6 +147,8 @@ module Evaluator =
         | Choice1Of2 (Some mt), Choice1Of2 (Some smt), Choice1Of2 (Some ft) ->
             Some (mt, smt, ft)
         | _ -> None
+
+    let private getContentFromTemplate = Utils.memoizeScriptFile getContentFromTemplate'
 
 
     ///`templatePath` - absolute path to `.fsx` file containing the template
