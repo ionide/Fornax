@@ -6,6 +6,17 @@ open System.IO
 
 
 module internal Utils =
+    let rec retry times fn =
+        if times > 1 then
+            try
+                fn()
+            with
+            | _ ->
+                System.Threading.Thread.Sleep 50
+                retry (times - 1) fn
+        else
+            fn()
+
     let memoizeParser f =
         let cache = ref Map.empty
         fun (x : string) (y : System.Type) ->
@@ -33,7 +44,7 @@ module internal Utils =
         fun (x : string) ->
             let rec getContent f =
                 let dir = Path.GetDirectoryName f
-                let content = File.ReadAllLines f
+                let content = retry 2 (fun _ -> File.ReadAllLines f)
                 let contetnMap' = [(f, content)]
                 let loads = content |> Array.where (fun n -> n.Contains "#load")
                 let relativeFiles = loads |> Array.map (fun n -> (n.Split '"').[1])
@@ -231,23 +242,23 @@ let private parseLess : string -> string = Utils.memoize StyleParser.parseLess
 ///`projectRoot` - path to the root of website
 ///`page` - path to page that should be generated
 let generate (projectRoot : string) (page : string) =
+    let startTime = DateTime.Now
     let contetPath = Path.Combine(projectRoot, page)
     let settingsPath = Path.Combine(projectRoot, "site.yaml")
     let outputPath =
         let p = Path.ChangeExtension(page, ".html")
         Path.Combine(projectRoot, "_site", p)
 
-    let contentText = File.ReadAllText contetPath
+    let contentText = Utils.retry 2 (fun _ -> File.ReadAllText contetPath)
 
     if containsLayout contentText then
-        let settingsText = File.ReadAllText settingsPath
+        let settingsText = Utils.retry 2 (fun _ -> File.ReadAllText settingsPath)
         let layout = getLayout contentText
 
         let settingsLoader = settingsParser settingsText
         let modelLoader = contentParser contentText
         let templatePath = Path.Combine(projectRoot, "templates", layout + ".fsx")
 
-        let startTime = DateTime.Now
         let result = Evaluator.evaluate templatePath settingsLoader modelLoader
 
         match result with
@@ -285,7 +296,7 @@ let generateFromLess (projectRoot : string) (path : string) =
     let outputPath = Path.Combine(projectRoot, "_site", path')
     let dir = Path.GetDirectoryName outputPath
     if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
-    let res = inputPath |> File.ReadAllText |>parseLess
+    let res = inputPath |> fun f -> Utils.retry 2 (fun _ -> File.ReadAllText f) |> parseLess
     File.WriteAllText(outputPath, res)
     let endTime = DateTime.Now
     let ms = (endTime - startTime).Milliseconds

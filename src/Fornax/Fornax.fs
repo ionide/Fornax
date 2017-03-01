@@ -60,7 +60,7 @@ let main argv =
             0
         | Some Watch ->
             let mutable lastAccessed = Map.empty<string, DateTime>
-            printfn "Watch mode started. Press any key to exit"
+            printfn "[%s] Watch mode started. Press any key to exit" (DateTime.Now.ToString("HH:mm:ss"))
             Generator.generateFolder cwd
             use watcher = createFileWatcher cwd (fun e ->
                 if not (e.FullPath.Contains "_site") then
@@ -68,6 +68,7 @@ let main argv =
                     match lastAccessed.TryFind e.FullPath with
                     | Some lt when Math.Abs((lt - lastTimeWrite).Seconds) < 1 -> ()
                     | _ ->
+                        printfn "[%s] Changes detected: %s" (DateTime.Now.ToString("HH:mm:ss")) e.FullPath
                         lastAccessed <- lastAccessed.Add(e.FullPath, lastTimeWrite)
                         Generator.generateFolder cwd)
             let _ = Console.ReadKey()
