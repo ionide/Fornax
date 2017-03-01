@@ -30,10 +30,10 @@ let createFileWatcher dir handler =
     fileSystemWatcher.Path <- dir
     fileSystemWatcher.EnableRaisingEvents <- true
     fileSystemWatcher.IncludeSubdirectories <- true
+    fileSystemWatcher.NotifyFilter <- NotifyFilters.DirectoryName ||| NotifyFilters.LastWrite ||| NotifyFilters.FileName
     fileSystemWatcher.Created.Add handler
     fileSystemWatcher.Changed.Add handler
     fileSystemWatcher.Deleted.Add handler
-    fileSystemWatcher.Renamed.Add handler
     fileSystemWatcher
 
 [<EntryPoint>]
@@ -59,9 +59,17 @@ let main argv =
             Generator.generateFolder cwd
             0
         | Some Watch ->
-            use watcher = createFileWatcher cwd (fun e -> Generator.generateFolder cwd)
+            let mutable lastAccessed = Map.empty<string, DateTime>
             printfn "Watch mode started. Press any key to exit"
             Generator.generateFolder cwd
+            use watcher = createFileWatcher cwd (fun e ->
+                if not (e.FullPath.Contains "_site") then
+                    let lastTimeWrite = File.GetLastWriteTime(e.FullPath)
+                    match lastAccessed.TryFind e.FullPath with
+                    | Some lt when Math.Abs((lt - lastTimeWrite).Seconds) < 1 -> ()
+                    | _ ->
+                        lastAccessed <- lastAccessed.Add(e.FullPath, lastTimeWrite)
+                        Generator.generateFolder cwd)
             let _ = Console.ReadKey()
             0
         | Some Version ->
