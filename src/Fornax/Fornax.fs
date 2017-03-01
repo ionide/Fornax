@@ -3,6 +3,7 @@ module Fornax
 open System
 open System.IO
 open Argu
+open Suave
 
 type [<CliPrefixAttribute("")>] Arguments =
     | New
@@ -61,6 +62,7 @@ let main argv =
         | Some Watch ->
             let mutable lastAccessed = Map.empty<string, DateTime>
             printfn "[%s] Watch mode started. Press any key to exit" (DateTime.Now.ToString("HH:mm:ss"))
+            startWebServerAsync defaultConfig (Files.browse (System.IO.Path.Combine(cwd, "_site")) ) |> snd |> Async.Start
             Generator.generateFolder cwd
             use watcher = createFileWatcher cwd (fun e ->
                 if not (e.FullPath.Contains "_site") then
