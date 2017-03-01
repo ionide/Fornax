@@ -28,13 +28,18 @@ module internal Utils =
                 res
 
     let memoizeScriptFile f =
-        let rec getContent f =
-            Map.empty
+
 
         let resultCache = ref Map.empty
         let contentCache = ref Map.empty
-        let ctn = getContent f
         fun (x : string) ->
+            let rec getContent f contentMap =
+                let content = File.ReadAllLines x
+                let contetnMap' = contentMap |> Map.add(x, content)
+
+                Map.empty
+            let ctn = getContent f Map.empty
+
             match (!resultCache).TryFind(x) with
             | Some res ->
                 match (!contentCache).TryFind(x) with
