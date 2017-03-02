@@ -33,7 +33,7 @@ Fornax is using normal F# code (F# script files) to define templates and data ty
 
 Site settings are information passed to every page during generation - every template has access to this data.
 
-The model representing site settings is defined in `siteModel.fsx` file in the root folder of the webpage, content of settings is defined in `site.yaml` file in the root folder of the webpage.
+The model representing site settings is defined in `siteModel.fsx` file in the root folder of the webpage, content of settings is defined in `_config.yml` file in the root folder of the webpage.
 
 Sample `siteModel.fsx`:
 
@@ -43,7 +43,7 @@ type SiteModel = {
 }
 ```
 
-Sample `site.yaml`:
+Sample `_config.yml`:
 ```
 SomeGlobalValue: "Test global value"
 ```

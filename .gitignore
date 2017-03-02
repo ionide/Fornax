@@ -391,5 +391,5 @@ paket-files/
 .idea/
 *.sln.iml
 
-_site
+_public
 temp/
