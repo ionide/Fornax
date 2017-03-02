@@ -304,7 +304,7 @@ let generateFromLess (projectRoot : string) (path : string) =
 
 let private (|Ignored|Markdown|Less|StaticFile|) (filename : string) =
     let ext = Path.GetExtension filename
-    if filename.Contains "_public" || filename.Contains "_lib" || filename.Contains "_config.yml" || ext = ".fsx"  then Ignored
+    if filename.Contains "_public" || filename.Contains "_lib" || filename.Contains "_data" || filename.Contains "_styles" || filename.Contains "_config.yml" || ext = ".fsx" then Ignored
     elif ext = ".md" then Markdown
     elif ext = ".less" then Less
     else StaticFile
