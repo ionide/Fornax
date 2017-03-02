@@ -62,10 +62,10 @@ let main argv =
         | Some Watch ->
             let mutable lastAccessed = Map.empty<string, DateTime>
             printfn "[%s] Watch mode started. Press any key to exit" (DateTime.Now.ToString("HH:mm:ss"))
-            startWebServerAsync defaultConfig (Files.browse (System.IO.Path.Combine(cwd, "_site")) ) |> snd |> Async.Start
+            startWebServerAsync defaultConfig (Files.browse (System.IO.Path.Combine(cwd, "_public")) ) |> snd |> Async.Start
             Generator.generateFolder cwd
             use watcher = createFileWatcher cwd (fun e ->
-                if not (e.FullPath.Contains "_site") then
+                if not (e.FullPath.Contains "_public") then
                     let lastTimeWrite = File.GetLastWriteTime(e.FullPath)
                     match lastAccessed.TryFind e.FullPath with
                     | Some lt when Math.Abs((lt - lastTimeWrite).Seconds) < 1 -> ()

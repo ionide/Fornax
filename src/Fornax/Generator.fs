@@ -244,10 +244,10 @@ let private parseLess : string -> string = Utils.memoize StyleParser.parseLess
 let generate (projectRoot : string) (page : string) =
     let startTime = DateTime.Now
     let contetPath = Path.Combine(projectRoot, page)
-    let settingsPath = Path.Combine(projectRoot, "site.yaml")
+    let settingsPath = Path.Combine(projectRoot, "_config.yml")
     let outputPath =
         let p = Path.ChangeExtension(page, ".html")
-        Path.Combine(projectRoot, "_site", p)
+        Path.Combine(projectRoot, "_public", p)
 
     let contentText = Utils.retry 2 (fun _ -> File.ReadAllText contetPath)
 
@@ -282,7 +282,7 @@ let generate (projectRoot : string) (page : string) =
 ///`path` - path to file that should be copied
 let copyStaticFile  (projectRoot : string) (path : string) =
     let inputPath = Path.Combine(projectRoot, path)
-    let outputPath = Path.Combine(projectRoot, "_site", path)
+    let outputPath = Path.Combine(projectRoot, "_public", path)
     let dir = Path.GetDirectoryName outputPath
     if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
     File.Copy(inputPath, outputPath, true)
@@ -293,7 +293,7 @@ let generateFromLess (projectRoot : string) (path : string) =
     let startTime = DateTime.Now
     let inputPath = Path.Combine(projectRoot, path)
     let path' = Path.ChangeExtension(path, ".css")
-    let outputPath = Path.Combine(projectRoot, "_site", path')
+    let outputPath = Path.Combine(projectRoot, "_public", path')
     let dir = Path.GetDirectoryName outputPath
     if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
     let res = inputPath |> fun f -> Utils.retry 2 (fun _ -> File.ReadAllText f) |> parseLess
@@ -304,7 +304,7 @@ let generateFromLess (projectRoot : string) (path : string) =
 
 let private (|Ignored|Markdown|Less|StaticFile|) (filename : string) =
     let ext = Path.GetExtension filename
-    if filename.Contains "_site" || filename.Contains "_lib" || ext = ".yaml" || ext = ".fsx"  then Ignored
+    if filename.Contains "_public" || filename.Contains "_lib" || filename.Contains "_config.yml" || ext = ".fsx"  then Ignored
     elif ext = ".md" then Markdown
     elif ext = ".less" then Less
     else StaticFile
