@@ -10,7 +10,7 @@ Fornax is a static site generator using type safe F# DSL to define page template
 * Transforming `.less` files to `.css` files
 * Coping other static content to output directory
 
-## Plsnned features
+## Planned features
 
 * Defining `.css` styles using F# DSL
 * Better performance (startup time in single build mode (`fornax build`) is bad)
