@@ -8,8 +8,8 @@ NUGET
       Argu (>= 3.2)
       FSharp.Core (>= 3.1.2.5)
       Mono.Cecil (>= 0.9.6.4)
-    FAKE (4.50.1)
-    FSharp.Compiler.Service (10.0.3)
+    FAKE (4.52)
+    FSharp.Compiler.Service (11.0.4)
       System.Collections.Immutable (>= 1.2)
       System.Reflection.Metadata (>= 1.4.1-beta-24227-04)
     FSharp.Configuration (0.6.4)
@@ -28,11 +28,11 @@ NUGET
       YamlDotNet (>= 3.8)
 GIT
   remote: https://github.com/Krzysztof-Cieslak/FsYaml.git
-     (c8ebda2c3c9d8d86f1a1580685b26ccf6b3dc26c)
+     (18d38e3085716667db9f873e56316df1feb9bec7)
       build: build.cmd BuildPackage
       path: /bin/
       os: windows
-     (c8ebda2c3c9d8d86f1a1580685b26ccf6b3dc26c)
+     (18d38e3085716667db9f873e56316df1feb9bec7)
       build: build.sh BuildPackage
       path: /bin/
       os: mono
