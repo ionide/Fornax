@@ -1254,3 +1254,23 @@ type CSSProperties =
         let tspan (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Tspan(props,children)
         let string str = HtmlElement.String str
         let (!!) str = HtmlElement.String str
+
+type Post = {
+    link : string
+    title: string option
+    author: string option
+    published: System.DateTime option
+    tags: string list
+}
+with
+    static member Construct (lst : (string * string option * string option * System.DateTime option * string list) []) =
+        lst
+        |> Array.map (fun (link, title, author, published, tags) ->
+            {
+                link = link
+                title = title
+                author = author
+                published = published
+                tags = tags
+            })
+        |> Array.toList

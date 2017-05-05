@@ -151,7 +151,7 @@ module Evaluator =
         let siteModelType, errs = fsi.EvalExpressionNonThrowing "typeof<SiteModel.SiteModel>"
         if errs.Length > 0 then printfn "[ERROR 4] Get site model Errors : %A" errs
 
-        let funType,errs = fsi.EvalExpressionNonThrowing "<@@ fun a b c -> (generate a b c) |> HtmlElement.ToString @@>"
+        let funType,errs = fsi.EvalExpressionNonThrowing "<@@ fun a b c d -> (generate a b (Post.Construct c) d) |> HtmlElement.ToString @@>"
         if errs.Length > 0 then printfn "[ERROR 5] Get template Errors : %A" errs
 
         match modelType, siteModelType, funType with
@@ -166,13 +166,13 @@ module Evaluator =
     ///`getSiteModel` - function generating instance of site settings model of given type
     ///`getContentModel` - function generating instance of page mode of given type
     ///`body` - content of the post (in html)
-    let evaluate (templatePath : string) (getSiteModel : System.Type -> obj) (getContentModel : System.Type -> obj * string) =
+    let evaluate posts (templatePath : string) (getSiteModel : System.Type -> obj) (getContentModel : System.Type -> obj * string) =
         match getContentFromTemplate templatePath with
         |  Some (mt, smt, ft) ->
             let modelInput, body = getContentModel (mt.ReflectionValue :?> Type)
             let siteInput = getSiteModel (smt.ReflectionValue :?> Type)
             let generator = compileExpression ft
-            invokeFunction generator [siteInput; modelInput; box body]
+            invokeFunction generator [siteInput; modelInput; box posts; box body]
             |> Option.bind (tryUnbox<string>)
         | _ -> None
 
@@ -239,9 +239,52 @@ let private containsLayout : string -> bool = Utils.memoize ContentParser.contai
 let private compileMarkdown : string -> string = Utils.memoize ContentParser.compileMarkdown
 let private parseLess : string -> string = Utils.memoize StyleParser.parseLess
 
+let getPosts (projectRoot : string) =
+    let path = Path.Combine(projectRoot, "posts")
+    Directory.GetFiles path
+    |> Array.filter (fun n -> n.EndsWith ".md")
+    |> Array.map (fun n ->
+        let text = Utils.retry 2 (fun _ -> File.ReadAllText n)
+        let layout = getLayout text |> String.split '\n'
+
+        let link = "/" + Path.Combine("posts", (n |> Path.GetFileNameWithoutExtension) + ".html").Replace("\\", "/")
+
+        let title =
+            try
+                layout |> List.tryFind (fun n -> n.ToLower().StartsWith "title" ) |> Option.map (fun n -> n.Split(':').[1])
+            with
+            | _ -> None
+
+        let author =
+            try
+                layout |> List.tryFind (fun n -> n.ToLower().StartsWith "author" ) |> Option.map (fun n -> n.Split(':').[1])
+            with
+            | _ -> None
+
+        let published =
+            try
+                layout |> List.tryFind (fun n -> n.ToLower().StartsWith "published" ) |> Option.map (fun n -> n.Split(':').[1] |> DateTime.Parse)
+            with
+            | _ -> None
+
+        let tags =
+            try
+                let x =
+                    layout
+                    |> List.tryFind (fun n -> n.ToLower().StartsWith "tags" )
+                    |> Option.map (fun n -> n.Split(':').[1].Split ',' |> Array.toList )
+                defaultArg x []
+            with
+            | _ -> []
+
+
+        (link, title, author, published, tags))
+
+
+
 ///`projectRoot` - path to the root of website
 ///`page` - path to page that should be generated
-let generate (projectRoot : string) (page : string) =
+let generate posts (projectRoot : string) (page : string) =
     let startTime = DateTime.Now
     let contetPath = Path.Combine(projectRoot, page)
     let settingsPath = Path.Combine(projectRoot, "_config.yml")
@@ -259,7 +302,7 @@ let generate (projectRoot : string) (page : string) =
         let modelLoader = contentParser contentText
         let templatePath = Path.Combine(projectRoot, "templates", layout + ".fsx")
 
-        let result = Evaluator.evaluate templatePath settingsLoader modelLoader
+        let result = Evaluator.evaluate posts templatePath settingsLoader modelLoader
 
         match result with
         | Some r ->
@@ -320,10 +363,12 @@ let generateFolder (projectRoot : string) =
         if projectRoot.EndsWith (string Path.DirectorySeparatorChar) then projectRoot
         else projectRoot + (string Path.DirectorySeparatorChar)
 
+    let posts = getPosts projectRoot
+
     Directory.GetFiles(projectRoot, "*", SearchOption.AllDirectories)
     |> Array.iter (fun n ->
         match n with
         | Ignored -> ()
-        | Markdown -> n |> relative projectRoot |> generate projectRoot
+        | Markdown -> n |> relative projectRoot |> generate posts projectRoot
         | Less -> n |> relative projectRoot |> generateFromLess projectRoot
         | StaticFile -> n |> relative projectRoot |> copyStaticFile projectRoot )

@@ -13,8 +13,7 @@ Fornax is a static site generator using type safe F# DSL to define page template
 ## Planned features
 
 * Defining `.css` styles using F# DSL
-* Better performance (startup time in single build mode (`fornax build`) is bad)
-* Better handling of site settings (right now there is no access to post list etc.) (passing `SiteSettings<SiteModel>` to generator ?)
+* Transforming `.scss` files to `.css` files
 * Handling site settings defined in multiple files (a la Jekyll's `_data` folder) (multiple models? unified model?)
 
 ## Installation.
@@ -50,7 +49,7 @@ SomeGlobalValue: "Test global value"
 
 ### Templates
 
-Templates are F# script files representing different templates that can be used in the website. They need to `#load` `siteModel.fsx` file, and `#r` `Fornax.Core.dll`. They need to define F# record called `Model` which defines additional settings passed to this particular template, and `generate` function of following signature: `SiteModel -> Model -> string -> HtmlElement`. `SiteModel` is type representing global settings of webpage, `Model` is type representing settings for this template, `string` is main content of post (already compiled to `html`).
+Templates are F# script files representing different templates that can be used in the website. They need to `#load` `siteModel.fsx` file, and `#r` `Fornax.Core.dll`. They need to define F# record called `Model` which defines additional settings passed to this particular template, and `generate` function of following signature: `SiteModel -> Model -> Post list -> string -> HtmlElement`. `SiteModel` is type representing global settings of webpage, `Model` is type representing settings for this template, `Post list` contains simplifed information about all avaliable posts in the blog (usefull for navigation, creating tag cloud etc.) `string` is main content of post (already compiled to `html`).
 
 Templates are defined using DSL defined in `Html` module of `Fornax.Core`.
 
@@ -69,7 +68,7 @@ type Model = {
     Surname : string
 }
 
-let generate (siteModel : SiteModel) (mdl : Model) (content : string) =
+let generate (siteModel : SiteModel) (mdl : Model) (posts: Post list) (content : string) =
     html [] [
         div [] [
             span [] [ !! ("Hello world " + mdl.Name) ]
@@ -95,6 +94,21 @@ Surname: Ja4
 
 Some blog post written in Markdown
 ```
+
+### Post list
+
+Templates are getting `Post list` as one of the input parameter that can be used for navigation, creating tag clouds etc. The `Post` is a record of following structure:
+```
+type Post = {
+    link : string
+    title: string option
+    author: string option
+    published: System.DateTime option
+    tags: string list
+}
+```
+It's filled based on respective entries in `layout` part of the post content file. `link` is using name of the file - it's usually something like `\posts\post1.html`
+
 
 ## FAQ
 
