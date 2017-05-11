@@ -3,7 +3,7 @@ module Generator
 
 open System
 open System.IO
-
+open System.Diagnostics
 
 module internal Utils =
     let rec retry times fn =
@@ -339,17 +339,41 @@ let generateFromLess (projectRoot : string) (path : string) =
     let outputPath = Path.Combine(projectRoot, "_public", path')
     let dir = Path.GetDirectoryName outputPath
     if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
-    let res = inputPath |> fun f -> Utils.retry 2 (fun _ -> File.ReadAllText f) |> parseLess
+    let res = Utils.retry 2 (fun _ -> File.ReadAllText inputPath) |> parseLess
     File.WriteAllText(outputPath, res)
     let endTime = DateTime.Now
     let ms = (endTime - startTime).Milliseconds
     printfn "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
 
-let private (|Ignored|Markdown|Less|StaticFile|) (filename : string) =
+///`projectRoot` - path to the root of website
+///`path` - path to `.less` file that should be copied
+let generateFromSass (projectRoot : string) (path : string) =
+    let startTime = DateTime.Now
+    let inputPath = Path.Combine(projectRoot, path)
+    let path' = Path.ChangeExtension(path, ".css")
+    let outputPath = Path.Combine(projectRoot, "_public", path')
+    let dir = Path.GetDirectoryName outputPath
+    if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
+
+    let psi = ProcessStartInfo()
+    psi.FileName <- "sass"
+    psi.Arguments <- sprintf "%s %s" inputPath outputPath
+    psi.CreateNoWindow <- true
+    psi.WindowStyle <- ProcessWindowStyle.Hidden
+
+    let proc = Process.Start psi
+    proc.WaitForExit()
+    let endTime = DateTime.Now
+    let ms = (endTime - startTime).Milliseconds
+    printfn "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
+
+
+let private (|Ignored|Markdown|Less|Sass|StaticFile|) (filename : string) =
     let ext = Path.GetExtension filename
     if filename.Contains "_public" || filename.Contains "_lib" || filename.Contains "_data" || filename.Contains "_styles" || filename.Contains "_config.yml" || ext = ".fsx" then Ignored
     elif ext = ".md" then Markdown
     elif ext = ".less" then Less
+    elif ext = ".sass" || ext =".scss" then Sass
     else StaticFile
 
 ///`projectRoot` - path to the root of website
@@ -371,4 +395,5 @@ let generateFolder (projectRoot : string) =
         | Ignored -> ()
         | Markdown -> n |> relative projectRoot |> generate posts projectRoot
         | Less -> n |> relative projectRoot |> generateFromLess projectRoot
+        | Sass  -> n |> relative projectRoot |> generateFromSass projectRoot
         | StaticFile -> n |> relative projectRoot |> copyStaticFile projectRoot )
