@@ -370,7 +370,7 @@ let generateFromSass (projectRoot : string) (path : string) =
 
 let private (|Ignored|Markdown|Less|Sass|StaticFile|) (filename : string) =
     let ext = Path.GetExtension filename
-    if filename.Contains "_public" || filename.Contains "_lib" || filename.Contains "_data" || filename.Contains "_styles" || filename.Contains "_config.yml" || ext = ".fsx" then Ignored
+    if filename.Contains "_public" || filename.Contains "_lib" || filename.Contains "_data" || filename.Contains "_styles" || filename.Contains "_config.yml" || ext = ".fsx" || filename.Contains ".sass-cache" then Ignored
     elif ext = ".md" then Markdown
     elif ext = ".less" then Less
     elif ext = ".sass" || ext =".scss" then Sass
