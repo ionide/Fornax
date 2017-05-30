@@ -1024,12 +1024,12 @@ type CSSProperties =
                 | Figure (props, children) -> format "figure" props children level
                 | Footer (props, children) -> format "footer" props children level
                 | Form (props, children) -> format "form" props children level
-                | H1 (props, children) -> format "" props children level
-                | H2 (props, children) -> format "" props children level
-                | H3 (props, children) -> format "" props children level
-                | H4 (props, children) -> format "" props children level
-                | H5 (props, children) -> format "" props children level
-                | H6 (props, children) -> format "" props children level
+                | H1 (props, children) -> format "h1" props children level
+                | H2 (props, children) -> format "h2" props children level
+                | H3 (props, children) -> format "h3" props children level
+                | H4 (props, children) -> format "h4" props children level
+                | H5 (props, children) -> format "h5" props children level
+                | H6 (props, children) -> format "h6" props children level
                 | Head (props, children) -> format "head" props children level
                 | Header (props, children) -> format "header" props children level
                 | Hgroup (props, children) -> format "hgroup" props children level
