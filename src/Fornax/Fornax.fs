@@ -10,6 +10,7 @@ type [<CliPrefixAttribute("")>] Arguments =
     | Build
     | Watch
     | Version
+    | Clean
 with
     interface IArgParserTemplate with
         member s.Usage =
@@ -18,12 +19,15 @@ with
             | Build -> "Build web site"
             | Watch -> "Start watch mode rebuilding "
             | Version -> "Print version"
+            | Clean -> "Clean output and temp files"
 
 let toArguments (result : ParseResults<Arguments>) =
     if result.Contains <@ New @> then Some New
     elif result.Contains <@ Build @> then Some Build
     elif result.Contains <@ Watch @> then Some Watch
     elif result.Contains <@ Version @> then Some Version
+    elif result.Contains <@ Clean @> then Some Clean
+
     else None
 
 let createFileWatcher dir handler =
@@ -62,7 +66,7 @@ let main argv =
         | Some Watch ->
             let mutable lastAccessed = Map.empty<string, DateTime>
             printfn "[%s] Watch mode started. Press any key to exit" (DateTime.Now.ToString("HH:mm:ss"))
-            startWebServerAsync defaultConfig (Files.browse (System.IO.Path.Combine(cwd, "_public")) ) |> snd |> Async.Start
+            startWebServerAsync defaultConfig (Files.browse (Path.Combine(cwd, "_public")) ) |> snd |> Async.Start
             Generator.generateFolder cwd
             use watcher = createFileWatcher cwd (fun e ->
                 if not (e.FullPath.Contains "_public") then
@@ -78,6 +82,15 @@ let main argv =
         | Some Version ->
             printfn "%s" AssemblyVersionInformation.AssemblyVersion
             0
+        | Some Clean ->
+            let publ = Path.Combine(cwd, "_public")
+            let sassCache = Path.Combine(cwd, ".sass-cache")
+            try
+                Directory.Delete(publ, true)
+                Directory.Delete(sassCache, true)
+                0
+            with
+            | _ -> 1
         | None ->
             printfn "Unknown argument"
             printfn "%s" <| parser.PrintUsage()
