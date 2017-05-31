@@ -22,7 +22,14 @@ Project is in really early stage right now... let's call it RC3. Right now only 
 
 ## CLI Application
 
-TODO: More docs. For now run `fornax help`... BTW, `fornax new` is not implemented yet (but other commands should work)
+The main functionality of Fornax comes from CLI applications that lets user scaffold, and generate webpages.
+
+`fornax new` - scaffolds new blog in current working directory using really simple template
+`fornax build` - builds webpage, puts output to `_public` folder
+`fornax watch` - starts small webserver that host your blog post, and background process that recompiles blog whenver any changes are detected. That's suggested way of working with Fornax
+`fornax clean` - removes output directory and any temp files.
+`fornax version` - prints out version of Fornax
+`fornax help` - prints out help
 
 ## Website definition
 
@@ -101,10 +108,11 @@ Templates are getting `Post list` as one of the input parameter that can be used
 ```
 type Post = {
     link : string
-    title: string option
+    title: string
     author: string option
     published: System.DateTime option
     tags: string list
+    content: string
 }
 ```
 It's filled based on respective entries in `layout` part of the post content file. `link` is using name of the file - it's usually something like `\posts\post1.html`
