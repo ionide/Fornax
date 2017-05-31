@@ -15,9 +15,9 @@ let generate (siteModel : SiteModel) (mdl : Model) (posts : Post list) (content 
         |> List.map (fun p ->
             article [ Class "post"] [
                 h1 [ Class "post-title"] [
-                    a [Href p.link] [ !! (defaultArg p.title "")]
+                    a [Href p.link] [ !! p.title ]
                 ]
-                div [Class "post-date"] [(!! (defaultArg (p.published |> Option.map (fun p -> p.ToString())) ""))]
+                div [Class "post-date"] [(!! (defaultArg (p.published |> Option.map (fun p -> p.ToShortDateString())) ""))]
                 !! content
             ]
         )

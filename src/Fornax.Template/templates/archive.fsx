@@ -14,10 +14,10 @@ let generate (siteModel : SiteModel) (mdl : Model) (posts : Post list) (content 
         posts
         |> List.map (fun p ->
             div [] [
-                !! (defaultArg (p.published |> Option.map (fun p -> p.ToString())) "")
+                !! (defaultArg (p.published |> Option.map (fun p -> p.ToShortDateString())) "")
                 !! "»"
                 span [ Class "post-title"] [
-                    a [Href p.link] [ !! (defaultArg p.title "")]
+                    a [Href p.link] [ !! p.title]
                 ]
             ]
         )

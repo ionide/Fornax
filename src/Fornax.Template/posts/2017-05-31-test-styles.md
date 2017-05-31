@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Test Theme Styles"
-date: "2017-05-30"
+published: "2017-05-31"
 
 ---
 
