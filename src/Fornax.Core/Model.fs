@@ -570,7 +570,7 @@ type CSSProperties =
         | Challenge of string
         | Checked of bool
         | ClassID of string
-        | ClassName of string
+        | Class of string
         | Cols of float
         | ColSpan of float
         | Content of string
@@ -713,7 +713,7 @@ type CSSProperties =
             | Challenge s -> sprintf "challenge=\"%s\"" s
             | Checked s -> sprintf "checked=\"%s\"" (if s then "true" else "false")
             | ClassID s -> sprintf "classID=\"%s\"" s
-            | ClassName s -> sprintf "className=\"%s\"" s
+            | Class s -> sprintf "class=\"%s\"" s
             | Cols s -> sprintf "cols=\"%g\"" s
             | ColSpan s -> sprintf "colSpan=\"%g\"" s
             | Content s -> sprintf "content=\"%s\"" s
