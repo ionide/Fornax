@@ -69,7 +69,7 @@ let main argv =
             startWebServerAsync defaultConfig (Files.browse (Path.Combine(cwd, "_public")) ) |> snd |> Async.Start
             Generator.generateFolder cwd
             use watcher = createFileWatcher cwd (fun e ->
-                if not (e.FullPath.Contains "_public") then
+                if not (e.FullPath.Contains "_public") && not (e.FullPath.Contains ".sass-cache") then
                     let lastTimeWrite = File.GetLastWriteTime(e.FullPath)
                     match lastAccessed.TryFind e.FullPath with
                     | Some lt when Math.Abs((lt - lastTimeWrite).Seconds) < 1 -> ()
