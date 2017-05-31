@@ -58,8 +58,19 @@ let main argv =
         let cwd = Directory.GetCurrentDirectory ()
         match result with
         | Some New ->
-            printfn "Not implemented"
-            1
+            let templateDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "templates", "project" )
+            let corePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin", "Fornax.Core.dll")
+
+            Directory.GetDirectories(templateDir, "*", SearchOption.AllDirectories)
+            |> Seq.iter (fun p -> Directory.CreateDirectory(p.Replace(templateDir, cwd)) |> ignore)
+
+            Directory.GetFiles(templateDir, "*.*", SearchOption.AllDirectories)
+            |> Seq.iter (fun p -> File.Copy(p, p.Replace(templateDir, cwd)))
+
+            Directory.CreateDirectory(Path.Combine(cwd, "_bin")) |> ignore
+            File.Copy(corePath, corePath.Replace(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin"), Path.Combine(cwd, "_bin")))
+
+            0
         | Some Build ->
             Generator.generateFolder cwd
             0
