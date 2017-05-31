@@ -24,12 +24,12 @@ Project is in really early stage right now... let's call it RC3. Right now only 
 
 The main functionality of Fornax comes from CLI applications that lets user scaffold, and generate webpages.
 
-`fornax new` - scaffolds new blog in current working directory using really simple template
-`fornax build` - builds webpage, puts output to `_public` folder
-`fornax watch` - starts small webserver that host your blog post, and background process that recompiles blog whenver any changes are detected. That's suggested way of working with Fornax
-`fornax clean` - removes output directory and any temp files.
-`fornax version` - prints out version of Fornax
-`fornax help` - prints out help
+* `fornax new` - scaffolds new blog in current working directory using really simple template
+* `fornax build` - builds webpage, puts output to `_public` folder
+* `fornax watch` - starts small webserver that host your blog post, and background process that recompiles blog whenver any changes are detected. That's suggested way of working with Fornax
+* `fornax clean` - removes output directory and any temp files.
+* `fornax version` - prints out version of Fornax
+* `fornax help` - prints out help
 
 ## Website definition
 
