@@ -1257,13 +1257,13 @@ type CSSProperties =
 
 type Post = {
     link : string
-    title: string option
+    title: string
     author: string option
     published: System.DateTime option
     tags: string list
 }
 with
-    static member Construct (lst : (string * string option * string option * System.DateTime option * string list) []) =
+    static member Construct (lst : (string * string * string option * System.DateTime option * string list) []) =
         lst
         |> Array.map (fun (link, title, author, published, tags) ->
             {

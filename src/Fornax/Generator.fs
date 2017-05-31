@@ -209,6 +209,17 @@ module ContentParser =
         |> Array.find isLayout
         |> fun n -> n.Replace("layout:", "").Trim()
 
+    ///`fileContent` - content of page to parse. Usually whole content of `.md` file
+    ///returns content of config that should be used for the page
+    let getConfig (fileContent : string) =
+        let fileContent = fileContent.Split '\n'
+        let fileContent = fileContent |> Array.skip 1 //First line must be ---
+        let indexOfSeperator = fileContent |> Array.findIndex isSeparator
+        fileContent
+        |> Array.splitAt indexOfSeperator
+        |> fst
+        |> String.concat "\n"
+
     let containsLayout (fileContent : string) =
         fileContent.Split '\n'
         |> Array.exists isLayout
@@ -235,6 +246,7 @@ module StyleParser =
 let private contentParser : string -> System.Type -> obj * string  = Utils.memoizeParser ContentParser.parse
 let private settingsParser : string -> System.Type -> obj = Utils.memoizeParser SiteSettingsParser.parse
 let private getLayout : string -> string = Utils.memoize  ContentParser.getLayout
+let private getConfig : string -> string = Utils.memoize  ContentParser.getConfig
 let private containsLayout : string -> bool = Utils.memoize ContentParser.containsLayout
 let private compileMarkdown : string -> string = Utils.memoize ContentParser.compileMarkdown
 let private parseLess : string -> string = Utils.memoize StyleParser.parseLess
@@ -245,15 +257,13 @@ let getPosts (projectRoot : string) =
     |> Array.filter (fun n -> n.EndsWith ".md")
     |> Array.map (fun n ->
         let text = Utils.retry 2 (fun _ -> File.ReadAllText n)
-        let layout = getLayout text |> String.split '\n'
+        let layout = getConfig text |> String.split '\n'
 
         let link = "/" + Path.Combine("posts", (n |> Path.GetFileNameWithoutExtension) + ".html").Replace("\\", "/")
 
         let title =
-            try
-                layout |> List.tryFind (fun n -> n.ToLower().StartsWith "title" ) |> Option.map (fun n -> n.Split(':').[1])
-            with
-            | _ -> None
+            layout |> List.find (fun n -> n.ToLower().StartsWith "title" ) |> fun n -> n.Split(':').[1]
+
 
         let author =
             try
