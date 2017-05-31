@@ -16,6 +16,8 @@ let releaseDir  = "./temp/release/"
 let releaseBinDir = "./temp/release/bin/"
 let releaseReferences = !! "src/**/Fornax.fsproj"
 
+let templates = "./src/Fornax.Template"
+
 let buildTestDir  = "./temp/build_test/"
 let testReferences = !!  "test/**/*.fsproj"
 
@@ -88,6 +90,9 @@ Target "BuildRelease" (fun _ ->
 
     !! (releaseDir + "*.dll")
     |> Seq.iter (MoveFile releaseBinDir)
+    let projectTemplateDir = releaseDir </> "templates" </> "project"
+
+    CopyDir projectTemplateDir templates (fun _ -> true)
 )
 
 // Build order
