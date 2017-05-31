@@ -12,9 +12,9 @@ type Model = {
 
 let generate (siteModel : SiteModel) (mdl : Model) (posts : Post list) (content : string) =
     let post =
-        article [ClassName "post"] [
-            h1 [ClassName "post-title"] [!! mdl.title]
-            div [ClassName "post-date"] [!! mdl.date ]
+        article [Class "post"] [
+            h1 [Class "post-title"] [!! mdl.title]
+            div [Class "post-date"] [!! mdl.date ]
             !! content
         ]
 

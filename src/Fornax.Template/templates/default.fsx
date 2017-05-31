@@ -15,11 +15,13 @@ let defaultPage (siteModel : SiteModel) pageTitle content =
 
         ]
         body [] [
-            div [ClassName "container"] [
-                header [ ClassName "masthead"] [
-                    h3 [ClassName "masthead-title"] [
+            div [Class "container"] [
+                header [ Class "masthead"] [
+                    h3 [Class "masthead-title"] [
                         a [ Href "/" ] [ !! (siteModel.title)]
-                        small [ Href "/archive.html"] [ !! "Archive"]
+                        small [ Class "masthead-link" ] [
+                            a [ Href "/archive.html"] [ !! "Archive"]
+                        ]
                     ]
                 ]
 

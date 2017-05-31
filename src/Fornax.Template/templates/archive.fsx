@@ -16,7 +16,7 @@ let generate (siteModel : SiteModel) (mdl : Model) (posts : Post list) (content 
             div [] [
                 !! (defaultArg (p.published |> Option.map (fun p -> p.ToString())) "")
                 !! "»"
-                span [ ClassName "post-title"] [
+                span [ Class "post-title"] [
                     a [Href p.link] [ !! (defaultArg p.title "")]
                 ]
             ]

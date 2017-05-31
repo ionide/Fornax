@@ -1,10 +1,3 @@
----
-###########
-# note: will result in an all-in-one-file stylesheet e.g. style.css
-###########
----
-
-
 @import 'settings';
 
 
@@ -29,7 +22,7 @@ a {
   strong {
     color: inherit;
   }
-  
+
   &:hover,
   &:focus {
     text-decoration: underline;
@@ -118,7 +111,7 @@ pre {
     color: inherit;
     background-color: transparent;
   }
-}  
+}
 
 
 /////////////////////
@@ -191,16 +184,17 @@ table {
     margin-top: 0;
     margin-bottom: 0;
     color: $masthead-color;
-  
+
     a {
       color: $masthead-color;
     }
-    
+
     small {
       color: $masthead-small-color;
       font-size: 75%;
       font-weight: 400;
       letter-spacing: 0;
+      margin-left: 10px;
     }
   }
 }
@@ -231,5 +225,5 @@ table {
 }
 
 .post-date {
-  color: $post-date-color;  
+  color: $post-date-color;
 }

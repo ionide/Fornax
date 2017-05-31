@@ -13,11 +13,11 @@ let generate (siteModel : SiteModel) (mdl : Model) (posts : Post list) (content 
     let psts =
         posts
         |> List.map (fun p ->
-            article [ ClassName "post"] [
-                h1 [ ClassName "post-title"] [
+            article [ Class "post"] [
+                h1 [ Class "post-title"] [
                     a [Href p.link] [ !! (defaultArg p.title "")]
                 ]
-                div [ClassName "post-date"] [(!! (defaultArg (p.published |> Option.map (fun p -> p.ToString())) ""))]
+                div [Class "post-date"] [(!! (defaultArg (p.published |> Option.map (fun p -> p.ToString())) ""))]
                 !! content
             ]
         )
