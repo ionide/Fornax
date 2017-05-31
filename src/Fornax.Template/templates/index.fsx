@@ -18,7 +18,7 @@ let generate (siteModel : SiteModel) (mdl : Model) (posts : Post list) (content 
                     a [Href p.link] [ !! p.title ]
                 ]
                 div [Class "post-date"] [(!! (defaultArg (p.published |> Option.map (fun p -> p.ToShortDateString())) ""))]
-                !! content
+                !! p.content
             ]
         )
 
