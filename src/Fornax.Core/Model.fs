@@ -1261,16 +1261,18 @@ type Post = {
     author: string option
     published: System.DateTime option
     tags: string list
+    content: string
 }
 with
-    static member Construct (lst : (string * string * string option * System.DateTime option * string list) []) =
+    static member Construct (lst : (string * string * string option * System.DateTime option * string list * string) []) =
         lst
-        |> Array.map (fun (link, title, author, published, tags) ->
+        |> Array.map (fun (link, title, author, published, tags, content) ->
             {
                 link = link
                 title = title
                 author = author
                 published = published
                 tags = tags
+                content = content
             })
         |> Array.toList

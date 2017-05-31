@@ -220,6 +220,17 @@ module ContentParser =
         |> fst
         |> String.concat "\n"
 
+    ///`fileContent` - content of page to parse. Usually whole content of `.md` file
+    ///returns HTML version of content of the page
+    let getContent (fileContent : string) =
+        let fileContent = fileContent.Split '\n'
+        let fileContent = fileContent |> Array.skip 1 //First line must be ---
+        let indexOfSeperator = fileContent |> Array.findIndex isSeparator
+        let _, content = fileContent |> Array.splitAt indexOfSeperator
+
+        let content = content |> Array.skip 1 |> String.concat "\n"
+        CommonMark.CommonMarkConverter.Convert content
+
     let containsLayout (fileContent : string) =
         fileContent.Split '\n'
         |> Array.exists isLayout
@@ -247,6 +258,8 @@ let private contentParser : string -> System.Type -> obj * string  = Utils.memoi
 let private settingsParser : string -> System.Type -> obj = Utils.memoizeParser SiteSettingsParser.parse
 let private getLayout : string -> string = Utils.memoize  ContentParser.getLayout
 let private getConfig : string -> string = Utils.memoize  ContentParser.getConfig
+let private getContent : string -> string = Utils.memoize  ContentParser.getContent
+
 let private containsLayout : string -> bool = Utils.memoize ContentParser.containsLayout
 let private compileMarkdown : string -> string = Utils.memoize ContentParser.compileMarkdown
 let private parseLess : string -> string = Utils.memoize StyleParser.parseLess
@@ -261,6 +274,7 @@ let getPosts (projectRoot : string) =
     |> Array.map (fun n ->
         let text = Utils.retry 2 (fun _ -> File.ReadAllText n)
         let config = getConfig text |> String.split '\n'
+        let content = getContent text
 
         let link = "/" + Path.Combine("posts", (n |> Path.GetFileNameWithoutExtension) + ".html").Replace("\\", "/")
 
@@ -291,7 +305,7 @@ let getPosts (projectRoot : string) =
             | _ -> []
 
 
-        (link, title, author, published, tags))
+        (link, title, author, published, tags, content))
 
 
 
