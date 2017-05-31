@@ -251,38 +251,41 @@ let private containsLayout : string -> bool = Utils.memoize ContentParser.contai
 let private compileMarkdown : string -> string = Utils.memoize ContentParser.compileMarkdown
 let private parseLess : string -> string = Utils.memoize StyleParser.parseLess
 
+let private trimString (str : string) =
+    str.Trim().TrimEnd('"').TrimStart('"')
+
 let getPosts (projectRoot : string) =
     let path = Path.Combine(projectRoot, "posts")
     Directory.GetFiles path
     |> Array.filter (fun n -> n.EndsWith ".md")
     |> Array.map (fun n ->
         let text = Utils.retry 2 (fun _ -> File.ReadAllText n)
-        let layout = getConfig text |> String.split '\n'
+        let config = getConfig text |> String.split '\n'
 
         let link = "/" + Path.Combine("posts", (n |> Path.GetFileNameWithoutExtension) + ".html").Replace("\\", "/")
 
         let title =
-            layout |> List.find (fun n -> n.ToLower().StartsWith "title" ) |> fun n -> n.Split(':').[1]
+            config |> List.find (fun n -> n.ToLower().StartsWith "title" ) |> fun n -> n.Split(':').[1] |> trimString
 
 
         let author =
             try
-                layout |> List.tryFind (fun n -> n.ToLower().StartsWith "author" ) |> Option.map (fun n -> n.Split(':').[1])
+                config |> List.tryFind (fun n -> n.ToLower().StartsWith "author" ) |> Option.map (fun n -> n.Split(':').[1] |> trimString)
             with
             | _ -> None
 
         let published =
             try
-                layout |> List.tryFind (fun n -> n.ToLower().StartsWith "published" ) |> Option.map (fun n -> n.Split(':').[1] |> DateTime.Parse)
+                config |> List.tryFind (fun n -> n.ToLower().StartsWith "published" ) |> Option.map (fun n -> n.Split(':').[1] |> trimString |> DateTime.Parse)
             with
             | _ -> None
 
         let tags =
             try
                 let x =
-                    layout
+                    config
                     |> List.tryFind (fun n -> n.ToLower().StartsWith "tags" )
-                    |> Option.map (fun n -> n.Split(':').[1].Split ',' |> Array.toList )
+                    |> Option.map (fun n -> n.Split(':').[1] |> trimString |> fun n -> n.Split ',' |> Array.toList )
                 defaultArg x []
             with
             | _ -> []
