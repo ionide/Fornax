@@ -18,7 +18,33 @@ Fornax is a static site generator using type safe F# DSL to define page template
 
 ## Installation.
 
-Project is in really early stage right now... let's call it RC3. Right now only way of installing Fornax is building it from source - clone repository, and run `build.cmd` (Windows) or `build.sh` (Linux / OSX). Compailed `Fornax.exe` will be in `.\temp\release` folder, `Fornax.Core.dll` in `.\temp\release\bin`. You can add `.\temp\release` to `PATH` - Fornax is desinged as globally installed tool.
+
+### Installing
+
+#### Via Scoop.sh (Windows)
+
+You can install Fornax via the [Scoop](http://scoop.sh/) package manager on Windows
+
+    scoop bucket add fsharp-extras https://github.com/Krzysztof-Cieslak/scoop-fsharp-extras.git
+    scoop install fornax
+
+#### Via Homebrew (OSX)
+
+You can install Fornax via the [Homebrew](http://brew.sh) package manager on OS X
+
+    brew tap Krzysztof-Cieslak/fornax && brew install fornax
+
+#### Via Linuxbrew (Linux)
+
+You can install Fornax via the [Linuxbrew](http://linuxbrew.sh/) package manager on Linux
+
+    brew tap Krzysztof-Cieslak/fornax && brew install fornax
+
+#### Other
+
+You can download one of the releases found at https://gitlab.com/Krzysztof-Cieslak/Fornax/tags
+
+Alternately you can clone the repo, build the source, and then move the files in your bin folder to a location of your choosing.
 
 ## CLI Application
 
