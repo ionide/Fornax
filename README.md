@@ -18,9 +18,6 @@ Fornax is a static site generator using type safe F# DSL to define page template
 
 ## Installation.
 
-
-### Installing
-
 #### Via Scoop.sh (Windows)
 
 You can install Fornax via the [Scoop](http://scoop.sh/) package manager on Windows
