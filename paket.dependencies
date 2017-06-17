@@ -10,9 +10,4 @@ nuget CommonMark.NET
 nuget Argu
 nuget dotless
 nuget Suave
-
-
-git https://github.com/Krzysztof-Cieslak/FsYaml.git untyped build: "build.cmd BuildPackage", OS: windows, Packages: /bin/
-git https://github.com/Krzysztof-Cieslak/FsYaml.git untyped build: "build.sh BuildPackage", OS: mono, Packages: /bin/
-
 nuget FsYaml
