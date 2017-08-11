@@ -4,6 +4,8 @@ open System
 open System.IO
 open Argu
 open Suave
+open Suave.Filters
+open Suave.Operators
 
 type [<CliPrefixAttribute("")>] Arguments =
     | New
@@ -41,6 +43,12 @@ let createFileWatcher dir handler =
     fileSystemWatcher.Deleted.Add handler
     fileSystemWatcher
 
+let router basePath =
+    choose [
+        path "/" >=> Redirection.redirect "/index.html"
+        (Files.browse (Path.Combine(basePath, "_public")))
+    ]
+
 [<EntryPoint>]
 let main argv =
     let parser = ArgumentParser.Create<Arguments>(programName = "fornax")
@@ -77,7 +85,7 @@ let main argv =
         | Some Watch ->
             let mutable lastAccessed = Map.empty<string, DateTime>
             printfn "[%s] Watch mode started. Press any key to exit" (DateTime.Now.ToString("HH:mm:ss"))
-            startWebServerAsync defaultConfig (Files.browse (Path.Combine(cwd, "_public")) ) |> snd |> Async.Start
+            startWebServerAsync defaultConfig (router cwd) |> snd |> Async.Start
             Generator.generateFolder cwd
             use watcher = createFileWatcher cwd (fun e ->
                 if not (e.FullPath.Contains "_public") && not (e.FullPath.Contains ".sass-cache") then
