@@ -71,4 +71,35 @@ let modelTests =
             let expected = "<a href=\"index.html\" hidden=\"true\">\n  <span></span>\n  <div></div>\n</a>"
             "Html element with multiple properties and multiple children"
             |> Expect.equal actual expected
+
+        testCase "Html element - void element as child" <| fun _ ->
+            let actual = Html.div [ ] [ Html.br [ ] ] |> HtmlElement.ToString
+            let expected = "<div>\n  <br/>\n</div>"
+            "Html element with one void element as child"
+            |> Expect.equal actual expected
+
+        testCase "Html element - mutliple properties and children (void and normal element)" <| fun _ ->
+            let actual = Html.div [ HtmlProperties.Style [ Display "block" ] ] [ Html.br [ ]; Html.p [ ] [ ]; Html.img [ Src "https://dummyimage.com/128x128/" ] ] |> HtmlElement.ToString
+            let expected = "<div style=\"display: block;\">\n  <br/>\n  <p></p>\n  <img src=\"https://dummyimage.com/128x128/\"/>\n</div>"
+            "Html element with one void element as child"
+            |> Expect.equal actual expected
+
+        testCase "Html void element - empty" <| fun _ ->
+            let actual = Html.br [ ] |> HtmlElement.ToString
+            let expected = "<br/>"
+            "Html void element with not properties"
+            |> Expect.equal actual expected
+
+        testCase "Html void element - one property" <| fun _ ->
+            let actual = Html.img [ Src "https://dummyimage.com/128x128/" ] |> HtmlElement.ToString
+            let expected = "<img src=\"https://dummyimage.com/128x128/\"/>"
+            "Html void element with one property"
+            |> Expect.equal actual expected
+
+        testCase "Html void element - multiple properties" <| fun _ ->
+            let actual = Html.img [ Src "https://dummyimage.com/128x128/"; Alt "A dummy image of 128 by 128 pixels"] |> HtmlElement.ToString
+            let expected = "<img src=\"https://dummyimage.com/128x128/\" alt=\"A dummy image of 128 by 128 pixels\"/>"
+            "Html void element with multiple properties"
+            |> Expect.equal actual expected
+
     ]

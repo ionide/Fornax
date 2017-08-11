@@ -840,24 +840,24 @@ type CSSProperties =
         | A of props: HtmlProperties list * children: HtmlElement list
         | Abbr of props: HtmlProperties list * children: HtmlElement list
         | Address of props: HtmlProperties list * children: HtmlElement list
-        | Area of props: HtmlProperties list * children: HtmlElement list
+        | Area of props: HtmlProperties list
         | Article of props: HtmlProperties list * children: HtmlElement list
         | Aside of props: HtmlProperties list * children: HtmlElement list
         | Audio of props: HtmlProperties list * children: HtmlElement list
         | B of props: HtmlProperties list * children: HtmlElement list
-        | Base of props: HtmlProperties list * children: HtmlElement list
+        | Base of props: HtmlProperties list
         | Bdi of props: HtmlProperties list * children: HtmlElement list
         | Bdo of props: HtmlProperties list * children: HtmlElement list
         | Big of props: HtmlProperties list * children: HtmlElement list
         | Blockquote of props: HtmlProperties list * children: HtmlElement list
         | Body of props: HtmlProperties list * children: HtmlElement list
-        | Br of props: HtmlProperties list * children: HtmlElement list
+        | Br of props: HtmlProperties list
         | Button of props: HtmlProperties list * children: HtmlElement list
         | Canvas of props: HtmlProperties list * children: HtmlElement list
         | Caption of props: HtmlProperties list * children: HtmlElement list
         | Cite of props: HtmlProperties list * children: HtmlElement list
         | Code of props: HtmlProperties list * children: HtmlElement list
-        | Col of props: HtmlProperties list * children: HtmlElement list
+        | Col of props: HtmlProperties list
         | Colgroup of props: HtmlProperties list * children: HtmlElement list
         | Data of props: HtmlProperties list * children: HtmlElement list
         | Datalist of props: HtmlProperties list * children: HtmlElement list
@@ -870,7 +870,7 @@ type CSSProperties =
         | Dl of props: HtmlProperties list * children: HtmlElement list
         | Dt of props: HtmlProperties list * children: HtmlElement list
         | Em of props: HtmlProperties list * children: HtmlElement list
-        | Embed of props: HtmlProperties list * children: HtmlElement list
+        | Embed of props: HtmlProperties list
         | Fieldset of props: HtmlProperties list * children: HtmlElement list
         | Figcaption of props: HtmlProperties list * children: HtmlElement list
         | Figure of props: HtmlProperties list * children: HtmlElement list
@@ -885,25 +885,25 @@ type CSSProperties =
         | Head of props: HtmlProperties list * children: HtmlElement list
         | Header of props: HtmlProperties list * children: HtmlElement list
         | Hgroup of props: HtmlProperties list * children: HtmlElement list
-        | Hr of props: HtmlProperties list * children: HtmlElement list
+        | Hr of props: HtmlProperties list
         | Html of props: HtmlProperties list * children: HtmlElement list
         | I of props: HtmlProperties list * children: HtmlElement list
         | Iframe of props: HtmlProperties list * children: HtmlElement list
-        | Img of props: HtmlProperties list * children: HtmlElement list
-        | Input of props: HtmlProperties list * children: HtmlElement list
+        | Img of props: HtmlProperties list
+        | Input of props: HtmlProperties list
         | Ins of props: HtmlProperties list * children: HtmlElement list
         | Kbd of props: HtmlProperties list * children: HtmlElement list
-        | Keygen of props: HtmlProperties list * children: HtmlElement list
+        | Keygen of props: HtmlProperties list
         | Label of props: HtmlProperties list * children: HtmlElement list
         | Legend of props: HtmlProperties list * children: HtmlElement list
         | Li of props: HtmlProperties list * children: HtmlElement list
-        | Link of props: HtmlProperties list * children: HtmlElement list
+        | Link of props: HtmlProperties list
         | Main of props: HtmlProperties list * children: HtmlElement list
         | Map of props: HtmlProperties list * children: HtmlElement list
         | Mark of props: HtmlProperties list * children: HtmlElement list
         | Menu of props: HtmlProperties list * children: HtmlElement list
-        | Menuitem of props: HtmlProperties list * children: HtmlElement list
-        | Meta of props: HtmlProperties list * children: HtmlElement list
+        | Menuitem of props: HtmlProperties list
+        | Meta of props: HtmlProperties list
         | Meter of props: HtmlProperties list * children: HtmlElement list
         | Nav of props: HtmlProperties list * children: HtmlElement list
         | Noscript of props: HtmlProperties list * children: HtmlElement list
@@ -913,7 +913,7 @@ type CSSProperties =
         | Option of props: HtmlProperties list * children: HtmlElement list
         | Output of props: HtmlProperties list * children: HtmlElement list
         | P of props: HtmlProperties list * children: HtmlElement list
-        | Param of props: HtmlProperties list * children: HtmlElement list
+        | Param of props: HtmlProperties list
         | Picture of props: HtmlProperties list * children: HtmlElement list
         | Pre of props: HtmlProperties list * children: HtmlElement list
         | Progress of props: HtmlProperties list * children: HtmlElement list
@@ -927,7 +927,7 @@ type CSSProperties =
         | Section of props: HtmlProperties list * children: HtmlElement list
         | Select of props: HtmlProperties list * children: HtmlElement list
         | Small of props: HtmlProperties list * children: HtmlElement list
-        | Source of props: HtmlProperties list * children: HtmlElement list
+        | Source of props: HtmlProperties list
         | Span of props: HtmlProperties list * children: HtmlElement list
         | Strong of props: HtmlProperties list * children: HtmlElement list
         | Style of props: HtmlProperties list * children: HtmlElement list
@@ -944,12 +944,12 @@ type CSSProperties =
         | Time of props: HtmlProperties list * children: HtmlElement list
         | Title of props: HtmlProperties list * children: HtmlElement list
         | Tr of props: HtmlProperties list * children: HtmlElement list
-        | Track of props: HtmlProperties list * children: HtmlElement list
+        | Track of props: HtmlProperties list
         | U of props: HtmlProperties list * children: HtmlElement list
         | Ul of props: HtmlProperties list * children: HtmlElement list
         | Var of props: HtmlProperties list * children: HtmlElement list
         | Video of props: HtmlProperties list * children: HtmlElement list
-        | Wbr of props: HtmlProperties list * children: HtmlElement list
+        | Wbr of props: HtmlProperties list
         | Svg of props: HtmlProperties list * children: HtmlElement list
         | Circle of props: HtmlProperties list * children: HtmlElement list
         | Defs of props: HtmlProperties list * children: HtmlElement list
@@ -983,29 +983,37 @@ type CSSProperties =
                     else ""
                 sprintf "<%s%s>%s</%s>" tag attrs cnt tag
 
+
+            and formatVoid tag (props : HtmlProperties list) level =
+                let attrs =
+                    if props.Length > 0 then
+                        " " + (props |> List.map (HtmlProperties.ToString) |> String.concat " ")
+                    else ""
+                sprintf "<%s%s/>" tag attrs
+
             and helper level tag =
                 match tag with
                 | A (props, children) -> format "a" props children level
                 | Abbr (props, children) -> format "abbr" props children level
                 | Address (props, children) -> format "address" props children level
-                | Area (props, children) -> format "area" props children level
+                | Area (props) -> formatVoid "area" props level
                 | Article (props, children) -> format "article" props children level
                 | Aside (props, children) -> format "aside" props children level
                 | Audio (props, children) -> format "audio" props children level
                 | B (props, children) -> format "b" props children level
-                | Base (props, children) -> format "base" props children level
+                | Base (props) -> formatVoid "base" props level
                 | Bdi (props, children) -> format "bdi" props children level
                 | Bdo (props, children) -> format "bdo" props children level
                 | Big (props, children) -> format "big" props children level
                 | Blockquote (props, children) -> format "blockquote" props children level
                 | Body (props, children) -> format "body" props children level
-                | Br (props, children) -> format "br" props children level
+                | Br (props) -> formatVoid "br" props level
                 | Button (props, children) -> format "button" props children level
                 | Canvas (props, children) -> format "canvas" props children level
                 | Caption (props, children) -> format "caption" props children level
                 | Cite (props, children) -> format "cite" props children level
                 | Code (props, children) -> format "code" props children level
-                | Col (props, children) -> format "col" props children level
+                | Col (props) -> formatVoid "col" props level
                 | Colgroup (props, children) -> format "colgroup" props children level
                 | Data (props, children) -> format "data" props children level
                 | Datalist (props, children) -> format "datalist" props children level
@@ -1018,7 +1026,7 @@ type CSSProperties =
                 | Dl (props, children) -> format "dl" props children level
                 | Dt (props, children) -> format "dt" props children level
                 | Em (props, children) -> format "em" props children level
-                | Embed (props, children) -> format "embed" props children level
+                | Embed (props) -> formatVoid "embed" props level
                 | Fieldset (props, children) -> format "fieldset" props children level
                 | Figcaption (props, children) -> format "figcaption" props children level
                 | Figure (props, children) -> format "figure" props children level
@@ -1033,25 +1041,25 @@ type CSSProperties =
                 | Head (props, children) -> format "head" props children level
                 | Header (props, children) -> format "header" props children level
                 | Hgroup (props, children) -> format "hgroup" props children level
-                | Hr (props, children) -> format "hr" props children level
+                | Hr (props) -> formatVoid "hr" props level
                 | Html (props, children) -> format "html" props children level
                 | I (props, children) -> format "i" props children level
                 | Iframe (props, children) -> format "iframe" props children level
-                | Img (props, children) -> format "img" props children level
-                | Input (props, children) -> format "input" props children level
+                | Img (props) -> formatVoid "img" props level
+                | Input (props) -> formatVoid "input" props level
                 | Ins (props, children) -> format "ins" props children level
                 | Kbd (props, children) -> format "kbd" props children level
-                | Keygen (props, children) -> format "keygen" props children level
+                | Keygen (props) -> formatVoid "keygen" props level
                 | Label (props, children) -> format "label" props children level
                 | Legend (props, children) -> format "legend" props children level
                 | Li (props, children) -> format "li" props children level
-                | Link (props, children) -> format "link" props children level
+                | Link (props) -> formatVoid "link" props level
                 | Main (props, children) -> format "main" props children level
                 | Map (props, children) -> format "map" props children level
                 | Mark (props, children) -> format "mark" props children level
                 | Menu (props, children) -> format "menu" props children level
-                | Menuitem (props, children) -> format "menuitem" props children level
-                | Meta (props, children) -> format "meta" props children level
+                | Menuitem (props) -> formatVoid "menuitem" props level
+                | Meta (props) -> formatVoid "meta" props level
                 | Meter (props, children) -> format "meter" props children level
                 | Nav (props, children) -> format "nav" props children level
                 | Noscript (props, children) -> format "noscript" props children level
@@ -1061,7 +1069,7 @@ type CSSProperties =
                 | Option (props, children) -> format "option" props children level
                 | Output (props, children) -> format "output" props children level
                 | P (props, children) -> format "p" props children level
-                | Param (props, children) -> format "param" props children level
+                | Param (props) -> formatVoid "param" props level
                 | Picture (props, children) -> format "picture" props children level
                 | Pre (props, children) -> format "pre" props children level
                 | Progress (props, children) -> format "progress" props children level
@@ -1075,7 +1083,7 @@ type CSSProperties =
                 | Section (props, children) -> format "section" props children level
                 | Select (props, children) -> format "select" props children level
                 | Small (props, children) -> format "small" props children level
-                | Source (props, children) -> format "source" props children level
+                | Source (props) -> formatVoid "source" props level
                 | Span (props, children) -> format "span" props children level
                 | Strong (props, children) -> format "strong" props children level
                 | Style (props, children) -> format "style" props children level
@@ -1092,12 +1100,12 @@ type CSSProperties =
                 | Time (props, children) -> format "time" props children level
                 | Title (props, children) -> format "title" props children level
                 | Tr (props, children) -> format "tr" props children level
-                | Track (props, children) -> format "track" props children level
+                | Track (props) -> formatVoid "track" props level
                 | U (props, children) -> format "u" props children level
                 | Ul (props, children) -> format "ul" props children level
                 | Var (props, children) -> format "var" props children level
                 | Video (props, children) -> format "video" props children level
-                | Wbr (props, children) -> format "wbr" props children level
+                | Wbr (props) -> formatVoid "wbr" props level
                 | Svg (props, children) -> format "svg" props children level
                 | Circle (props, children) -> format "circle" props children level
                 | Defs (props, children) -> format "defs" props children level
@@ -1124,24 +1132,24 @@ type CSSProperties =
         let a (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.A(props,children)
         let abbr (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Abbr(props,children)
         let address (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Address(props,children)
-        let area (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Area(props,children)
+        let area (props : HtmlProperties list) = HtmlElement.Area(props)
         let article (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Article(props,children)
         let aside (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Aside(props,children)
         let audio (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Audio(props,children)
         let b (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.B(props,children)
-        let ``base`` (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Base(props,children)
+        let ``base`` (props : HtmlProperties list) = HtmlElement.Base(props)
         let bdi (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Bdi(props,children)
         let bdo (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Bdo(props,children)
         let big (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Big(props,children)
         let blockquote (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Blockquote(props,children)
         let body (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Body(props,children)
-        let br (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Br(props,children)
+        let br (props : HtmlProperties list) = HtmlElement.Br(props)
         let button (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Button(props,children)
         let canvas (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Canvas(props,children)
         let caption (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Caption(props,children)
         let cite (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Cite(props,children)
         let code (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Code(props,children)
-        let col (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Col(props,children)
+        let col (props : HtmlProperties list) = HtmlElement.Col(props)
         let colgroup (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Colgroup(props,children)
         let data (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Data(props,children)
         let datalist (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Datalist(props,children)
@@ -1154,7 +1162,7 @@ type CSSProperties =
         let dl (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Dl(props,children)
         let dt (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Dt(props,children)
         let em (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Em(props,children)
-        let embed (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Embed(props,children)
+        let embed (props : HtmlProperties list) = HtmlElement.Embed(props)
         let fieldset (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Fieldset(props,children)
         let figcaption (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Figcaption(props,children)
         let figure (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Figure(props,children)
@@ -1169,25 +1177,25 @@ type CSSProperties =
         let head (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Head(props,children)
         let header (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Header(props,children)
         let hgroup (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Hgroup(props,children)
-        let hr (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Hr(props,children)
+        let hr (props : HtmlProperties list) = HtmlElement.Hr(props)
         let html (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Html(props,children)
         let i (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.I(props,children)
         let iframe (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Iframe(props,children)
-        let img (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Img(props,children)
-        let input (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Input(props,children)
+        let img (props : HtmlProperties list) = HtmlElement.Img(props)
+        let input (props : HtmlProperties list) = HtmlElement.Input(props)
         let ins (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Ins(props,children)
         let kbd (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Kbd(props,children)
-        let keygen (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Keygen(props,children)
+        let keygen (props : HtmlProperties list) = HtmlElement.Keygen(props)
         let label (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Label(props,children)
         let legend (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Legend(props,children)
         let li (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Li(props,children)
-        let link (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Link(props,children)
+        let link (props : HtmlProperties list) = HtmlElement.Link(props)
         let main (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Main(props,children)
         let map (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Map(props,children)
         let mark (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Mark(props,children)
         let menu (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Menu(props,children)
-        let menuitem (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Menuitem(props,children)
-        let meta (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Meta(props,children)
+        let menuitem (props : HtmlProperties list) = HtmlElement.Menuitem(props)
+        let meta (props : HtmlProperties list) = HtmlElement.Meta(props)
         let meter (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Meter(props,children)
         let nav (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Nav(props,children)
         let noscript (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Noscript(props,children)
@@ -1197,7 +1205,7 @@ type CSSProperties =
         let option (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Option(props,children)
         let output (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Output(props,children)
         let p (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.P(props,children)
-        let param (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Param(props,children)
+        let param (props : HtmlProperties list) = HtmlElement.Param(props)
         let picture (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Picture(props,children)
         let pre (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Pre(props,children)
         let progress (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Progress(props,children)
@@ -1211,7 +1219,7 @@ type CSSProperties =
         let section (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Section(props,children)
         let select (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Select(props,children)
         let small (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Small(props,children)
-        let source (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Source(props,children)
+        let source (props : HtmlProperties list) = HtmlElement.Source(props)
         let span (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Span(props,children)
         let strong (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Strong(props,children)
         let style (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Style(props,children)
@@ -1228,12 +1236,12 @@ type CSSProperties =
         let time (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Time(props,children)
         let title (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Title(props,children)
         let tr (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Tr(props,children)
-        let track (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Track(props,children)
+        let track (props : HtmlProperties list) = HtmlElement.Track(props)
         let u (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.U(props,children)
         let ul (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Ul(props,children)
         let var (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Var(props,children)
         let video (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Video(props,children)
-        let wbr (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Wbr(props,children)
+        let wbr (props : HtmlProperties list) = HtmlElement.Wbr(props)
         let svg (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Svg(props,children)
         let circle (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Circle(props,children)
         let defs (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Defs(props,children)
