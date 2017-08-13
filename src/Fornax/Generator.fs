@@ -176,6 +176,17 @@ module Evaluator =
             |> Option.bind (tryUnbox<string>)
         | _ -> None
 
+// Module to print colored message in the console
+module Logger =
+    let consoleColor (fc : ConsoleColor) =
+        let current = Console.ForegroundColor
+        Console.ForegroundColor <- fc
+        { new IDisposable with
+              member x.Dispose() = Console.ForegroundColor <- current }
+
+    let error str = Printf.kprintf (fun s -> use c = consoleColor ConsoleColor.Red in printf "%s" s) str
+    let errorfn str = Printf.kprintf (fun s -> use c = consoleColor ConsoleColor.Red in printfn "%s" s) str
+
 module ContentParser =
     open FsYaml
 
@@ -388,11 +399,17 @@ let generateFromSass (projectRoot : string) (path : string) =
     psi.CreateNoWindow <- true
     psi.WindowStyle <- ProcessWindowStyle.Hidden
 
-    let proc = Process.Start psi
-    proc.WaitForExit()
-    let endTime = DateTime.Now
-    let ms = (endTime - startTime).Milliseconds
-    printfn "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
+    try
+        let proc = Process.Start psi
+        proc.WaitForExit()
+        let endTime = DateTime.Now
+        let ms = (endTime - startTime).Milliseconds
+        printfn "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
+    with
+        | :? System.ComponentModel.Win32Exception as ex ->
+            let endTime = DateTime.Now
+            Logger.error  "[%s] Generation of '%s' failed. " (endTime.ToString("HH:mm:ss")) path'
+            Logger.errorfn "Please check you have installed the Sass compiler"
 
 
 let private (|Ignored|Markdown|Less|Sass|StaticFile|) (filename : string) =
