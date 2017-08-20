@@ -80,7 +80,7 @@ Before you submit your pull request consider the following guidelines:
     grunt test
     ```
 
-* Push your branch to GitHub:
+* Push your branch to GitLab:
 
     ```shell
     git push origin my-fix-branch
@@ -109,7 +109,7 @@ That's it! Thank you for your contribution!
 After your pull request is merged, you can safely delete your branch and pull the changes
 from the main (upstream) repository:
 
-* Delete the remote branch on GitHub either through the GitHub web UI or your local shell as follows:
+* Delete the remote branch on GitLab either through the GitLab web UI or your local shell as follows:
 
     ```shell
     git push origin --delete my-fix-branch
@@ -153,7 +153,7 @@ from the main (upstream) repository:
 
 ## <a name="build"></a> Build process
 
- * Dependencies are controlled with [Paket](https://fsprojects.github.io/Paket/)
- * Build process is using [FAKE](http://fsharp.github.io/FAKE/)
+ * Dependencies are controlled with [Paket](https://fsprojects.GitLab.io/Paket/)
+ * Build process is using [FAKE](http://fsharp.GitLab.io/FAKE/)
  * To build application and run tests run `build.cmd` (on Windows) or `build.sh` (Linux / OSX)
 

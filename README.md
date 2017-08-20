@@ -153,7 +153,7 @@ It's filled based on respective entries in `layout` part of the post content fil
 
 ## Contributing and copyright
 
-The project is hosted on [GitHub](https://gitlab.com/Krzysztof-Cieslak/Fornax) where you can [report issues](https://gitlab.com/Krzysztof-Cieslak/Fornax/issues), fork
+The project is hosted on [GitLab](https://gitlab.com/Krzysztof-Cieslak/Fornax) where you can [report issues](https://gitlab.com/Krzysztof-Cieslak/Fornax/issues), fork
 the project and submit pull requests. Please read [Contribution Guide](https://gitlab.com/Krzysztof-Cieslak/Fornax/blob/master/CONTRIBUTING.md)
 
 The library is available under [MIT license](https://gitlab.com/Krzysztof-Cieslak/Fornax/blob/master/LICENSE.md), which allows modification and redistribution for both commercial and non-commercial purposes.
