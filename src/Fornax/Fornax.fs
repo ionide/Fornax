@@ -7,6 +7,18 @@ open Suave
 open Suave.Filters
 open Suave.Operators
 
+type FornaxExiter () =
+    interface IExiter with
+        member x.Name = "fornax exiter"
+        member x.Exit (msg, errorCode) =
+            if errorCode = ErrorCode.HelpText then
+                printfn "%s" msg
+                exit 0
+            else
+                printfn "Error with code %A received - exiting." errorCode
+                printfn "%s" msg
+                exit 1
+
 type [<CliPrefixAttribute("")>] Arguments =
     | New
     | Build
@@ -51,7 +63,7 @@ let router basePath =
 
 [<EntryPoint>]
 let main argv =
-    let parser = ArgumentParser.Create<Arguments>(programName = "fornax")
+    let parser = ArgumentParser.Create<Arguments>(programName = "fornax", errorHandler = FornaxExiter ())
 
     if argv.Length = 0 then
         printfn "No arguments provided."
