@@ -8,10 +8,10 @@ open SiteModel
 let defaultPage (siteModel : SiteModel) pageTitle content =
     html [] [
         head [] [
-            meta [CharSet "utf-8"] []
+            meta [CharSet "utf-8"]
             title [] [ (!! pageTitle) ]
-            link [ Rel "stylesheet"; Type "text/css"; Href "/css/style.css" ] []
-            link [ Rel "alternate"; Type "application/atom+xml"; Href "/feed.xml"; HtmlProperties.Title "News Feed" ] []
+            link [ Rel "stylesheet"; Type "text/css"; Href "/css/style.css" ]
+            link [ Rel "alternate"; Type "application/atom+xml"; Href "/feed.xml"; HtmlProperties.Title "News Feed" ]
 
         ]
         body [] [
