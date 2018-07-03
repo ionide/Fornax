@@ -13,17 +13,17 @@ today! Here are the guidelines we'd like you to follow:
 ## <a name="issue"></a> Found an Issue?
 
 If you find a bug in the source code or a mistake in the documentation, you can help us by
-submitting an issue to our [GitLab Repository](https://gitlab.com/LambdaFactory/Fornax). Even better you can submit a Pull Request
+submitting an issue to our [GitHub Repository](https://github.com/LambdaFactory/Fornax). Even better you can submit a Pull Request
 with a fix.
 
 
 ## <a name="feature"></a> Want a Feature?
 
-You can request a new feature by submitting an issue to our [GitLab Repository](https://gitlab.com/LambdaFactory/Fornax). If you would like to implement a new feature then consider what kind of change it is:
+You can request a new feature by submitting an issue to our [GitHub Repository](https://github.com/LambdaFactory/Fornax). If you would like to implement a new feature then consider what kind of change it is:
 
 * **Major Changes** that you wish to contribute to the project should be discussed first on in the issue so that we can better coordinate our efforts, prevent duplication of work, and help you to craft the change so that it is successfully accepted into the project.
 
-* **Small Changes** can be crafted and submitted to the [GitLab Repository](https://gitlab.com/LambdaFactory/Fornax) as a Pull Request.
+* **Small Changes** can be crafted and submitted to the [GitHub Repository](https://github.com/LambdaFactory/Fornax) as a Pull Request.
 
 ## <a name="docs"></a> Want a Doc Fix?
 
@@ -56,7 +56,7 @@ quickly:
 ### Submitting a Pull Request
 Before you submit your pull request consider the following guidelines:
 
-* Search GitLab for an open or closed Pull Request
+* Search GitHub for an open or closed Pull Request
   that relates to your submission. You don't want to duplicate effort.
 * Make your changes in a new git branch:
 
@@ -80,19 +80,19 @@ Before you submit your pull request consider the following guidelines:
     grunt test
     ```
 
-* Push your branch to GitLab:
+* Push your branch to GitHub:
 
     ```shell
     git push origin my-fix-branch
     ```
 
-In GitLab, send a pull request to `fornax:master`.
+In GitHub, send a pull request to `fornax:master`.
 If we suggest changes, then:
 
 * Make the required updates.
 * Re-run the Formax test suite to ensure tests are still passing.
 * Commit your changes to your branch (e.g. `my-fix-branch`).
-* Push the changes to your GitLab repository (this will update your Pull Request).
+* Push the changes to your GitHub repository (this will update your Pull Request).
 
 If the PR gets too outdated we may ask you to rebase and force push to update the PR:
 
@@ -109,7 +109,7 @@ That's it! Thank you for your contribution!
 After your pull request is merged, you can safely delete your branch and pull the changes
 from the main (upstream) repository:
 
-* Delete the remote branch on GitLab either through the GitLab web UI or your local shell as follows:
+* Delete the remote branch on GitHub either through the GitHub web UI or your local shell as follows:
 
     ```shell
     git push origin --delete my-fix-branch
@@ -153,7 +153,7 @@ from the main (upstream) repository:
 
 ## <a name="build"></a> Build process
 
- * Dependencies are controlled with [Paket](https://fsprojects.GitLab.io/Paket/)
- * Build process is using [FAKE](http://fsharp.GitLab.io/FAKE/)
+ * Dependencies are controlled with [Paket](https://fsprojects.github.io/Paket/)
+ * Build process is using [FAKE](http://fsharp.github.io/FAKE/)
  * To build application and run tests run `build.cmd` (on Windows) or `build.sh` (Linux / OSX)
 
