@@ -151,9 +151,25 @@ It's filled based on respective entries in `layout` part of the post content fil
 
 * F# Formatting is really good project, but it doesn't provide own rendering / templating engine - it's using Razor for that. Fornax right now is handling *only* rendering / templating - hopefully, it should work pretty well as rendering engine for F# Formatting.
 
+## How to contribute
+
+*Imposter syndrome disclaimer*: I want your help. No really, I do.
+
+There might be a little voice inside that tells you you're not ready; that you need to do one more tutorial, or learn another framework, or write a few more blog posts before you can help me with this project.
+
+I assure you, that's not the case.
+
+This project has some clear Contribution Guidelines and expectations that you can [read here](https://github.com/Krzysztof-Cieslak/Saturn/blob/master/CONTRIBUTING.md).
+
+The contribution guidelines outline the process that you'll need to follow to get a patch merged. By making expectations and process explicit, I hope it will make it easier for you to contribute.
+
+And you don't just have to write code. You can help out by writing documentation, tests, or even by giving feedback about this work. (And yes, that includes giving feedback about the contribution guidelines.)
+
+Thank you for contributing!
+
 ## Contributing and copyright
 
-The project is hosted on [GitLab](https://gitlab.com/Krzysztof-Cieslak/Fornax) where you can [report issues](https://gitlab.com/Krzysztof-Cieslak/Fornax/issues), fork
-the project and submit pull requests. Please read [Contribution Guide](https://gitlab.com/Krzysztof-Cieslak/Fornax/blob/master/CONTRIBUTING.md)
+The project is hosted on [GitHub](https://github.com/Krzysztof-Cieslak/Fornax) where you can [report issues](https://github.com/Krzysztof-Cieslak/Fornax/issues), fork
+the project and submit pull requests. Please read [Contribution Guide](https://github.com/Krzysztof-Cieslak/Fornax/blob/master/CONTRIBUTING.md)
 
-The library is available under [MIT license](https://gitlab.com/Krzysztof-Cieslak/Fornax/blob/master/LICENSE.md), which allows modification and redistribution for both commercial and non-commercial purposes.
+The library is available under [MIT license](https://github.com/Krzysztof-Cieslak/Fornax/blob/master/LICENSE.md), which allows modification and redistribution for both commercial and non-commercial purposes.
