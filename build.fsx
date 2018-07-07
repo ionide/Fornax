@@ -1,15 +1,25 @@
-#r "./packages/FAKE/tools/FakeLib.dll"
+open Fake.DotNet
+#r "paket:
+nuget Fake.Core.Target
+nuget Fake.IO.FileSystem
+nuget Fake.DotNet.Cli
+nuget Fake.DotNet.Testing.Expecto
+nuget Fake.Core.ReleaseNotes
+nuget Fake.DotNet.MsBuild
+nuget Fake.DotNet.AssemblyInfoFile  //"
+#load "./.fake/build.fsx/intellisense.fsx"
 
-open System
-open System.IO
-open Fake
-open Fake.AssemblyInfoFile
-open Fake.ReleaseNotesHelper
-open Fake.Testing.Expecto
+open Fake.Core
+open Fake.IO
+open Fake.IO.Globbing.Operators
+open Fake.IO.FileSystemOperators
+open Fake.DotNet
+open Fake.Core.TargetOperators
+open Fake.DotNet.Testing
 
 let project = "Fornax"
 let summary = "Fornax is a static site generator using type safe F# DSL to define page templates"
-let release = LoadReleaseNotes "CHANGELOG.md"
+let release = ReleaseNotes.load "CHANGELOG.md"
 let buildDir  = "./temp/build/"
 let appReferences = !!  "src/**/*.fsproj"
 let releaseDir  = "./temp/release/"
@@ -25,8 +35,8 @@ let testExecutables = !! (buildTestDir + "*Tests.exe")
 
 
 // Targets
-Target "Clean" (fun _ ->
-    CleanDirs [buildDir; releaseDir; releaseBinDir; buildTestDir]
+Target.create "Clean" (fun _ ->
+    Shell.cleanDirs [buildDir; releaseDir; releaseBinDir; buildTestDir]
 )
 
 let (|Fsproj|Csproj|Vbproj|) (projFileName:string) =
@@ -36,14 +46,36 @@ let (|Fsproj|Csproj|Vbproj|) (projFileName:string) =
     | f when f.EndsWith("vbproj") -> Vbproj
     | _                           -> failwith (sprintf "Project file %s not supported. Unknown project type." projFileName)
 
+let debugParams (defaults:MSBuildParams) =
+    { defaults with
+        Verbosity = Some(Quiet)
+        Targets = ["Build"]
+        Properties =
+            [
+                "Optimize", "True"
+                "DebugSymbols", "True"
+            ]
+    }
+
+let releaseParams (defaults:MSBuildParams) =
+    { defaults with
+        Verbosity = Some(Quiet)
+        Targets = ["Build"]
+        Properties =
+            [
+                "Optimize", "True"
+                "DebugSymbols", "False"
+            ]
+    }
+
 // Generate assembly info files with the right version & up-to-date information
-Target "AssemblyInfo" (fun _ ->
+Target.create "AssemblyInfo" (fun _ ->
     let getAssemblyInfoAttributes projectName =
-        [ Attribute.Title (projectName)
-          Attribute.Product project
-          Attribute.Description summary
-          Attribute.Version release.AssemblyVersion
-          Attribute.FileVersion release.AssemblyVersion ]
+        [ AssemblyInfo.Title (projectName)
+          AssemblyInfo.Product project
+          AssemblyInfo.Description summary
+          AssemblyInfo.Version release.AssemblyVersion
+          AssemblyInfo.FileVersion release.AssemblyVersion ]
 
     let getProjectDetails projectPath =
         let projectName = System.IO.Path.GetFileNameWithoutExtension(projectPath)
@@ -55,53 +87,53 @@ Target "AssemblyInfo" (fun _ ->
 
     appReferences
     |> Seq.map getProjectDetails
-    |> Seq.iter (fun (projFileName, projectName, folderName, attributes) ->
+    |> Seq.iter (fun (projFileName, _projectName, folderName, attributes) ->
         match projFileName with
-        | Fsproj -> CreateFSharpAssemblyInfo (folderName @@ "AssemblyInfo.fs") attributes
-        | Csproj -> CreateCSharpAssemblyInfo ((folderName @@ "Properties") @@ "AssemblyInfo.cs") attributes
-        | Vbproj -> CreateVisualBasicAssemblyInfo ((folderName @@ "My Project") @@ "AssemblyInfo.vb") attributes
+        | Fsproj -> AssemblyInfoFile.createFSharp (folderName @@ "AssemblyInfo.fs") attributes
+        | Csproj -> AssemblyInfoFile.createCSharp ((folderName @@ "Properties") @@ "AssemblyInfo.cs") attributes
+        | Vbproj -> AssemblyInfoFile.createVisualBasic ((folderName @@ "My Project") @@ "AssemblyInfo.vb") attributes
         )
 )
 
 
-Target "Build" (fun _ ->
-    MSBuildDebug buildDir "Build" appReferences
-    |> Log "AppBuild-Output: "
+Target.create "Build" (fun _ ->
+    MSBuild.runDebug debugParams buildDir "Build" appReferences
+    |> Trace.logItems "AppBuild-Output: "
 )
 
-Target "BuildTest" (fun _ ->
-    MSBuildDebug buildTestDir "Build" testReferences
-    |> Log "AppBuild-Output: "
+Target.create "BuildTest" (fun _ ->
+    MSBuild.runDebug debugParams buildTestDir "Build" testReferences
+    |> Trace.logItems "AppBuild-Output: "
 )
 
-Target "RunTest" (fun _ ->
+Target.create "RunTest" (fun _ ->
     testExecutables
-    |> Expecto id
+    |> Testing.Expecto.run id
 )
 
 
-Target "BuildRelease" (fun _ ->
-    MSBuildRelease releaseDir "Build" releaseReferences
-    |> Log "AppBuild-Output: "
+Target.create "BuildRelease" (fun _ ->
+    MSBuild.runRelease releaseParams buildTestDir "Build" releaseReferences
+    |> Trace.logItems "AppBuild-Output: "
 
     !! (releaseDir + "*.xml")
     ++ (releaseDir + "*.pdb")
-    |> DeleteFiles
+    |> File.deleteAll
 
     !! (releaseDir + "*.dll")
-    |> Seq.iter (MoveFile releaseBinDir)
+    |> Seq.iter (Shell.moveFile releaseBinDir)
     let projectTemplateDir = releaseDir </> "templates" </> "project"
 
-    CopyDir projectTemplateDir templates (fun _ -> true)
+    Shell.copyDir projectTemplateDir templates (fun _ -> true)
 )
 
 // Build order
 "Clean"
-  ==> "AssemblyInfo"
-  ==> "Build"
-  ==> "BuildTest"
-  ==> "RunTest"
-  ==> "BuildRelease"
+    ==> "AssemblyInfo"
+    ==> "Build"
+    ==> "BuildTest"
+    ==> "RunTest"
+    ==> "BuildRelease"
 
 // start build
-RunTargetOrDefault "BuildRelease"
+Target.runOrDefault "BuildRelease"
