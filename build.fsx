@@ -13,7 +13,6 @@ open Fake.Core
 open Fake.IO
 open Fake.IO.Globbing.Operators
 open Fake.IO.FileSystemOperators
-open Fake.DotNet
 open Fake.Core.TargetOperators
 open Fake.DotNet.Testing
 
@@ -108,12 +107,12 @@ Target.create "BuildTest" (fun _ ->
 
 Target.create "RunTest" (fun _ ->
     testExecutables
-    |> Testing.Expecto.run id
+    |> Expecto.run id
 )
 
 
 Target.create "BuildRelease" (fun _ ->
-    MSBuild.runRelease releaseParams buildTestDir "Build" releaseReferences
+    MSBuild.runRelease releaseParams releaseDir "Build" releaseReferences
     |> Trace.logItems "AppBuild-Output: "
 
     !! (releaseDir + "*.xml")
