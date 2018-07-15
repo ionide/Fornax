@@ -3,8 +3,8 @@ framework: net46
 
 nuget Expecto
 nuget FAKE
-nuget FSharp.Core 4.0.0.1
-nuget FSharp.Compiler.Service
+nuget FSharp.Core 4.1.18
+nuget FSharp.Compiler.Service 23.0.3
 nuget FSharp.Quotations.Evaluator
 nuget CommonMark.NET
 nuget Argu
