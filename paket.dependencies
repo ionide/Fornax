@@ -1,13 +1,13 @@
 source https://www.nuget.org/api/v2
-framework: net46
+framework: auto-detect
 
 nuget Expecto
 nuget FAKE
-nuget FSharp.Core 4.1.18
+nuget FSharp.Core 4.3.4
 nuget FSharp.Compiler.Service 23.0.3
 nuget FSharp.Quotations.Evaluator
 nuget CommonMark.NET
 nuget Argu
-nuget dotless
+nuget dotless.Core
 nuget Suave
 nuget FsYaml
