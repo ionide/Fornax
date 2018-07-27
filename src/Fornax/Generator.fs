@@ -42,7 +42,7 @@ module internal Utils =
         let resultCache = ref Map.empty
         let contentCache = ref Map.empty
         fun (x : string) ->
-            let rec getContent f =
+            let rec getContent (f : string) =
                 let dir = Path.GetDirectoryName f
                 let content = retry 2 (fun _ -> File.ReadAllLines f)
                 let contetnMap' = [(f, content)]
@@ -95,7 +95,7 @@ module Evaluator =
             printfn "ErrorStream: %s" (errStream.ToString())
             raise ex
 
-    let private getOpen path =
+    let private getOpen (path : string) =
         let filename = Path.GetFileNameWithoutExtension path
         let textInfo = (CultureInfo("en-US", false)).TextInfo
         textInfo.ToTitleCase filename
