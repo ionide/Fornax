@@ -1,7 +1,6 @@
 #r "../_bin/Fornax.Core.dll"
 #load "../siteModel.fsx"
 
-
 open Html
 open SiteModel
 
