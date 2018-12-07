@@ -1,8 +1,11 @@
 FSharp.Core
+
 Argu
 Suave
+
 FSharp.Compiler.Service
 FSharp.Quotations.Evaluator
+
 CommonMark.NET
-FsYaml
+YamlDotNet
 dotless.Core

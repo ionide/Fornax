@@ -3,11 +3,15 @@ framework: auto-detect
 
 nuget Expecto
 nuget FAKE
+
 nuget FSharp.Core 4.3.4
+
 nuget FSharp.Compiler.Service 23.0.3
 nuget FSharp.Quotations.Evaluator
-nuget CommonMark.NET
+
 nuget Argu
-nuget dotless.Core
 nuget Suave
-nuget FsYaml
+
+nuget CommonMark.NET
+nuget dotless.Core
+nuget YamlDotNet

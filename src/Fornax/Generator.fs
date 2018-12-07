@@ -188,7 +188,7 @@ module Logger =
     let errorfn str = Printf.kprintf (fun s -> use c = consoleColor ConsoleColor.Red in printfn "%s" s) str
 
 module ContentParser =
-    open FsYaml
+    open Configuration
 
     let private isSeparator (input : string) =
         input.StartsWith "---"
@@ -210,7 +210,7 @@ module ContentParser =
         let content = content |> Array.skip 1 |> String.concat "\n"
         let config = config |> String.concat "\n"
         let contentOutput = CommonMark.CommonMarkConverter.Convert content
-        let configOutput = Yaml.loadUntyped modelType config
+        let configOutput = Yaml.parse modelType config
         configOutput, contentOutput
 
     ///`fileContent` - content of page to parse. Usually whole content of `.md` file
@@ -250,12 +250,12 @@ module ContentParser =
         CommonMark.CommonMarkConverter.Convert fileContent
 
 module SiteSettingsParser =
-    open FsYaml
+    open Configuration
 
     ///`fileContent` - site settings to parse. Usually whole content of `site.yml` file
     ///`modelType` - `System.Type` representing type used as model of the global site settings
     let parse fileContent (modelType : Type) =
-        Yaml.loadUntyped modelType fileContent
+        Yaml.parse modelType fileContent
 
 module StyleParser =
 
