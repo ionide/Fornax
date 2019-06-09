@@ -66,14 +66,14 @@ The model representing site settings is defined in `siteModel.fsx` file in the r
 
 Sample `siteModel.fsx`:
 
-```
+```fsharp
 type SiteModel = {
     SomeGlobalValue : string
 }
 ```
 
 Sample `_config.yml`:
-```
+```fsharp
 SomeGlobalValue: "Test global value"
 ```
 
@@ -86,7 +86,7 @@ Templates are defined using DSL defined in `Html` module of `Fornax.Core`.
 All templates should be defined in `templates` folder.
 
 Sample template:
-```
+```fsharp
 #r "../lib/Fornax.Core.dll"
 #load "../siteModel.fsx"
 
@@ -128,7 +128,7 @@ Some blog post written in Markdown
 ### Post list
 
 Templates are getting `Post list` as one of the input parameter that can be used for navigation, creating tag clouds etc. The `Post` is a record of following structure:
-```
+```fsharp
 type Post = {
     link : string
     title: string
