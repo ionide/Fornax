@@ -1,21 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <AssemblyName>Fornax</AssemblyName>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net461</TargetFramework>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Fornax.Core\Fornax.Core.fsproj">
-      <Name>Fornax.Core.fsproj</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
+    <ProjectReference Include="..\Fornax.Core\Fornax.Core.fsproj" />
+
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Configuration.fs" />
     <Compile Include="Generator.fs" />
     <Compile Include="Fornax.fs" />
-    <None Include="App.config" />
+    <None Include="paket.references" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

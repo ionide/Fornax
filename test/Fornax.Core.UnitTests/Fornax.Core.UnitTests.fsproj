@@ -3,18 +3,13 @@
   <PropertyGroup>
     <AssemblyName>Fornax.Core.UnitTests</AssemblyName>
     <OutputType>Exe</OutputType>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <TargetFramework>net461</TargetFramework>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Fornax.Core\Fornax.Core.fsproj">
-      <Name>Fornax.Core.fsproj</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
+    <ProjectReference Include="..\..\src\Fornax.Core\Fornax.Core.fsproj" />
     <Compile Include="Tests.fs" />
     <Compile Include="Main.fs" />
-    <None Include="App.config" />
+    <None Include="paket.references" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

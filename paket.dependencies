@@ -1,12 +1,11 @@
 source https://www.nuget.org/api/v2
-framework: auto-detect
 
 nuget Expecto
 nuget FAKE
 
-nuget FSharp.Core 4.3.4
+nuget FSharp.Core 
 
-nuget FSharp.Compiler.Service 23.0.3
+nuget FSharp.Compiler.Service 
 nuget FSharp.Quotations.Evaluator
 
 nuget Argu

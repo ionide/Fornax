@@ -391,6 +391,9 @@ paket-files/
 .idea/
 *.sln.iml
 
+# Ionide
+.ionide/
+
 _public
 temp/
 _bin
