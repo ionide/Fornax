@@ -1,9 +1,10 @@
-#r "../../temp/build/Fornax.Core.dll"
+#r "../../src/Fornax.Core/bin/Debug/netstandard2.0/Fornax.Core.dll"
 #load "../siteModel.fsx"
 
 open Html
 open SiteModel
 
+[<CLIMutable>]
 type Model = {
     Name : string
     Surname : string

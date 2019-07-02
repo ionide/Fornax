@@ -1,5 +1,6 @@
 ---
 layout: post
+title: Post 1
 Name: Ja
 Surname: Ja2
 ---
