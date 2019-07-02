@@ -86,7 +86,7 @@ module Evaluator =
         let errStream = new StringWriter(sbErr)
         try
             let fsiConfig = FsiEvaluationSession.GetDefaultConfiguration()
-            let argv = [| "/temo/fsi.exe"; |]
+            let argv = [| "/temp/fsi.exe"; |]
             FsiEvaluationSession.Create(fsiConfig, argv, inStream, outStream, errStream)
         with
         | ex ->
@@ -138,12 +138,12 @@ module Evaluator =
     let private getContentFromTemplate' (templatePath : string) =
         let filename = getOpen templatePath
         let load = getLoad templatePath
-
+        
         let _, errs = fsi.EvalInteractionNonThrowing(sprintf "#load \"%s\";;" load)
-        if errs.Length > 0 then printfn "[ERROR 1] Load Erros : %A" errs
+        if errs.Length > 0 then printfn "[ERROR 1] Load Errors : %A" errs
 
         let _, errs = fsi.EvalInteractionNonThrowing(sprintf "open %s;;" filename)
-        if errs.Length > 0 then printfn "[ERROR 2] Open Erros : %A" errs
+        if errs.Length > 0 then printfn "[ERROR 2] Open Errors : %A" errs
 
         let modelType, errs = fsi.EvalExpressionNonThrowing "typeof<Model>"
         if errs.Length > 0 then printfn "[ERROR 3] Get model Errors : %A" errs
@@ -284,7 +284,9 @@ let getPosts (projectRoot : string) =
     |> Array.filter (fun n -> n.EndsWith ".md")
     |> Array.map (fun n ->
         let text = Utils.retry 2 (fun _ -> File.ReadAllText n)
+        
         let config = getConfig text |> String.split '\n'
+
         let content = getContent text
 
         let link = "/" + Path.Combine("posts", (n |> Path.GetFileNameWithoutExtension) + ".html").Replace("\\", "/")
@@ -292,19 +294,18 @@ let getPosts (projectRoot : string) =
         let title =
             config |> List.find (fun n -> n.ToLower().StartsWith "title" ) |> fun n -> n.Split(':').[1] |> trimString
 
-
         let author =
             try
                 config |> List.tryFind (fun n -> n.ToLower().StartsWith "author" ) |> Option.map (fun n -> n.Split(':').[1] |> trimString)
             with
             | _ -> None
-
+        
         let published =
             try
                 config |> List.tryFind (fun n -> n.ToLower().StartsWith "published" ) |> Option.map (fun n -> n.Split(':').[1] |> trimString |> DateTime.Parse)
             with
             | _ -> None
-
+        
         let tags =
             try
                 let x =
@@ -314,7 +315,6 @@ let getPosts (projectRoot : string) =
                 defaultArg x []
             with
             | _ -> []
-
 
         (link, title, author, published, tags, content))
 
