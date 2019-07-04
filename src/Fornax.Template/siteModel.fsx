@@ -1,5 +1,7 @@
+#if DEBUG
 #r "Facades/netstandard"
-#r "../../Fornax.Core/bin/Debug/netstandard2.0/Fornax.Core.dll"
+#endif
+#I "./_bin/"
 
 [<CLIMutable>]
 type SiteModel = {

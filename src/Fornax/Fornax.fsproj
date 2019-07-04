@@ -11,6 +11,11 @@
     <Compile Include="Configuration.fs" />
     <Compile Include="Generator.fs" />
     <Compile Include="Fornax.fs" />
+    <Content
+      Include="../Fornax.Template/**"
+      Exclude="../Fornax.Template/_public/**"
+      LinkBase="newTemplate"
+      CopyToOutputDirectory="PreserveNewest" />
     <None Include="paket.references" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

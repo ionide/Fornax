@@ -138,7 +138,7 @@ module Evaluator =
     let private getContentFromTemplate' (templatePath : string) =
         let filename = getOpen templatePath
         let load = getLoad templatePath
-        
+
         let _, errs = fsi.EvalInteractionNonThrowing(sprintf "#load \"%s\";;" load)
         if errs.Length > 0 then printfn "[ERROR 1] Load Errors : %A" errs
 

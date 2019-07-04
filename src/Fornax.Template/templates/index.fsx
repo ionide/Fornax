@@ -6,6 +6,7 @@
 open Html
 open SiteModel
 
+
 [<CLIMutable>]
 type Model = {
     title : string
