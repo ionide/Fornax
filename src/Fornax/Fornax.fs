@@ -79,16 +79,22 @@ let main argv =
         match result with
         | Some New ->
             let templateDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "templates", "project" )
+            printfn "template dir %s" templateDir
             let corePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin", "Fornax.Core.dll")
+            printfn "core path %s" corePath
 
             Directory.GetDirectories(templateDir, "*", SearchOption.AllDirectories)
             |> Seq.iter (fun p -> Directory.CreateDirectory(p.Replace(templateDir, cwd)) |> ignore)
+            printfn "1"
 
             Directory.GetFiles(templateDir, "*.*", SearchOption.AllDirectories)
             |> Seq.iter (fun p -> File.Copy(p, p.Replace(templateDir, cwd)))
+            printfn "2"
 
             Directory.CreateDirectory(Path.Combine(cwd, "_bin")) |> ignore
+            printfn "3"
             File.Copy(corePath, corePath.Replace(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin"), Path.Combine(cwd, "_bin")))
+            printfn "4"
 
             0
         | Some Build ->

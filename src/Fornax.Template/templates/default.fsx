@@ -1,4 +1,5 @@
-#r "../_bin/Fornax.Core.dll"
+// #r "../_bin/Fornax.Core.dll"
+// #r "../../Fornax.Core/bin/Debug/netstandard2.0/Fornax.Core.dll"
 #load "../siteModel.fsx"
 
 open Html

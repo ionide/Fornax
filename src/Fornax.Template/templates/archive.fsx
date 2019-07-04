@@ -1,4 +1,5 @@
-#r "../_bin/Fornax.Core.dll"
+// #r "../_bin/Fornax.Core.dll"
+// #r "../../Fornax.Core/bin/Debug/netstandard2.0/Fornax.Core.dll"
 #load "../siteModel.fsx"
 #load "default.fsx"
 
@@ -9,6 +10,7 @@ open SiteModel
 type Model = {
     title : string
 }
+
 
 let generate (siteModel : SiteModel) (mdl : Model) (posts : Post list) (content : string) =
     let psts =
