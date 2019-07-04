@@ -1,7 +1,7 @@
-#if DEBUG
+#if !FORNAX
 #r "Facades/netstandard"
 #endif
-#I "./_bin/"
+#r "./_bin/Fornax.Core.dll"
 
 [<CLIMutable>]
 type SiteModel = {

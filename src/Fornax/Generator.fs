@@ -86,7 +86,7 @@ module Evaluator =
         let errStream = new StringWriter(sbErr)
         try
             let fsiConfig = FsiEvaluationSession.GetDefaultConfiguration()
-            let argv = [| "/temp/fsi.exe"; |]
+            let argv = [| "/temp/fsi.exe"; "--define:FORNAX"|]
             FsiEvaluationSession.Create(fsiConfig, argv, inStream, outStream, errStream)
         with
         | ex ->

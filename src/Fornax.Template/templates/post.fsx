@@ -1,4 +1,3 @@
-// #r "../../Fornax.Core/bin/Debug/netstandard2.0/Fornax.Core.dll"
 #load "../siteModel.fsx"
 #load "default.fsx"
 
