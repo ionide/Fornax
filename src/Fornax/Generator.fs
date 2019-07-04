@@ -409,7 +409,7 @@ let generateFromSass (projectRoot : string) (path : string) =
         | :? System.ComponentModel.Win32Exception as ex ->
             let endTime = DateTime.Now
             Logger.error  "[%s] Generation of '%s' failed. " (endTime.ToString("HH:mm:ss")) path'
-            Logger.errorfn "Please check you have installed the Sass compiler"
+            Logger.errorfn "Please check you have installed the Sass compiler if you are going to be using files with extension .scss. https://sass-lang.com/install"
 
 
 let private (|Ignored|Markdown|Less|Sass|StaticFile|) (filename : string) =

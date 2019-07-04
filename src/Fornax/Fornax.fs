@@ -91,15 +91,15 @@ let main argv =
             
             File.Copy(corePath, "./_bin/Fornax.Core.dll")
 
+            printfn "New project successfully created."
+
             0
         | Some Build ->
-            Generator.generateFolder cwd
+            generateFolder cwd
             0
         | Some Watch ->
             let mutable lastAccessed = Map.empty<string, DateTime>
-            printfn "[%s] Watch mode started. Press any key to exit" (DateTime.Now.ToString("HH:mm:ss"))
-            startWebServerAsync defaultConfig (router cwd) |> snd |> Async.Start
-            Generator.generateFolder cwd
+            generateFolder cwd
             use watcher = createFileWatcher cwd (fun e ->
                 if not (e.FullPath.Contains "_public") && not (e.FullPath.Contains ".sass-cache") && not (e.FullPath.Contains ".git") then
                     let lastTimeWrite = File.GetLastWriteTime(e.FullPath)
@@ -109,7 +109,10 @@ let main argv =
                         printfn "[%s] Changes detected: %s" (DateTime.Now.ToString("HH:mm:ss")) e.FullPath
                         lastAccessed <- lastAccessed.Add(e.FullPath, lastTimeWrite)
                         Generator.generateFolder cwd)
-            let _ = Console.ReadKey()
+            startWebServerAsync defaultConfig (router cwd) |> snd |> Async.Start
+            printfn "[%s] Watch mode started. Press any key to exit." (DateTime.Now.ToString("HH:mm:ss"))
+            Console.ReadKey() |> ignore
+            printfn "Exiting..."
             0
         | Some Version ->
             printfn "%s" AssemblyVersionInformation.AssemblyVersion
