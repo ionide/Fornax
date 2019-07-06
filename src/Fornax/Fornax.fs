@@ -66,11 +66,11 @@ let main argv =
     let parser = ArgumentParser.Create<Arguments>(programName = "fornax", errorHandler = FornaxExiter ())
 
     if argv.Length = 0 then
-        printfn "No arguments provided."
+        printfn "No arguments provided.  Try 'fornax help' for additional details."
         printfn "%s" <| parser.PrintUsage()
         1
     elif argv.Length > 1 then
-        printfn "Provide only 1 argument"
+        printfn "More than one argument was provided.  Please provide only a single argument.  Try 'fornax help' for additional details."
         printfn "%s" <| parser.PrintUsage()
         1
     else
