@@ -78,17 +78,26 @@ let main argv =
         let cwd = Directory.GetCurrentDirectory ()
         match result with
         | Some New ->
-            let templateDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "newTemplate")
+            // The path of the directory that holds the scaffolding for a new website.
+            let newTemplateDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "newTemplate")
+
+            // The path of Fornax.Core.dll, which is located where the dotnet tool is installed.
             let corePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Fornax.Core.dll")
 
-            Directory.GetDirectories(templateDir, "*", SearchOption.AllDirectories)
-            |> Seq.iter (fun p -> Directory.CreateDirectory(p.Replace(templateDir, cwd)) |> ignore)
+            // Copy the folders from the template directory into the current folder.
+            Directory.GetDirectories(newTemplateDir, "*", SearchOption.AllDirectories)
+            |> Seq.iter (fun p -> Directory.CreateDirectory(p.Replace(newTemplateDir, cwd)) |> ignore)
 
-            Directory.GetFiles(templateDir, "*.*", SearchOption.AllDirectories)
-            |> Seq.iter (fun p -> File.Copy(p, p.Replace(templateDir, cwd)))
+            // Copy the files from the template directory into the current folder.
+            Directory.GetFiles(newTemplateDir, "*.*", SearchOption.AllDirectories)
+            |> Seq.iter (fun p -> File.Copy(p, p.Replace(newTemplateDir, cwd)))
 
+            // Create the _bin directory in the current folder.  It holds
+            // Fornax.Core.dll, which is used to provide Intellisense/autocomplete
+            // in the .fsx files.
             Directory.CreateDirectory(Path.Combine(cwd, "_bin")) |> ignore
             
+            // Copy the Fornax.Core.dll into _bin
             File.Copy(corePath, "./_bin/Fornax.Core.dll")
 
             printfn "New project successfully created."
