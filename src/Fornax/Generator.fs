@@ -249,6 +249,19 @@ module ContentParser =
     let compileMarkdown (fileContent : string) =
         CommonMark.CommonMarkConverter.Convert fileContent
 
+type Link = string
+type Title = string
+type Author = string option
+
+/// Optional published date.
+type Published = DateTime option
+
+/// Tags associated with the post.
+type Tags = string list
+
+/// Represents the converted HTML of the .md content.
+type Content = string
+
 module SiteSettingsParser =
     open Configuration
 
@@ -263,8 +276,6 @@ module StyleParser =
     let parseLess fileContent =
         dotless.Core.Less.Parse fileContent
 
-
-
 let private contentParser : string -> System.Type -> obj * string  = Utils.memoizeParser ContentParser.parse
 let private settingsParser : string -> System.Type -> obj = Utils.memoizeParser SiteSettingsParser.parse
 let private getLayout : string -> string = Utils.memoize  ContentParser.getLayout
@@ -278,21 +289,23 @@ let private parseLess : string -> string = Utils.memoize StyleParser.parseLess
 let private trimString (str : string) =
     str.Trim().TrimEnd('"').TrimStart('"')
 
+
 let getPosts (projectRoot : string) =
-    let path = Path.Combine(projectRoot, "posts")
-    Directory.GetFiles path
+    let postsPath = Path.Combine(projectRoot, "posts")
+    Directory.GetFiles postsPath
     |> Array.filter (fun n -> n.EndsWith ".md")
     |> Array.map (fun n ->
+        // All the text in the .md file.
         let text = Utils.retry 2 (fun _ -> File.ReadAllText n)
         
         let config = getConfig text |> String.split '\n'
+        printfn "Config: %O" config
 
         let content = getContent text
 
         let link = "/" + Path.Combine("posts", (n |> Path.GetFileNameWithoutExtension) + ".html").Replace("\\", "/")
 
-        let title =
-            config |> List.find (fun n -> n.ToLower().StartsWith "title" ) |> fun n -> n.Split(':').[1] |> trimString
+        let title = config |> List.find (fun n -> n.ToLower().StartsWith "title" ) |> fun n -> n.Split(':').[1] |> trimString
 
         let author =
             try
@@ -316,21 +329,20 @@ let getPosts (projectRoot : string) =
             with
             | _ -> []
 
-        (link, title, author, published, tags, content))
-
-
+        ((link:Link), (title:Title), (author:Author), (published:Published), (tags:Tags), (content:Content)))
 
 ///`projectRoot` - path to the root of website
 ///`page` - path to page that should be generated
 let generate posts (projectRoot : string) (page : string) =
+    printfn "Page: %s" page
     let startTime = DateTime.Now
-    let contetPath = Path.Combine(projectRoot, page)
+    let contentPath = Path.Combine(projectRoot, page)
     let settingsPath = Path.Combine(projectRoot, "_config.yml")
     let outputPath =
         let p = Path.ChangeExtension(page, ".html")
         Path.Combine(projectRoot, "_public", p)
 
-    let contentText = Utils.retry 2 (fun _ -> File.ReadAllText contetPath)
+    let contentText = Utils.retry 2 (fun _ -> File.ReadAllText contentPath)
 
     if containsLayout contentText then
         let settingsText = Utils.retry 2 (fun _ -> File.ReadAllText settingsPath)
@@ -410,7 +422,6 @@ let generateFromSass (projectRoot : string) (path : string) =
             let endTime = DateTime.Now
             Logger.error  "[%s] Generation of '%s' failed. " (endTime.ToString("HH:mm:ss")) path'
             Logger.errorfn "Please check you have installed the Sass compiler if you are going to be using files with extension .scss. https://sass-lang.com/install"
-
 
 let private (|Ignored|Markdown|Less|Sass|StaticFile|) (filename : string) =
     let ext = Path.GetExtension filename

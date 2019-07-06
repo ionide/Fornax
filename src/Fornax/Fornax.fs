@@ -104,7 +104,7 @@ let main argv =
 
             0
         | Some Build ->
-            generateFolder cwd
+            Generator.generateFolder cwd
             0
         | Some Watch ->
             let mutable lastAccessed = Map.empty<string, DateTime>
