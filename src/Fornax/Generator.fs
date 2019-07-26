@@ -299,7 +299,6 @@ let getPosts (projectRoot : string) =
         let text = Utils.retry 2 (fun _ -> File.ReadAllText n)
         
         let config = getConfig text |> String.split '\n'
-        printfn "Config: %O" config
 
         let content = getContent text
 
@@ -334,7 +333,6 @@ let getPosts (projectRoot : string) =
 ///`projectRoot` - path to the root of website
 ///`page` - path to page that should be generated
 let generate posts (projectRoot : string) (page : string) =
-    printfn "Page: %s" page
     let startTime = DateTime.Now
     let contentPath = Path.Combine(projectRoot, page)
     let settingsPath = Path.Combine(projectRoot, "_config.yml")
