@@ -153,7 +153,9 @@ from the main (upstream) repository:
 
 ## <a name="build"></a> Build process
 
+ * You need [.Net Core 2.2 SDK](https://dotnet.microsoft.com/download/dotnet-core/2.2)
  * Dependencies are controlled with [Paket](https://fsprojects.github.io/Paket/)
- * Build process is using [FAKE](http://fsharp.github.io/FAKE/)
- * To build application and run tests run `build.cmd` (on Windows) or `build.sh` (Linux / OSX)
+ * Build process is using [FAKE](http://fsharp.github.io/FAKE/) - install it with `dotnet tool install fake-cli -g`
+ * To build the project run `fake build`
+ * To run unit tests run `fake build -t Test`
 
