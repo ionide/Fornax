@@ -1,3 +1,7 @@
+### 0.2.0 - 05.08.2019
+* Update to .Net Core
+* Distribute as .Net Core global tool
+
 ### 0.1.0 - 04.06.2017
 * Defining templates in F# DSL
 * Creating pages using templates from `.md` files with `layout` entry

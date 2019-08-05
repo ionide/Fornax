@@ -1,4 +1,4 @@
-![Logo](https://gitlab.com/Krzysztof-Cieslak/Fornax/raw/master/logo/Fornax.png)
+![Logo](https://gitlab.com/LambdaFactory/Fornax/raw/master/logo/Fornax.png)
 
 Fornax is a static site generator using type safe F# DSL to define page templates.
 
@@ -18,30 +18,7 @@ Fornax is a static site generator using type safe F# DSL to define page template
 
 ## Installation.
 
-#### Via Scoop.sh (Windows)
-
-You can install Fornax via the [Scoop](http://scoop.sh/) package manager on Windows
-
-    scoop bucket add fsharp-extras https://github.com/Krzysztof-Cieslak/scoop-fsharp-extras.git
-    scoop install fornax
-
-#### Via Homebrew (OSX)
-
-You can install Fornax via the [Homebrew](http://brew.sh) package manager on OS X
-
-    brew tap Krzysztof-Cieslak/fornax && brew install fornax
-
-#### Via Linuxbrew (Linux)
-
-You can install Fornax via the [Linuxbrew](http://linuxbrew.sh/) package manager on Linux
-
-    brew tap Krzysztof-Cieslak/fornax && brew install fornax
-
-#### Other
-
-You can download one of the releases found at https://gitlab.com/Krzysztof-Cieslak/Fornax/tags
-
-Alternately you can clone the repo, build the source, and then move the files in your bin folder to a location of your choosing.
+Fornax is released as a global .Net Core tool. You can install it with `dotnet tool install fornax -g`
 
 ## CLI Application
 
@@ -49,7 +26,7 @@ The main functionality of Fornax comes from CLI applications that lets user scaf
 
 * `fornax new` - scaffolds new blog in current working directory using really simple template
 * `fornax build` - builds webpage, puts output to `_public` folder
-* `fornax watch` - starts small webserver that host your blog post, and background process that recompiles blog whenver any changes are detected. That's suggested way of working with Fornax
+* `fornax watch` - starts small webserver that host your blog post, and background process that recompiles blog whenever any changes are detected. That's suggested way of working with Fornax
 * `fornax clean` - removes output directory and any temp files.
 * `fornax version` - prints out version of Fornax
 * `fornax help` - prints out help
@@ -79,7 +56,7 @@ SomeGlobalValue: "Test global value"
 
 ### Templates
 
-Templates are F# script files representing different templates that can be used in the website. They need to `#load` `siteModel.fsx` file, and `#r` `Fornax.Core.dll`. They need to define F# record called `Model` which defines additional settings passed to this particular template, and `generate` function of following signature: `SiteModel -> Model -> Post list -> string -> HtmlElement`. `SiteModel` is type representing global settings of webpage, `Model` is type representing settings for this template, `Post list` contains simplifed information about all avaliable posts in the blog (usefull for navigation, creating tag cloud etc.) `string` is main content of post (already compiled to `html`).
+Templates are F# script files representing different templates that can be used in the website. They need to `#load` `siteModel.fsx` file, and `#r` `Fornax.Core.dll`. They need to define F# record called `Model` which defines additional settings passed to this particular template, and `generate` function of following signature: `SiteModel -> Model -> Post list -> string -> HtmlElement`. `SiteModel` is type representing global settings of webpage, `Model` is type representing settings for this template, `Post list` contains simplified information about all available posts in the blog (useful for navigation, creating tag cloud etc.) `string` is main content of post (already compiled to `html`).
 
 Templates are defined using DSL defined in `Html` module of `Fornax.Core`.
 
@@ -110,7 +87,7 @@ let generate (siteModel : SiteModel) (mdl : Model) (posts: Post list) (content :
 
 ### Page content
 
-Content files are `.md` files containg page contnt, and header with settings (defined using yaml). Header part is parsed, and passed to template `generate` function as `Model`. Content part is compiled to html and also passed to `generate` function. Header part needs to have `layout` entry which defines which template will be used for the page.
+Content files are `.md` files containing page content, and header with settings (defined using yaml). Header part is parsed, and passed to template `generate` function as `Model`. Content part is compiled to html and also passed to `generate` function. Header part needs to have `layout` entry which defines which template will be used for the page.
 
 Sample page:
 
@@ -145,7 +122,7 @@ It's filled based on respective entries in `layout` part of the post content fil
 
 1. Hmmm... it looks similar to Jekyll, doesn't it?
 
-* Yes, indeed. But the main advantage over Jekyll is type safe DSL for defining templates, and fact it's using normal prorgramming language - no additional syntax to things like loops or conditional statements, it's also very easy to compose templates - you just `#load` other template and execute as normal F# function
+* Yes, indeed. But the main advantage over Jekyll is type safe DSL for defining templates, and fact it's using normal programming language - no additional syntax to things like loops or conditional statements, it's also very easy to compose templates - you just `#load` other template and execute as normal F# function
 
 2. What about F# Formatting?
 
@@ -159,7 +136,7 @@ There might be a little voice inside that tells you you're not ready; that you n
 
 I assure you, that's not the case.
 
-This project has some clear Contribution Guidelines and expectations that you can [read here](https://github.com/Krzysztof-Cieslak/Saturn/blob/master/CONTRIBUTING.md).
+This project has some clear Contribution Guidelines and expectations that you can [read here](https://github.com/LambdaFactory/Saturn/blob/master/CONTRIBUTING.md).
 
 The contribution guidelines outline the process that you'll need to follow to get a patch merged. By making expectations and process explicit, I hope it will make it easier for you to contribute.
 
@@ -169,7 +146,7 @@ Thank you for contributing!
 
 ## Contributing and copyright
 
-The project is hosted on [GitHub](https://github.com/Krzysztof-Cieslak/Fornax) where you can [report issues](https://github.com/Krzysztof-Cieslak/Fornax/issues), fork
-the project and submit pull requests. Please read [Contribution Guide](https://github.com/Krzysztof-Cieslak/Fornax/blob/master/CONTRIBUTING.md)
+The project is hosted on [GitHub](https://github.com/LambdaFactory/Fornax) where you can [report issues](https://github.com/LambdaFactory/Fornax/issues), fork
+the project and submit pull requests. Please read [Contribution Guide](https://github.com/LambdaFactory/Fornax/blob/master/CONTRIBUTING.md)
 
-The library is available under [MIT license](https://github.com/Krzysztof-Cieslak/Fornax/blob/master/LICENSE.md), which allows modification and redistribution for both commercial and non-commercial purposes.
+The library is available under [MIT license](https://github.com/LambdaFactory/Fornax/blob/master/LICENSE.md), which allows modification and redistribution for both commercial and non-commercial purposes.
