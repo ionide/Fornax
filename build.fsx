@@ -125,7 +125,7 @@ Target.create "Pack" (fun _ ->
     Environment.setEnvironVar "PackageReleaseNotes" (release.Notes |> String.toLines)
     Environment.setEnvironVar "PackageTags" "f#, site-generator, html"
     Environment.setEnvironVar "PackageProjectUrl" "https://github.com/LambdaFactory/Fornax"
-    Environment.setEnvironVar "PackageLicenseUrl" "https://raw.githubusercontent.com/LambdaFactory/Fornax/master/LICENSE.txt"
+    Environment.setEnvironVar "PackageLicenseExpression" "MIT"
 
     DotNet.pack (fun p ->
         { p with

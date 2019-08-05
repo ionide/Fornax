@@ -397,3 +397,4 @@ packages/
 _public
 temp/
 _bin
+release.cmd
