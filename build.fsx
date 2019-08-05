@@ -1,49 +1,79 @@
-#r "./packages/FAKE/tools/FakeLib.dll"
+// --------------------------------------------------------------------------------------
+// FAKE build script
+// --------------------------------------------------------------------------------------
+#r "paket: groupref build //"
+#load ".fake/build.fsx/intellisense.fsx"
+#if !FAKE
+  #r "netstandard"
+  #r "Facades/netstandard.dll"
+#endif
 
-open System
-open System.IO
-open Fake
-open Fake.AssemblyInfoFile
-open Fake.ReleaseNotesHelper
-open Fake.Testing.Expecto
+open Fake.Core
+open Fake.DotNet
+open Fake.Tools
+open Fake.IO
+open Fake.IO.FileSystemOperators
+open Fake.IO.Globbing.Operators
+open Fake.Core.TargetOperators
+open Fake.Api
+
+// --------------------------------------------------------------------------------------
+// Information about the project to be used at NuGet and in AssemblyInfo files
+// --------------------------------------------------------------------------------------
 
 let project = "Fornax"
 let summary = "Fornax is a static site generator using type safe F# DSL to define page templates"
-let release = LoadReleaseNotes "CHANGELOG.md"
-let buildDir  = "./temp/build/"
-let appReferences = !!  "src/**/*.fsproj"
-let releaseDir  = "./temp/release/"
-let releaseBinDir = "./temp/release/bin/"
-let releaseReferences = !! "src/**/Fornax.fsproj"
 
-let templates = "./src/Fornax.Template"
+let gitOwner = "LambdaFactory"
+let gitHome = "https://github.com/" + gitOwner
+let gitName = "Fornax"
+let gitRaw = Environment.environVarOrDefault "gitRaw" ("https://raw.github.com/" + gitOwner)
 
-let buildTestDir  = "./temp/build_test/"
-let testReferences = !!  "test/**/*.fsproj"
+// --------------------------------------------------------------------------------------
+// Build variables
+// --------------------------------------------------------------------------------------
 
-let testExecutables = !! (buildTestDir + "*Tests.exe")
+System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
+let release = ReleaseNotes.parse (System.IO.File.ReadAllLines "CHANGELOG.md")
+
+let packageDir = __SOURCE_DIRECTORY__ </> "out"
+let buildDir = __SOURCE_DIRECTORY__ </> "temp"
 
 
-// Targets
-Target "Clean" (fun _ ->
-    CleanDirs [buildDir; releaseDir; releaseBinDir; buildTestDir]
+// --------------------------------------------------------------------------------------
+// Helpers
+// --------------------------------------------------------------------------------------
+let isNullOrWhiteSpace = System.String.IsNullOrWhiteSpace
+let exec cmd args dir =
+    if Process.execSimple( fun info ->
+
+        { info with
+            FileName = cmd
+            WorkingDirectory =
+                if (isNullOrWhiteSpace dir) then info.WorkingDirectory
+                else dir
+            Arguments = args
+            }
+    ) System.TimeSpan.MaxValue <> 0 then
+        failwithf "Error while running '%s' with args: %s" cmd args
+let getBuildParam = Environment.environVar
+
+let DoNothing = ignore
+// --------------------------------------------------------------------------------------
+// Build Targets
+// --------------------------------------------------------------------------------------
+
+Target.create "Clean" (fun _ ->
+    Shell.cleanDirs [buildDir; packageDir]
 )
 
-let (|Fsproj|Csproj|Vbproj|) (projFileName:string) =
-    match projFileName with
-    | f when f.EndsWith("fsproj") -> Fsproj
-    | f when f.EndsWith("csproj") -> Csproj
-    | f when f.EndsWith("vbproj") -> Vbproj
-    | _                           -> failwith (sprintf "Project file %s not supported. Unknown project type." projFileName)
-
-// Generate assembly info files with the right version & up-to-date information
-Target "AssemblyInfo" (fun _ ->
+Target.create "AssemblyInfo" (fun _ ->
     let getAssemblyInfoAttributes projectName =
-        [ Attribute.Title (projectName)
-          Attribute.Product project
-          Attribute.Description summary
-          Attribute.Version release.AssemblyVersion
-          Attribute.FileVersion release.AssemblyVersion ]
+        [ AssemblyInfo.Title projectName
+          AssemblyInfo.Product project
+          AssemblyInfo.Description summary
+          AssemblyInfo.Version release.AssemblyVersion
+          AssemblyInfo.FileVersion release.AssemblyVersion ]
 
     let getProjectDetails projectPath =
         let projectName = System.IO.Path.GetFileNameWithoutExtension(projectPath)
@@ -53,55 +83,121 @@ Target "AssemblyInfo" (fun _ ->
           (getAssemblyInfoAttributes projectName)
         )
 
-    appReferences
+    !! "src/**/*.??proj"
     |> Seq.map getProjectDetails
-    |> Seq.iter (fun (projFileName, projectName, folderName, attributes) ->
+    |> Seq.iter (fun (projFileName, _, folderName, attributes) ->
         match projFileName with
-        | Fsproj -> CreateFSharpAssemblyInfo (folderName @@ "AssemblyInfo.fs") attributes
-        | Csproj -> CreateCSharpAssemblyInfo ((folderName @@ "Properties") @@ "AssemblyInfo.cs") attributes
-        | Vbproj -> CreateVisualBasicAssemblyInfo ((folderName @@ "My Project") @@ "AssemblyInfo.vb") attributes
+        | proj when proj.EndsWith("fsproj") -> AssemblyInfoFile.createFSharp (folderName </> "AssemblyInfo.fs") attributes
+        | proj when proj.EndsWith("csproj") -> AssemblyInfoFile.createCSharp ((folderName </> "Properties") </> "AssemblyInfo.cs") attributes
+        | proj when proj.EndsWith("vbproj") -> AssemblyInfoFile.createVisualBasic ((folderName </> "My Project") </> "AssemblyInfo.vb") attributes
+        | _ -> ()
         )
 )
 
-
-Target "Build" (fun _ ->
-    MSBuildDebug buildDir "Build" appReferences
-    |> Log "AppBuild-Output: "
+Target.create "Restore" (fun _ ->
+    DotNet.restore id ""
 )
 
-Target "BuildTest" (fun _ ->
-    MSBuildDebug buildTestDir "Build" testReferences
-    |> Log "AppBuild-Output: "
+Target.create "Build" (fun _ ->
+    DotNet.build id ""
 )
 
-Target "RunTest" (fun _ ->
-    testExecutables
-    |> Expecto id
+Target.create "Publish" (fun _ ->
+    DotNet.publish (fun p -> {p with OutputPath = Some buildDir}) "src/Fornax"
+
 )
 
-
-Target "BuildRelease" (fun _ ->
-    MSBuildRelease releaseDir "Build" releaseReferences
-    |> Log "AppBuild-Output: "
-
-    !! (releaseDir + "*.xml")
-    ++ (releaseDir + "*.pdb")
-    |> DeleteFiles
-
-    !! (releaseDir + "*.dll")
-    |> Seq.iter (MoveFile releaseBinDir)
-    let projectTemplateDir = releaseDir </> "templates" </> "project"
-
-    CopyDir projectTemplateDir templates (fun _ -> true)
+Target.create "Test" (fun _ ->
+    exec "dotnet"  @"run --project .\test\Fornax.Core.UnitTests\Fornax.Core.UnitTests.fsproj" "."
 )
 
+// --------------------------------------------------------------------------------------
+// Release Targets
+// --------------------------------------------------------------------------------------
+
+Target.create "Pack" (fun _ ->
+
+    //Pack Fornax global tool
+    Environment.setEnvironVar "PackageVersion" release.NugetVersion
+    Environment.setEnvironVar "Version" release.NugetVersion
+    Environment.setEnvironVar "Authors" "Krzysztof Cieslak"
+    Environment.setEnvironVar "Description" summary
+    Environment.setEnvironVar "PackageReleaseNotes" (release.Notes |> String.toLines)
+    Environment.setEnvironVar "PackageTags" "f#, site-generator, html"
+    Environment.setEnvironVar "PackageProjectUrl" "https://github.com/LambdaFactory/Fornax"
+    Environment.setEnvironVar "PackageLicenseUrl" "https://raw.githubusercontent.com/LambdaFactory/Fornax/master/LICENSE.txt"
+
+    DotNet.pack (fun p ->
+        { p with
+            OutputPath = Some packageDir
+            Configuration = DotNet.BuildConfiguration.Release
+        }) "src/Fornax"
+)
+
+Target.create "ReleaseGitHub" (fun _ ->
+    let remote =
+        Git.CommandHelper.getGitResult "" "remote -v"
+        |> Seq.filter (fun (s: string) -> s.EndsWith("(push)"))
+        |> Seq.tryFind (fun (s: string) -> s.Contains(gitOwner + "/" + gitName))
+        |> function None -> gitHome + "/" + gitName | Some (s: string) -> s.Split().[0]
+
+    Git.Staging.stageAll ""
+    Git.Commit.exec "" (sprintf "Bump version to %s" release.NugetVersion)
+    Git.Branches.pushBranch "" remote (Git.Information.getBranchName "")
+
+
+    Git.Branches.tag "" release.NugetVersion
+    Git.Branches.pushTag "" remote release.NugetVersion
+
+    let client =
+        let user =
+            match getBuildParam "github-user" with
+            | s when not (isNullOrWhiteSpace s) -> s
+            | _ -> UserInput.getUserInput "Username: "
+        let pw =
+            match getBuildParam "github-pw" with
+            | s when not (isNullOrWhiteSpace s) -> s
+            | _ -> UserInput.getUserPassword "Password: "
+
+        // Git.createClient user pw
+        GitHub.createClient user pw
+    let files = !! (packageDir </> "*.nupkg")
+
+    // release on github
+    let cl =
+        client
+        |> GitHub.draftNewRelease gitOwner gitName release.NugetVersion (release.SemVer.PreRelease <> None) release.Notes
+    (cl,files)
+    ||> Seq.fold (fun acc e -> acc |> GitHub.uploadFile e)
+    |> GitHub.publishDraft//releaseDraft
+    |> Async.RunSynchronously
+)
+
+Target.create "Push" (fun _ ->
+    let key =
+        match getBuildParam "nuget-key" with
+        | s when not (isNullOrWhiteSpace s) -> s
+        | _ -> UserInput.getUserPassword "NuGet Key: "
+    Paket.push (fun p -> { p with WorkingDir = buildDir; ApiKey = key }))
+
+// --------------------------------------------------------------------------------------
 // Build order
+// --------------------------------------------------------------------------------------
+Target.create "Default" DoNothing
+Target.create "Release" DoNothing
+
 "Clean"
   ==> "AssemblyInfo"
+  ==> "Restore"
   ==> "Build"
-  ==> "BuildTest"
-  ==> "RunTest"
-  ==> "BuildRelease"
+  ==> "Publish"
+  ==> "Test"
+  ==> "Default"
 
-// start build
-RunTargetOrDefault "BuildRelease"
+"Default"
+  ==> "Pack"
+  ==> "ReleaseGitHub"
+  ==> "Push"
+  ==> "Release"
+
+Target.runOrDefault "Pack"

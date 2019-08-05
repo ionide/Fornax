@@ -1,11 +1,9 @@
 source https://www.nuget.org/api/v2
 
 nuget Expecto
-nuget FAKE
+nuget FSharp.Core
 
-nuget FSharp.Core 
-
-nuget FSharp.Compiler.Service 
+nuget FSharp.Compiler.Service
 nuget FSharp.Quotations.Evaluator
 
 nuget Argu
@@ -14,3 +12,19 @@ nuget Suave
 nuget CommonMark.NET
 nuget dotless.Core
 nuget YamlDotNet
+
+group Build
+  source https://www.nuget.org/api/v2
+
+  nuget Fake.Core.Target
+  nuget Fake.Core.Process
+  nuget Fake.DotNet.Cli
+  nuget Fake.Core.ReleaseNotes
+  nuget Fake.DotNet.AssemblyInfoFile
+  nuget Fake.DotNet.Paket
+  nuget Fake.Tools.Git
+  nuget Fake.Core.Environment
+  nuget Fake.Core.UserInput
+  nuget Fake.IO.FileSystem
+  nuget Fake.DotNet.MsBuild
+  nuget Fake.Api.GitHub
