@@ -18,7 +18,7 @@ Fornax is a static site generator using type safe F# DSL to define page template
 
 ## Installation
 
-Fornax is released as a global .Net Core tool. You can install it with `dotnet tool install fornax -g`
+Fornax is released as a global .Net Core tool. You can instVall it with `dotnet tool install fornax -g`
 
 ## CLI Application
 
@@ -43,14 +43,15 @@ The model representing site settings is defined in `siteModel.fsx` file in the r
 
 Sample `siteModel.fsx`:
 
-```
+```fsharp
 type SiteModel = {
     SomeGlobalValue : string
 }
 ```
 
 Sample `_config.yml`:
-```
+
+```yml
 SomeGlobalValue: "Test global value"
 ```
 
@@ -63,7 +64,8 @@ Templates are defined using DSL defined in `Html` module of `Fornax.Core`.
 All templates should be defined in `templates` folder.
 
 Sample template:
-```
+
+```fsharp
 #r "../lib/Fornax.Core.dll"
 #load "../siteModel.fsx"
 
@@ -91,7 +93,7 @@ Content files are `.md` files containing page content, and a header with setting
 
 Sample page:
 
-```
+```markdown
 ---
 layout: post
 Name: Ja3
@@ -105,7 +107,8 @@ Some blog post written in Markdown
 ### Post list
 
 Templates have `Post list` as one of the input parameters that can be used for navigation, creating tag clouds etc. The `Post` is a record of the following structure:
-```
+
+```fsharp
 type Post = {
     link : string
     title: string
@@ -115,18 +118,18 @@ type Post = {
     content: string
 }
 ```
-It's filled based on respective entries in `layout` part of the post content file. `link` is using name of the file - it's usually something like `\posts\post1.html`
 
+It's filled based on respective entries in `layout` part of the post content file. `link` is using name of the file - it's usually something like `\posts\post1.html`
 
 ## FAQ
 
 1. Hmmm... it looks similar to Jekyll, doesn't it?
 
-* Yes, indeed. But the main advantage over Jekyll is the type safe DSL for defining templates, which uses a normal programming language - no additional syntax to things like loops or conditional statements, it's also very easy to compose templates - you just `#load` other templates and execute them as normal F# functions.
+    * Yes, indeed. But the main advantage over Jekyll is the type safe DSL for defining templates, which uses a normal programming language - no additional syntax to things like loops or conditional statements, it's also very easy to compose templates - you just `#load` other templates and execute them as normal F# functions.
 
 2. What about F# Formatting?
 
-* F# Formatting is really good project, but it doesn't provide its own rendering / templating engine - it's using Razor for that. Fornax right now is handling *only* rendering / templating - hopefully, it should work pretty well as a rendering engine for F# Formatting.
+    * F# Formatting is really good project, but it doesn't provide its own rendering / templating engine - it's using Razor for that. Fornax right now is handling *only* rendering / templating - hopefully, it should work pretty well as a rendering engine for F# Formatting.
 
 ## How to contribute
 
