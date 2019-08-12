@@ -1,3 +1,5 @@
+# Fornax
+
 ![Logo](https://raw.githubusercontent.com/LambdaFactory/Fornax/master/logo/Fornax.png)
 
 Fornax is a static site generator using type safe F# DSL to define page templates.
