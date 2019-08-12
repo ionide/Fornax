@@ -8,15 +8,15 @@ Fornax is a static site generator using type safe F# DSL to define page template
 * Creating pages using templates from `.md` files with `layout` entry
 * Creating plain pages without templates from `md` files without `layout` entry
 * Transforming `.less` files to `.css` files
-* Transforming `.scss` files to `.css` files (require having `sass` installed)
-* Coping other static content to output directory
+* Transforming `.scss` files to `.css` files (requires having `sass` installed)
+* Copying other static content to the output directory
 
 ## Planned features
 
 * Defining `.css` styles using F# DSL
 * Handling site settings defined in multiple files (a la Jekyll's `_data` folder) (multiple models? unified model?)
 
-## Installation.
+## Installation
 
 Fornax is released as a global .Net Core tool. You can install it with `dotnet tool install fornax -g`
 
@@ -26,20 +26,20 @@ The main functionality of Fornax comes from CLI applications that lets user scaf
 
 * `fornax new` - scaffolds new blog in current working directory using really simple template
 * `fornax build` - builds webpage, puts output to `_public` folder
-* `fornax watch` - starts small webserver that host your blog post, and background process that recompiles blog whenever any changes are detected. That's suggested way of working with Fornax
-* `fornax clean` - removes output directory and any temp files.
-* `fornax version` - prints out version of Fornax
+* `fornax watch` - starts a small webserver that hosts your generated site, and a background process that recompiles the site whenever any changes are detected. This is the recommended way of working with Fornax.
+* `fornax clean` - removes output directory and any temp files
+* `fornax version` - prints out the currently-installed version of Fornax
 * `fornax help` - prints out help
 
 ## Website definition
 
-Fornax is using normal F# code (F# script files) to define templates and data types representing content, and yaml and Markdown to provide content (fitting defined models) for the templates. Sample webpage can be found in `samples` folder - to build sample webpage run `fornax build` in this folder.
+Fornax is using normal F# code (F# script files) to define templates and data types representing content, and yaml and Markdown to provide content (fitting defined models) for the templates. A sample website can be found in the `samples` folder - to build it, run `fornax build` in this folder.
 
 ### Site Settings
 
 Site settings are information passed to every page during generation - every template has access to this data.
 
-The model representing site settings is defined in `siteModel.fsx` file in the root folder of the webpage, content of settings is defined in `_config.yml` file in the root folder of the webpage.
+The model representing site settings is defined in `siteModel.fsx` file in the root folder of the website, content of settings is defined in `_config.yml` file in the root folder of the website.
 
 Sample `siteModel.fsx`:
 
@@ -87,7 +87,7 @@ let generate (siteModel : SiteModel) (mdl : Model) (posts: Post list) (content :
 
 ### Page content
 
-Content files are `.md` files containing page content, and header with settings (defined using yaml). Header part is parsed, and passed to template `generate` function as `Model`. Content part is compiled to html and also passed to `generate` function. Header part needs to have `layout` entry which defines which template will be used for the page.
+Content files are `.md` files containing page content, and a header with settings (defined using yaml). The header part is parsed, and passed to the template's `generate` function as `Model`. The content part is compiled to html and also passed to the `generate` function. The header part needs to have the `layout` entry which defines what template will be used for the page.
 
 Sample page:
 
@@ -104,7 +104,7 @@ Some blog post written in Markdown
 
 ### Post list
 
-Templates are getting `Post list` as one of the input parameter that can be used for navigation, creating tag clouds etc. The `Post` is a record of following structure:
+Templates have `Post list` as one of the input parameters that can be used for navigation, creating tag clouds etc. The `Post` is a record of the following structure:
 ```
 type Post = {
     link : string
@@ -122,11 +122,11 @@ It's filled based on respective entries in `layout` part of the post content fil
 
 1. Hmmm... it looks similar to Jekyll, doesn't it?
 
-* Yes, indeed. But the main advantage over Jekyll is type safe DSL for defining templates, and fact it's using normal programming language - no additional syntax to things like loops or conditional statements, it's also very easy to compose templates - you just `#load` other template and execute as normal F# function
+* Yes, indeed. But the main advantage over Jekyll is the type safe DSL for defining templates, which uses a normal programming language - no additional syntax to things like loops or conditional statements, it's also very easy to compose templates - you just `#load` other templates and execute them as normal F# functions.
 
 2. What about F# Formatting?
 
-* F# Formatting is really good project, but it doesn't provide own rendering / templating engine - it's using Razor for that. Fornax right now is handling *only* rendering / templating - hopefully, it should work pretty well as rendering engine for F# Formatting.
+* F# Formatting is really good project, but it doesn't provide its own rendering / templating engine - it's using Razor for that. Fornax right now is handling *only* rendering / templating - hopefully, it should work pretty well as a rendering engine for F# Formatting.
 
 ## How to contribute
 
@@ -136,7 +136,7 @@ There might be a little voice inside that tells you you're not ready; that you n
 
 I assure you, that's not the case.
 
-This project has some clear Contribution Guidelines and expectations that you can [read here](https://github.com/LambdaFactory/Saturn/blob/master/CONTRIBUTING.md).
+This project has some clear Contribution Guidelines and expectations that you can [read here](https://github.com/LambdaFactory/Fornax/blob/master/CONTRIBUTING.md).
 
 The contribution guidelines outline the process that you'll need to follow to get a patch merged. By making expectations and process explicit, I hope it will make it easier for you to contribute.
 
