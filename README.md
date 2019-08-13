@@ -20,7 +20,7 @@ Fornax is a static site generator using type safe F# DSL to define page template
 
 ## Installation
 
-Fornax is released as a global .Net Core tool. You can instVall it with `dotnet tool install fornax -g`
+Fornax is released as a global .Net Core tool. You can install it with `dotnet tool install fornax -g`
 
 ## CLI Application
 
