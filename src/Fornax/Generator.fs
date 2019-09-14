@@ -297,7 +297,7 @@ let getPosts (projectRoot : string) =
     |> Array.map (fun n ->
         // All the text in the .md file.
         let text = Utils.retry 2 (fun _ -> File.ReadAllText n)
-        
+
         let config = getConfig text |> String.split '\n'
 
         let content = getContent text
@@ -311,13 +311,13 @@ let getPosts (projectRoot : string) =
                 config |> List.tryFind (fun n -> n.ToLower().StartsWith "author" ) |> Option.map (fun n -> n.Split(':').[1] |> trimString)
             with
             | _ -> None
-        
+
         let published =
             try
                 config |> List.tryFind (fun n -> n.ToLower().StartsWith "published" ) |> Option.map (fun n -> n.Split(':').[1] |> trimString |> DateTime.Parse)
             with
             | _ -> None
-        
+
         let tags =
             try
                 let x =
@@ -424,7 +424,7 @@ let generateFromSass (projectRoot : string) (path : string) =
 
 let private (|Ignored|Markdown|Less|Sass|StaticFile|) (filename : string) =
     let ext = Path.GetExtension filename
-    if filename.Contains "_public" || filename.Contains "_lib" || filename.Contains "_data" || filename.Contains "_settings" || filename.Contains "_config.yml" || ext = ".fsx" || filename.Contains ".sass-cache" || filename.Contains ".git" then Ignored
+    if filename.Contains "_public" || filename.Contains "_bin" || filename.Contains "_lib" || filename.Contains "_data" || filename.Contains "_settings" || filename.Contains "_config.yml" || ext = ".fsx" || filename.Contains ".sass-cache" || filename.Contains ".git" then Ignored
     elif ext = ".md" then Markdown
     elif ext = ".less" then Less
     elif ext = ".sass" || ext =".scss" then Sass
