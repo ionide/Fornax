@@ -398,3 +398,6 @@ _public
 temp/
 _bin
 release.cmd
+
+.paket/.store
+.paket/paket.exe
