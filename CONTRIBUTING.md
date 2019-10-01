@@ -154,6 +154,7 @@ from the main (upstream) repository:
 ## <a name="build"></a> Build process
 
  * You need [.NET Core 3.0 SDK](https://dotnet.microsoft.com/download/dotnet-core/3.0)
- * `dotnet tool restore` restores the .NET Core 3 local tools defined at .config/dotnet-tools.json
+ * Run `dotnet tool install paket --tool-path .paket --version 5.216.0` to install paket
+ * Run `dotnet tool restore` to restore the .NET Core 3 local tools defined at .config/dotnet-tools.json
  * To build the project run `fake build`
  * To run unit tests run `fake build -t Test`
