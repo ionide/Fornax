@@ -130,9 +130,13 @@ Quotes from "The Strange Case of Dr. Jekyll and Mr. Hyde":
 > -- Robert Louis Stevenson
 
 
-
 ### Tables
 
+#### Pipe Tables
+
+The syntax of pipe tables is documented in the [Markdig pipe table extension specification](https://github.com/lunet-io/markdig/blob/master/src/Markdig.Tests/Specs/PipeTableSpecs.md).
+
+Property         | Value
 ---------------- | ------------------------
 Author           | Robert Louis Stevenson
 Original title   | Strange Case Of Dr Jekyll And Mr Hyde
@@ -142,6 +146,29 @@ Series           | None
 Genre            | Drama, Horror, Thriller, Gothic, Science fiction
 Publisher        | Longmans, Green & Co.
 Publication date | 5 January 1886
+
+
+#### Grid Tables
+
+The syntax of grid tables is documented in the [Markdig grid table extension specification](https://github.com/lunet-io/markdig/blob/master/src/Markdig.Tests/Specs/GridTableSpecs.md).
+
++------------------+--------------------------------------------------+
+| Author           | Robert Louis Stevenson                           |
++------------------+--------------------------------------------------+
+| Original title   | Strange Case Of Dr Jekyll And Mr Hyde            |
++------------------+--------------------------------------------------+
+| Country          | United Kingdom                                   |
++------------------+--------------------------------------------------+
+| Language         | English                                          |
++------------------+--------------------------------------------------+
+| Series           | None                                             |
++------------------+--------------------------------------------------+
+| Genre            | Drama, Horror, Thriller, Gothic, Science fiction |
++------------------+--------------------------------------------------+
+| Publisher        | Longmans, Green & Co.                            |
++------------------+--------------------------------------------------+
+| Publication date | 5 January 1886                                   |
++------------------+--------------------------------------------------+
 
 
 ### Code n Code Blocks
