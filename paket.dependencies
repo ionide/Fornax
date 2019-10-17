@@ -11,7 +11,7 @@ nuget FSharp.Quotations.Evaluator
 nuget Argu
 nuget Suave
 
-nuget CommonMark.NET
+nuget Markdig
 nuget dotless.Core
 nuget YamlDotNet
 
