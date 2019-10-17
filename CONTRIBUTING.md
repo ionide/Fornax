@@ -77,7 +77,7 @@ Before you submit your pull request consider the following guidelines:
 * Build your changes locally to ensure all the tests pass:
 
     ```shell
-    grunt test
+    dotnet fake build -t test
     ```
 
 * Push your branch to GitHub:
@@ -154,7 +154,6 @@ from the main (upstream) repository:
 ## <a name="build"></a> Build process
 
  * You need [.NET Core 3.0 SDK](https://dotnet.microsoft.com/download/dotnet-core/3.0)
- * Run `dotnet tool install paket --tool-path .paket --version 5.216.0` to install paket
  * Run `dotnet tool restore` to restore the .NET Core 3 local tools defined at .config/dotnet-tools.json
  * To build the project run `dotnet fake build`
  * To run unit tests run `dotnet fake build -t Test`
