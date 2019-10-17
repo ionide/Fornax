@@ -133,15 +133,23 @@ Quotes from "The Strange Case of Dr. Jekyll and Mr. Hyde":
 
 ### Tables
 
----------------- | ------------------------
-Author           | Robert Louis Stevenson
-Original title   | Strange Case Of Dr Jekyll And Mr Hyde
-Country          | United Kingdom
-Language         | English
-Series           | None
-Genre            | Drama, Horror, Thriller, Gothic, Science fiction
-Publisher        | Longmans, Green & Co.
-Publication date | 5 January 1886
++------------------+--------------------------------------------------+
+| Author         | Robert Louis Stevenson                             |
++------------------+--------------------------------------------------+
+| Original title   | Strange Case Of Dr Jekyll And Mr Hyde            |
++------------------+--------------------------------------------------+
+| Country          | United Kingdom                                   |
++------------------+--------------------------------------------------+
+| Language         | English                                          |
++------------------+--------------------------------------------------+
+| Series           | None                                             |
++------------------+--------------------------------------------------+
+| Genre            | Drama, Horror, Thriller, Gothic, Science fiction |
++------------------+--------------------------------------------------+
+| Publisher        | Longmans, Green & Co.                            |
++------------------+--------------------------------------------------+
+| Publication date | 5 January 1886                                   |
++------------------+--------------------------------------------------+
 
 
 ### Code n Code Blocks

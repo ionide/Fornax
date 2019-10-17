@@ -189,12 +189,17 @@ module Logger =
 
 module ContentParser =
     open Configuration
+    open Markdig
 
     let private isSeparator (input : string) =
         input.StartsWith "---"
 
     let private isLayout (input : string) =
         input.StartsWith "layout:"
+
+    let markdownPipeline =
+        MarkdownPipelineBuilder().UseGridTables()
+            .Build()
 
     ///`fileContent` - content of page to parse. Usually whole content of `.md` file
     ///`modelType` - `System.Type` representing type used as model of the page
@@ -209,7 +214,7 @@ module ContentParser =
 
         let content = content |> Array.skip 1 |> String.concat "\n"
         let config = config |> String.concat "\n"
-        let contentOutput = CommonMark.CommonMarkConverter.Convert content
+        let contentOutput = Markdown.ToHtml(content, markdownPipeline)
         let configOutput = Yaml.parse modelType config
         configOutput, contentOutput
 
@@ -240,14 +245,14 @@ module ContentParser =
         let _, content = fileContent |> Array.splitAt indexOfSeperator
 
         let content = content |> Array.skip 1 |> String.concat "\n"
-        CommonMark.CommonMarkConverter.Convert content
+        Markdown.ToHtml(content, markdownPipeline)
 
     let containsLayout (fileContent : string) =
         fileContent.Split '\n'
         |> Array.exists isLayout
 
     let compileMarkdown (fileContent : string) =
-        CommonMark.CommonMarkConverter.Convert fileContent
+        Markdown.ToHtml(fileContent, markdownPipeline)
 
 type Link = string
 type Title = string
