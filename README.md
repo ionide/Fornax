@@ -39,7 +39,7 @@ Fornax is using normal F# code (F# script files) to define layouts and data type
 
 ### Site Settings
 
-Site settings are information passed to every page during generation - every template has access to this data.
+Site settings are information passed to every page during generation - every layout has access to this data.
 
 The model representing site settings is defined in `siteModel.fsx` file in the root folder of the website, content of settings is defined in `_config.yml` file in the root folder of the website.
 
@@ -59,13 +59,13 @@ SomeGlobalValue: "Test global value"
 
 ### Layouts
 
-Layouts are F# script files representing different layouts that can be used in the website. They need to `#load` `siteModel.fsx` file, and `#r` `Fornax.Core.dll`. They need to define F# record called `Model` which defines additional settings passed to this particular template, and `generate` function of following signature: `SiteModel -> Model -> Post list -> string -> HtmlElement`. `SiteModel` is type representing global settings of webpage, `Model` is type representing settings for this template, `Post list` contains simplified information about all available posts in the blog (useful for navigation, creating tag cloud etc.) `string` is main content of post (already compiled to `html`).
+Layouts are F# script files representing different layouts that can be used in the website. They need to `#load` `siteModel.fsx` file, and `#r` `Fornax.Core.dll`. They need to define F# record called `Model` which defines additional settings passed to this particular layout, and `generate` function of following signature: `SiteModel -> Model -> Post list -> string -> HtmlElement`. `SiteModel` is type representing global settings of webpage, `Model` is type representing settings for this layout, `Post list` contains simplified information about all available posts in the blog (useful for navigation, creating tag cloud etc.) `string` is main content of post (already compiled to `html`).
 
 Layouts are defined using DSL defined in `Html` module of `Fornax.Core`.
 
 All layouts should be defined in `layouts` folder.
 
-Sample template:
+Sample layout:
 
 ```fsharp
 #r "../lib/Fornax.Core.dll"
@@ -91,7 +91,7 @@ let generate (siteModel : SiteModel) (mdl : Model) (posts: Post list) (content :
 
 ### Page content
 
-Content files are `.md` files containing page content, and a header with settings (defined using yaml). The header part is parsed, and passed to the template's `generate` function as `Model`. The content part is compiled to html and also passed to the `generate` function. The header part needs to have the `layout` entry which defines what template will be used for the page.
+Content files are `.md` files containing page content, and a header with settings (defined using yaml). The header part is parsed, and passed to the layout's `generate` function as `Model`. The content part is compiled to html and also passed to the `generate` function. The header part needs to have the `layout` entry which defines what layout will be used for the page.
 
 Sample page:
 

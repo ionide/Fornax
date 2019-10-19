@@ -135,9 +135,9 @@ module Evaluator =
         let genExpr = input.ReflectionValue :?> Quotations.Expr
         QuotationEvaluator.CompileUntyped genExpr
 
-    let private getContentFromTemplate' (templatePath : string) =
-        let filename = getOpen templatePath
-        let load = getLoad templatePath
+    let private getContentFromLayout' (layoutPath : string) =
+        let filename = getOpen layoutPath
+        let load = getLoad layoutPath
 
         let _, errs = fsi.EvalInteractionNonThrowing(sprintf "#load \"%s\";;" load)
         if errs.Length > 0 then printfn "[ERROR 1] Load Errors : %A" errs
@@ -152,22 +152,22 @@ module Evaluator =
         if errs.Length > 0 then printfn "[ERROR 4] Get site model Errors : %A" errs
 
         let funType,errs = fsi.EvalExpressionNonThrowing "<@@ fun a b c d -> (generate a b (Post.Construct c) d) |> HtmlElement.ToString @@>"
-        if errs.Length > 0 then printfn "[ERROR 5] Get template Errors : %A" errs
+        if errs.Length > 0 then printfn "[ERROR 5] Get layout Errors : %A" errs
 
         match modelType, siteModelType, funType with
         | Choice1Of2 (Some mt), Choice1Of2 (Some smt), Choice1Of2 (Some ft) ->
             Some (mt, smt, ft)
         | _ -> None
 
-    let private getContentFromTemplate = Utils.memoizeScriptFile getContentFromTemplate'
+    let private getContentFromLayout = Utils.memoizeScriptFile getContentFromLayout'
 
 
-    ///`templatePath` - absolute path to `.fsx` file containing the template
+    ///`layoutPath` - absolute path to `.fsx` file containing the layout
     ///`getSiteModel` - function generating instance of site settings model of given type
     ///`getContentModel` - function generating instance of page mode of given type
     ///`body` - content of the post (in html)
-    let evaluate posts (templatePath : string) (getSiteModel : System.Type -> obj) (getContentModel : System.Type -> obj * string) =
-        match getContentFromTemplate templatePath with
+    let evaluate posts (layoutPath : string) (getSiteModel : System.Type -> obj) (getContentModel : System.Type -> obj * string) =
+        match getContentFromLayout layoutPath with
         |  Some (mt, smt, ft) ->
             let modelInput, body = getContentModel (mt.ReflectionValue :?> Type)
             let siteInput = getSiteModel (smt.ReflectionValue :?> Type)
@@ -214,7 +214,7 @@ module ContentParser =
         configOutput, contentOutput
 
     ///`fileContent` - content of page to parse. Usually whole content of `.md` file
-    ///returns name of template that should be used for the page
+    ///returns name of layout that should be used for the page
     let getLayout (fileContent : string) =
         fileContent.Split '\n'
         |> Array.find isLayout
@@ -348,9 +348,9 @@ let generate posts (projectRoot : string) (page : string) =
 
         let settingsLoader = settingsParser settingsText
         let modelLoader = contentParser contentText
-        let templatePath = Path.Combine(projectRoot, "layouts", layout + ".fsx")
+        let layoutPath = Path.Combine(projectRoot, "layouts", layout + ".fsx")
 
-        let result = Evaluator.evaluate posts templatePath settingsLoader modelLoader
+        let result = Evaluator.evaluate posts layoutPath settingsLoader modelLoader
 
         match result with
         | Some r ->
