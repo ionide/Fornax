@@ -348,7 +348,7 @@ let generate posts (projectRoot : string) (page : string) =
 
         let settingsLoader = settingsParser settingsText
         let modelLoader = contentParser contentText
-        let templatePath = Path.Combine(projectRoot, "templates", layout + ".fsx")
+        let templatePath = Path.Combine(projectRoot, "layouts", layout + ".fsx")
 
         let result = Evaluator.evaluate posts templatePath settingsLoader modelLoader
 
