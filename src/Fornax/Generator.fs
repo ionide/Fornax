@@ -198,7 +198,9 @@ module ContentParser =
         input.StartsWith "layout:"
 
     let markdownPipeline =
-        MarkdownPipelineBuilder().UseGridTables()
+        MarkdownPipelineBuilder()
+            .UsePipeTables()
+            .UseGridTables()
             .Build()
 
     ///`fileContent` - content of page to parse. Usually whole content of `.md` file
