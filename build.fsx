@@ -22,7 +22,7 @@ open Fake.Api
 // --------------------------------------------------------------------------------------
 
 let project = "Fornax"
-let summary = "Fornax is a static site generator using type safe F# DSL to define page templates"
+let summary = "Fornax is a static site generator using type safe F# DSL to define page layouts"
 
 let gitOwner = "LambdaFactory"
 let gitHome = "https://github.com/" + gitOwner

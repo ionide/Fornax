@@ -2,11 +2,11 @@
 
 ![Logo](https://raw.githubusercontent.com/LambdaFactory/Fornax/master/logo/Fornax.png)
 
-Fornax is a static site generator using type safe F# DSL to define page templates.
+Fornax is a static site generator using type safe F# DSL to define page layouts.
 
 ## Working features
 
-* Defining templates in F# DSL
+* Defining layouts in F# DSL
 * Creating pages using templates from `.md` files with `layout` entry
 * Creating plain pages without templates from `md` files without `layout` entry
 * Transforming `.less` files to `.css` files
@@ -35,11 +35,11 @@ The main functionality of Fornax comes from CLI applications that lets user scaf
 
 ## Website definition
 
-Fornax is using normal F# code (F# script files) to define templates and data types representing content, and yaml and Markdown to provide content (fitting defined models) for the templates. A sample website can be found in the `samples` folder - to build it, run `fornax build` in this folder.
+Fornax is using normal F# code (F# script files) to define layouts and data types representing content, and yaml and Markdown to provide content (fitting defined models) for the layouts. A sample website can be found in the `samples` folder - to build it, run `fornax build` in this folder.
 
 ### Site Settings
 
-Site settings are information passed to every page during generation - every template has access to this data.
+Site settings are information passed to every page during generation - every layout has access to this data.
 
 The model representing site settings is defined in `siteModel.fsx` file in the root folder of the website, content of settings is defined in `_config.yml` file in the root folder of the website.
 
@@ -57,15 +57,15 @@ Sample `_config.yml`:
 SomeGlobalValue: "Test global value"
 ```
 
-### Templates
+### Layouts
 
-Templates are F# script files representing different templates that can be used in the website. They need to `#load` `siteModel.fsx` file, and `#r` `Fornax.Core.dll`. They need to define F# record called `Model` which defines additional settings passed to this particular template, and `generate` function of following signature: `SiteModel -> Model -> Post list -> string -> HtmlElement`. `SiteModel` is type representing global settings of webpage, `Model` is type representing settings for this template, `Post list` contains simplified information about all available posts in the blog (useful for navigation, creating tag cloud etc.) `string` is main content of post (already compiled to `html`).
+Layouts are F# script files representing different layouts that can be used in the website. They need to `#load` `siteModel.fsx` file, and `#r` `Fornax.Core.dll`. They need to define F# record called `Model` which defines additional settings passed to this particular layout, and `generate` function of following signature: `SiteModel -> Model -> Post list -> string -> HtmlElement`. `SiteModel` is type representing global settings of webpage, `Model` is type representing settings for this layout, `Post list` contains simplified information about all available posts in the blog (useful for navigation, creating tag cloud etc.) `string` is main content of post (already compiled to `html`).
 
-Templates are defined using DSL defined in `Html` module of `Fornax.Core`.
+Layouts are defined using DSL defined in `Html` module of `Fornax.Core`.
 
-All templates should be defined in `templates` folder.
+All layouts should be defined in `layouts` folder.
 
-Sample template:
+Sample layout:
 
 ```fsharp
 #r "../lib/Fornax.Core.dll"
@@ -91,7 +91,7 @@ let generate (siteModel : SiteModel) (mdl : Model) (posts: Post list) (content :
 
 ### Page content
 
-Content files are `.md` files containing page content, and a header with settings (defined using yaml). The header part is parsed, and passed to the template's `generate` function as `Model`. The content part is compiled to html and also passed to the `generate` function. The header part needs to have the `layout` entry which defines what template will be used for the page.
+Content files are `.md` files containing page content, and a header with settings (defined using yaml). The header part is parsed, and passed to the layout's `generate` function as `Model`. The content part is compiled to html and also passed to the `generate` function. The header part needs to have the `layout` entry which defines what layout will be used for the page.
 
 Sample page:
 
@@ -108,7 +108,7 @@ Some blog post written in Markdown
 
 ### Post list
 
-Templates have `Post list` as one of the input parameters that can be used for navigation, creating tag clouds etc. The `Post` is a record of the following structure:
+Layouts have `Post list` as one of the input parameters that can be used for navigation, creating tag clouds etc. The `Post` is a record of the following structure:
 
 ```fsharp
 type Post = {
@@ -127,7 +127,7 @@ It's filled based on respective entries in `layout` part of the post content fil
 
 1. Hmmm... it looks similar to Jekyll, doesn't it?
 
-    * Yes, indeed. But the main advantage over Jekyll is the type safe DSL for defining templates, which uses a normal programming language - no additional syntax to things like loops or conditional statements, it's also very easy to compose templates - you just `#load` other templates and execute them as normal F# functions.
+    * Yes, indeed. But the main advantage over Jekyll is the type safe DSL for defining layouts, which uses a normal programming language - no additional syntax to things like loops or conditional statements, it's also very easy to compose layouts - you just `#load` other layouts and execute them as normal F# functions.
 
 2. What about F# Formatting?
 
