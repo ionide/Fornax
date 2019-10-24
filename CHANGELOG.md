@@ -1,3 +1,7 @@
+### 0.3.0 - 16.10.2019
+* Update to .NET Core 3.0
+* Adds tools manifest .config/dotnet-tools.json
+
 ### 0.2.0 - 05.08.2019
 * Update to .Net Core
 * Distribute as .Net Core global tool
