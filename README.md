@@ -155,3 +155,5 @@ The project is hosted on [GitHub](https://github.com/LambdaFactory/Fornax) where
 the project and submit pull requests. Please read [Contribution Guide](https://github.com/LambdaFactory/Fornax/blob/master/CONTRIBUTING.md)
 
 The library is available under [MIT license](https://github.com/LambdaFactory/Fornax/blob/master/LICENSE.md), which allows modification and redistribution for both commercial and non-commercial purposes.
+
+Please note that this project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
