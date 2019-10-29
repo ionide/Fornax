@@ -61,6 +61,14 @@ let router basePath =
         (Files.browse (Path.Combine(basePath, "_public")))
     ]
 
+let hasGeneratorErrors (generatorResults : GeneratorResult []) =
+    generatorResults
+    |> Array.tryFind
+        (function
+         | GeneratorFailure _ -> true
+         | _ -> false)
+    |> Option.isSome
+
 [<EntryPoint>]
 let main argv =
     let parser = ArgumentParser.Create<Arguments>(programName = "fornax", errorHandler = FornaxExiter ())
@@ -104,20 +112,25 @@ let main argv =
 
             0
         | Some Build ->
-            Generator.generateFolder cwd
-            0
+            let results = Generator.generateFolder cwd
+            if hasGeneratorErrors results then
+                1
+            else
+                0
         | Some Watch ->
             let mutable lastAccessed = Map.empty<string, DateTime>
-            generateFolder cwd
+            let results = generateFolder cwd
+            if hasGeneratorErrors results then printfn "Generated site with errors. Waiting for changes..."
             use watcher = createFileWatcher cwd (fun e ->
-                if not (e.FullPath.Contains "_public") && not (e.FullPath.Contains ".sass-cache") && not (e.FullPath.Contains ".git") then
+                if not (e.FullPath.Contains "_public") && not (e.FullPath.Contains ".sass-cache") && not (e.FullPath.Contains ".git") && not (e.FullPath.Contains ".ionide") then
                     let lastTimeWrite = File.GetLastWriteTime(e.FullPath)
                     match lastAccessed.TryFind e.FullPath with
                     | Some lt when Math.Abs((lt - lastTimeWrite).Seconds) < 1 -> ()
                     | _ ->
                         printfn "[%s] Changes detected: %s" (DateTime.Now.ToString("HH:mm:ss")) e.FullPath
                         lastAccessed <- lastAccessed.Add(e.FullPath, lastTimeWrite)
-                        Generator.generateFolder cwd)
+                        let watchedResults = Generator.generateFolder cwd
+                        if hasGeneratorErrors watchedResults then printfn "Generated site with errors. Waiting for changes...")
             startWebServerAsync defaultConfig (router cwd) |> snd |> Async.Start
             printfn "[%s] Watch mode started. Press any key to exit." (DateTime.Now.ToString("HH:mm:ss"))
             Console.ReadKey() |> ignore
