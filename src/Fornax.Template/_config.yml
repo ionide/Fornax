@@ -1,7 +1,8 @@
-###########
-# site.title, site.url, site.author_name
+# In case you need to exclude directories you can use the `exclude` option
+# exclude:
+#   - "node_modules/"
+#   - "packages/"
 
-title:   'Jekyll Minimal Theme'
-author_name: 'Jekyll Minimal Theme Team'
-url:  'http://henrythemes.github.io/jekyll-minimal-theme'
-
+# In case you want to bundle your less/scss define a single entry point
+# style:
+#  entry: "main.scss"

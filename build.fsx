@@ -39,10 +39,10 @@ let release = ReleaseNotes.parse (System.IO.File.ReadAllLines "CHANGELOG.md")
 let packageDir = __SOURCE_DIRECTORY__ </> "out"
 let buildDir = __SOURCE_DIRECTORY__ </> "temp"
 
-
 // --------------------------------------------------------------------------------------
 // Helpers
 // --------------------------------------------------------------------------------------
+
 let isNullOrWhiteSpace = System.String.IsNullOrWhiteSpace
 let exec cmd args dir =
     if Process.execSimple( fun info ->
@@ -59,6 +59,7 @@ let exec cmd args dir =
 let getBuildParam = Environment.environVar
 
 let DoNothing = ignore
+
 // --------------------------------------------------------------------------------------
 // Build Targets
 // --------------------------------------------------------------------------------------
@@ -104,11 +105,11 @@ Target.create "Build" (fun _ ->
 
 Target.create "Publish" (fun _ ->
     DotNet.publish (fun p -> {p with OutputPath = Some buildDir}) "src/Fornax"
-
 )
 
 Target.create "Test" (fun _ ->
     exec "dotnet"  @"run --project .\test\Fornax.Core.UnitTests\Fornax.Core.UnitTests.fsproj" "."
+    exec "dotnet"  @"run --project .\test\Fornax.UnitTests\Fornax.UnitTests.fsproj" "."
 )
 
 // --------------------------------------------------------------------------------------
@@ -183,6 +184,7 @@ Target.create "Push" (fun _ ->
 // --------------------------------------------------------------------------------------
 // Build order
 // --------------------------------------------------------------------------------------
+
 Target.create "Default" DoNothing
 Target.create "Release" DoNothing
 

@@ -41,7 +41,7 @@ Fornax is using normal F# code (F# script files) to define layouts and data type
 
 Site settings are information passed to every page during generation - every layout has access to this data.
 
-The model representing site settings is defined in `siteModel.fsx` file in the root folder of the website, content of settings is defined in `_config.yml` file in the root folder of the website.
+The model representing site settings is defined in `siteModel.fsx` file in the root folder of the website, content of settings is defined in `_siteModel.yml` file in the root folder of the website.
 
 Sample `siteModel.fsx`:
 
@@ -51,7 +51,7 @@ type SiteModel = {
 }
 ```
 
-Sample `_config.yml`:
+Sample `_siteModel.yml`:
 
 ```yml
 SomeGlobalValue: "Test global value"

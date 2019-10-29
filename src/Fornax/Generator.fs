@@ -244,13 +244,13 @@ module ContentParser =
         let fileContent = fileContent.Split '\n'
         let fileContent = fileContent |> Array.skip 1 //First line must be ---
         let indexOfSeperator = fileContent |> Array.findIndex isSeparator
-        let config, content = fileContent |> Array.splitAt indexOfSeperator
+        let siteConfig, content = fileContent |> Array.splitAt indexOfSeperator
 
         let content = content |> Array.skip 1 |> String.concat "\n"
-        let config = config |> String.concat "\n"
+        let siteConfig = siteConfig |> String.concat "\n"
         let contentOutput = Markdown.ToHtml(content, markdownPipeline)
-        let configOutput = Yaml.parse modelType config
-        configOutput, contentOutput
+        let siteConfigOutput = Yaml.parse modelType siteConfig
+        siteConfigOutput, contentOutput
 
     ///`fileContent` - content of page to parse. Usually whole content of `.md` file
     ///returns name of layout that should be used for the page
@@ -304,7 +304,7 @@ type Content = string
 module SiteSettingsParser =
     open Configuration
 
-    ///`fileContent` - site settings to parse. Usually whole content of `site.yml` file
+    ///`fileContent` - site settings to parse. Usually whole content of `siteModel.yml` file
     ///`modelType` - `System.Type` representing type used as model of the global site settings
     let parse fileContent (modelType : Type) =
         Yaml.parse modelType fileContent
@@ -316,7 +316,9 @@ module StyleParser =
         dotless.Core.Less.Parse fileContent
 
 let private contentParser : string -> System.Type -> obj * string  = Utils.memoizeParser ContentParser.parse
-let private settingsParser : string -> System.Type -> obj = Utils.memoizeParser SiteSettingsParser.parse
+let private siteSettingsParser : string -> System.Type -> obj = Utils.memoizeParser SiteSettingsParser.parse
+let private fornaxSettingsParser : string -> Configuration.FornaxConfiguration.FornaxConfiguration =
+    Utils.memoize Configuration.FornaxConfiguration.parseFornaxConfiguration
 let private getLayout : string -> string = Utils.memoize  ContentParser.getLayout
 let private getConfig : string -> string = Utils.memoize  ContentParser.getConfig
 let private getContent : string -> string = Utils.memoize  ContentParser.getContent
@@ -327,6 +329,17 @@ let private parseLess : string -> string = Utils.memoize StyleParser.parseLess
 
 let private trimString (str : string) =
     str.Trim().TrimEnd('"').TrimStart('"')
+
+let getFornaxConfig (projectRoot : string) =
+    let configFileName = "_config.yml"
+
+    let configFileContent =
+        if File.Exists (Path.Combine(projectRoot, configFileName)) then
+            Utils.retry 2 (fun _ -> File.ReadAllText configFileName)
+        else
+            ""
+
+    fornaxSettingsParser configFileContent
 
 let getPosts (projectRoot : string) =
     let postsPath = Path.Combine(projectRoot, "posts")
@@ -382,7 +395,7 @@ type GeneratorResult =
 let generate posts (projectRoot : string) (page : string) =
     let startTime = DateTime.Now
     let contentPath = Path.Combine(projectRoot, page)
-    let settingsPath = Path.Combine(projectRoot, "_config.yml")
+    let settingsPath = Path.Combine(projectRoot, "_siteModel.yml")
     let outputPath =
         let p = Path.ChangeExtension(page, ".html")
         Path.Combine(projectRoot, "_public", p)
@@ -393,7 +406,7 @@ let generate posts (projectRoot : string) (page : string) =
         let settingsText = Utils.retry 2 (fun _ -> File.ReadAllText settingsPath)
         let layout = getLayout contentText
 
-        let settingsLoader = settingsParser settingsText
+        let settingsLoader = siteSettingsParser settingsText
         let modelLoader = contentParser contentText
         let layoutPath = Path.Combine(projectRoot, "layouts", layout + ".fsx")
 
@@ -485,10 +498,31 @@ let generateFromSass (projectRoot : string) (path : string) =
             |> fun s -> s + Environment.NewLine + "Please check you have installed the Sass compiler if you are going to be using files with extension .scss. https://sass-lang.com/install"
             |> GeneratorFailure
 
-let private (|Ignored|Markdown|Less|Sass|StaticFile|) (filename : string) =
+let private isWithinIgnoredDiretories (excluded : string list) (filename : string) =
+    let alwaysIgnored = [
+        "_public"
+        "_bin"
+        "_lib"
+        "_data"
+        "_settings"
+        "_siteModel.yml"
+        "_config.yml"
+        ".sass-cache"
+        ".git"
+        ".ionide"
+    ]
+
+    alwaysIgnored @ excluded
+    |> List.fold (fun prev current -> filename.Contains current || prev) false
+
+let private (|Ignored|_|) (config : Configuration.FornaxConfiguration.FornaxConfiguration) (filename : string) =
     let ext = Path.GetExtension filename
-    if filename.Contains "_public" || filename.Contains "_bin" || filename.Contains "_lib" || filename.Contains "_data" || filename.Contains "_settings" || filename.Contains "_config.yml" || ext = ".fsx" || filename.Contains ".sass-cache" || filename.Contains ".git" || filename.Contains ".ionide" then Ignored
-    elif ext = ".md" then Markdown
+    if isWithinIgnoredDiretories config.Exclude filename || ext = ".fsx" then Some Ignored
+    else None
+
+let private (|Markdown|Less|Sass|StaticFile|) (filename : string) =
+    let ext = Path.GetExtension filename
+    if ext = ".md" then Markdown
     elif ext = ".less" then Less
     elif ext = ".sass" || ext =".scss" then Sass
     else StaticFile
@@ -504,6 +538,8 @@ let generateFolder (projectRoot : string) =
         if projectRoot.EndsWith (string Path.DirectorySeparatorChar) then projectRoot
         else projectRoot + (string Path.DirectorySeparatorChar)
 
+    let fornaxConfig = getFornaxConfig projectRoot
+
     let posts = getPosts projectRoot
 
     let logResult (result : GeneratorResult) =
@@ -516,12 +552,21 @@ let generateFolder (projectRoot : string) =
             // if one generator fails we want to exit early and report the problem to the operator
             raise (FornaxGeneratorException message)
 
+    let generateStyleDependingOnEntry (generator : string -> GeneratorResult) (fileName : string) =
+        match fornaxConfig.StyleConfiguration with
+        | { Entry = Some entryName} ->
+            if fileName.Contains entryName then
+                generator fileName
+            else
+                GeneratorIgnored
+        | _ -> generator fileName
+
     Directory.GetFiles(projectRoot, "*", SearchOption.AllDirectories)
     |> Array.iter (fun n ->
         match n with
-        | Ignored -> GeneratorIgnored
+        | Ignored fornaxConfig-> GeneratorIgnored
         | Markdown -> n |> relative projectRoot |> generate posts projectRoot
-        | Less -> n |> relative projectRoot |> generateFromLess projectRoot
-        | Sass  -> n |> relative projectRoot |> generateFromSass projectRoot
-        | StaticFile -> n |> relative projectRoot |> copyStaticFile projectRoot
+        | Less -> n |> relative projectRoot |> generateStyleDependingOnEntry (generateFromLess projectRoot)
+        | Sass  -> n |> relative projectRoot |> generateStyleDependingOnEntry (generateFromSass projectRoot)
+        | StaticFile  -> n |> relative projectRoot |> copyStaticFile projectRoot
         |> logResult)

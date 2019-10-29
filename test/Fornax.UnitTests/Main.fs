@@ -1,4 +1,4 @@
-module Fornax.Core.UnitTests
+﻿module Fornax.UnitTests
 
 open Expecto
 

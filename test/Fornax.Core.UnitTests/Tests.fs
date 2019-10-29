@@ -2,7 +2,6 @@ module Tests
 
 open Expecto
 
-
 [<Tests>]
 let modelTests =
     testList "Test Model" [
