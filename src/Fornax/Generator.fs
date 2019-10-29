@@ -184,6 +184,7 @@ module Logger =
         { new IDisposable with
               member x.Dispose() = Console.ForegroundColor <- current }
 
+    let informationfn str = Printf.kprintf (fun s -> use c = consoleColor ConsoleColor.Green in printfn "%s" s) str
     let error str = Printf.kprintf (fun s -> use c = consoleColor ConsoleColor.Red in printf "%s" s) str
     let errorfn str = Printf.kprintf (fun s -> use c = consoleColor ConsoleColor.Red in printfn "%s" s) str
 
@@ -296,7 +297,6 @@ let private parseLess : string -> string = Utils.memoize StyleParser.parseLess
 let private trimString (str : string) =
     str.Trim().TrimEnd('"').TrimStart('"')
 
-
 let getPosts (projectRoot : string) =
     let postsPath = Path.Combine(projectRoot, "posts")
     Directory.GetFiles postsPath
@@ -337,6 +337,13 @@ let getPosts (projectRoot : string) =
 
         ((link:Link), (title:Title), (author:Author), (published:Published), (tags:Tags), (content:Content)))
 
+type GeneratorMessage = string
+
+type GeneratorResult =
+    | GeneratorIgnored
+    | GeneratorSuccess of GeneratorMessage option
+    | GeneratorFailure of GeneratorMessage
+
 ///`projectRoot` - path to the root of website
 ///`page` - path to page that should be generated
 let generate posts (projectRoot : string) (page : string) =
@@ -366,15 +373,23 @@ let generate posts (projectRoot : string) (page : string) =
             File.WriteAllText(outputPath, r)
             let endTime = DateTime.Now
             let ms = (endTime - startTime).Milliseconds
-            printfn "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
+            sprintf "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
+            |> Some
+            |> GeneratorSuccess
         | None ->
             let endTime = DateTime.Now
-            printfn "[%s] '%s' generation failed" (endTime.ToString("HH:mm:ss")) outputPath
+            sprintf "[%s] '%s' generation failed" (endTime.ToString("HH:mm:ss")) outputPath
+            |> GeneratorFailure
     else
         let r = compileMarkdown contentText
         let dir = Path.GetDirectoryName outputPath
         if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
         File.WriteAllText(outputPath, r)
+        let endTime = DateTime.Now
+        let ms = (endTime - startTime).Milliseconds
+        sprintf "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
+        |> Some
+        |> GeneratorSuccess
 
 ///`projectRoot` - path to the root of website
 ///`path` - path to file that should be copied
@@ -384,6 +399,7 @@ let copyStaticFile  (projectRoot : string) (path : string) =
     let dir = Path.GetDirectoryName outputPath
     if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
     File.Copy(inputPath, outputPath, true)
+    GeneratorSuccess None
 
 ///`projectRoot` - path to the root of website
 ///`path` - path to `.less` file that should be copied
@@ -398,10 +414,12 @@ let generateFromLess (projectRoot : string) (path : string) =
     File.WriteAllText(outputPath, res)
     let endTime = DateTime.Now
     let ms = (endTime - startTime).Milliseconds
-    printfn "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
+    sprintf "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
+    |> Some
+    |> GeneratorSuccess
 
 ///`projectRoot` - path to the root of website
-///`path` - path to `.less` file that should be copied
+///`path` - path to `.scss` or `.sass` file that should be copied
 let generateFromSass (projectRoot : string) (path : string) =
     let startTime = DateTime.Now
     let inputPath = Path.Combine(projectRoot, path)
@@ -422,16 +440,19 @@ let generateFromSass (projectRoot : string) (path : string) =
         proc.WaitForExit()
         let endTime = DateTime.Now
         let ms = (endTime - startTime).Milliseconds
-        printfn "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
+        sprintf "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
+        |> Some
+        |> GeneratorSuccess
     with
         | :? System.ComponentModel.Win32Exception as ex ->
             let endTime = DateTime.Now
-            Logger.error  "[%s] Generation of '%s' failed. " (endTime.ToString("HH:mm:ss")) path'
-            Logger.errorfn "Please check you have installed the Sass compiler if you are going to be using files with extension .scss. https://sass-lang.com/install"
+            sprintf "[%s] Generation of '%s' failed. " (endTime.ToString("HH:mm:ss")) path'
+            |> fun s -> s + "\n" + "Please check you have installed the Sass compiler if you are going to be using files with extension .scss. https://sass-lang.com/install"
+            |> GeneratorFailure
 
 let private (|Ignored|Markdown|Less|Sass|StaticFile|) (filename : string) =
     let ext = Path.GetExtension filename
-    if filename.Contains "_public" || filename.Contains "_bin" || filename.Contains "_lib" || filename.Contains "_data" || filename.Contains "_settings" || filename.Contains "_config.yml" || ext = ".fsx" || filename.Contains ".sass-cache" || filename.Contains ".git" then Ignored
+    if filename.Contains "_public" || filename.Contains "_bin" || filename.Contains "_lib" || filename.Contains "_data" || filename.Contains "_settings" || filename.Contains "_config.yml" || ext = ".fsx" || filename.Contains ".sass-cache" || filename.Contains ".git" || filename.Contains ".ionide" then Ignored
     elif ext = ".md" then Markdown
     elif ext = ".less" then Less
     elif ext = ".sass" || ext =".scss" then Sass
@@ -450,11 +471,22 @@ let generateFolder (projectRoot : string) =
 
     let posts = getPosts projectRoot
 
+    let logResult (result : GeneratorResult) =
+        match result with
+        | GeneratorIgnored -> ()
+        | GeneratorSuccess None -> ()
+        | GeneratorSuccess (Some message) ->
+            Logger.informationfn "%s" message
+        | GeneratorFailure message ->
+            Logger.errorfn "%s" message
+        result
+
     Directory.GetFiles(projectRoot, "*", SearchOption.AllDirectories)
-    |> Array.iter (fun n ->
+    |> Array.map (fun n ->
         match n with
-        | Ignored -> ()
+        | Ignored -> GeneratorIgnored
         | Markdown -> n |> relative projectRoot |> generate posts projectRoot
         | Less -> n |> relative projectRoot |> generateFromLess projectRoot
         | Sass  -> n |> relative projectRoot |> generateFromSass projectRoot
-        | StaticFile -> n |> relative projectRoot |> copyStaticFile projectRoot )
+        | StaticFile -> n |> relative projectRoot |> copyStaticFile projectRoot
+        |> logResult)
