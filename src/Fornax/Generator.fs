@@ -77,6 +77,14 @@ module Evaluator =
     open Microsoft.FSharp.Compiler.Interactive.Shell
     open FSharp.Quotations.Evaluator
     open FSharp.Reflection
+    open Microsoft.FSharp.Compiler.SourceCodeServices
+
+    type ContentError =
+    | LoadError of FSharpErrorInfo
+    | OpenError of FSharpErrorInfo
+    | ModelError of FSharpErrorInfo
+    | SiteModelError of FSharpErrorInfo
+    | LayoutError of FSharpErrorInfo
 
     let private sbOut = StringBuilder()
     let private sbErr = StringBuilder()
@@ -139,25 +147,34 @@ module Evaluator =
         let filename = getOpen layoutPath
         let load = getLoad layoutPath
 
-        let _, errs = fsi.EvalInteractionNonThrowing(sprintf "#load \"%s\";;" load)
-        if errs.Length > 0 then printfn "[ERROR 1] Load Errors : %A" errs
+        let _, loadErrors = fsi.EvalInteractionNonThrowing(sprintf "#load \"%s\";;" load)
+        if loadErrors.Length > 0 then printfn "[ERROR 1] Load Errors : %A" loadErrors
 
-        let _, errs = fsi.EvalInteractionNonThrowing(sprintf "open %s;;" filename)
-        if errs.Length > 0 then printfn "[ERROR 2] Open Errors : %A" errs
+        let _, openErrors = fsi.EvalInteractionNonThrowing(sprintf "open %s;;" filename)
+        if openErrors.Length > 0 then printfn "[ERROR 2] Open Errors : %A" openErrors
 
-        let modelType, errs = fsi.EvalExpressionNonThrowing "typeof<Model>"
-        if errs.Length > 0 then printfn "[ERROR 3] Get model Errors : %A" errs
+        let modelType, modelErrors = fsi.EvalExpressionNonThrowing "typeof<Model>"
+        if modelErrors.Length > 0 then printfn "[ERROR 3] Get model Errors : %A" modelErrors
 
-        let siteModelType, errs = fsi.EvalExpressionNonThrowing "typeof<SiteModel.SiteModel>"
-        if errs.Length > 0 then printfn "[ERROR 4] Get site model Errors : %A" errs
+        let siteModelType, siteModelErrors = fsi.EvalExpressionNonThrowing "typeof<SiteModel.SiteModel>"
+        if siteModelErrors.Length > 0 then printfn "[ERROR 4] Get site model Errors : %A" siteModelErrors
 
-        let funType,errs = fsi.EvalExpressionNonThrowing "<@@ fun a b c d -> (generate a b (Post.Construct c) d) |> HtmlElement.ToString @@>"
-        if errs.Length > 0 then printfn "[ERROR 5] Get layout Errors : %A" errs
+        let funType,layoutErrors = fsi.EvalExpressionNonThrowing "<@@ fun a b c d -> (generate a b (Post.Construct c) d) |> HtmlElement.ToString @@>"
+        if layoutErrors.Length > 0 then printfn "[ERROR 5] Get layout Errors : %A" layoutErrors
 
-        match modelType, siteModelType, funType with
-        | Choice1Of2 (Some mt), Choice1Of2 (Some smt), Choice1Of2 (Some ft) ->
-            Some (mt, smt, ft)
-        | _ -> None
+        let errors =
+            [
+                yield! loadErrors |> Array.map LoadError
+                yield! openErrors |> Array.map OpenError
+                yield! modelErrors |> Array.map ModelError
+                yield! siteModelErrors |> Array.map SiteModelError
+                yield! layoutErrors |> Array.map LayoutError
+            ]
+        match modelType, siteModelType, funType, errors with
+        | Choice1Of2 (Some mt), Choice1Of2 (Some smt), Choice1Of2 (Some ft), [] ->
+            Ok (mt, smt, ft)
+        | _ ->
+            Error errors
 
     let private getContentFromLayout = Utils.memoizeScriptFile getContentFromLayout'
 
@@ -168,13 +185,15 @@ module Evaluator =
     ///`body` - content of the post (in html)
     let evaluate posts (layoutPath : string) (getSiteModel : System.Type -> obj) (getContentModel : System.Type -> obj * string) =
         match getContentFromLayout layoutPath with
-        |  Some (mt, smt, ft) ->
+        |  Ok (mt, smt, ft) ->
             let modelInput, body = getContentModel (mt.ReflectionValue :?> Type)
             let siteInput = getSiteModel (smt.ReflectionValue :?> Type)
             let generator = compileExpression ft
-            invokeFunction generator [siteInput; modelInput; box posts; box body]
-            |> Option.bind (tryUnbox<string>)
-        | _ -> None
+            let p = invokeFunction generator [siteInput; modelInput; box posts; box body]
+                    |> Option.bind (tryUnbox<string>)
+            if p.IsSome then Ok p.Value
+            else Error 1
+        | Error e -> Error e.Length
 
 // Module to print colored message in the console
 module Logger =
@@ -296,7 +315,6 @@ let private parseLess : string -> string = Utils.memoize StyleParser.parseLess
 let private trimString (str : string) =
     str.Trim().TrimEnd('"').TrimStart('"')
 
-
 let getPosts (projectRoot : string) =
     let postsPath = Path.Combine(projectRoot, "posts")
     Directory.GetFiles postsPath
@@ -360,30 +378,36 @@ let generate posts (projectRoot : string) (page : string) =
         let result = Evaluator.evaluate posts layoutPath settingsLoader modelLoader
 
         match result with
-        | Some r ->
+        | Ok r ->
             let dir = Path.GetDirectoryName outputPath
             if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
             File.WriteAllText(outputPath, r)
             let endTime = DateTime.Now
             let ms = (endTime - startTime).Milliseconds
             printfn "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
-        | None ->
+            0
+        | Error e ->
             let endTime = DateTime.Now
             printfn "[%s] '%s' generation failed" (endTime.ToString("HH:mm:ss")) outputPath
+            e
     else
         let r = compileMarkdown contentText
         let dir = Path.GetDirectoryName outputPath
         if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
         File.WriteAllText(outputPath, r)
+        0
 
 ///`projectRoot` - path to the root of website
 ///`path` - path to file that should be copied
 let copyStaticFile  (projectRoot : string) (path : string) =
-    let inputPath = Path.Combine(projectRoot, path)
-    let outputPath = Path.Combine(projectRoot, "_public", path)
-    let dir = Path.GetDirectoryName outputPath
-    if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
-    File.Copy(inputPath, outputPath, true)
+    try
+        let inputPath = Path.Combine(projectRoot, path)
+        let outputPath = Path.Combine(projectRoot, "_public", path)
+        let dir = Path.GetDirectoryName outputPath
+        if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
+        File.Copy(inputPath, outputPath, true)
+        0
+    with _ -> 1
 
 ///`projectRoot` - path to the root of website
 ///`path` - path to `.less` file that should be copied
@@ -392,13 +416,20 @@ let generateFromLess (projectRoot : string) (path : string) =
     let inputPath = Path.Combine(projectRoot, path)
     let path' = Path.ChangeExtension(path, ".css")
     let outputPath = Path.Combine(projectRoot, "_public", path')
-    let dir = Path.GetDirectoryName outputPath
-    if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
-    let res = Utils.retry 2 (fun _ -> File.ReadAllText inputPath) |> parseLess
-    File.WriteAllText(outputPath, res)
-    let endTime = DateTime.Now
-    let ms = (endTime - startTime).Milliseconds
-    printfn "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
+    try
+
+        let dir = Path.GetDirectoryName outputPath
+        if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
+        let res = Utils.retry 2 (fun _ -> File.ReadAllText inputPath) |> parseLess
+        File.WriteAllText(outputPath, res)
+        let endTime = DateTime.Now
+        let ms = (endTime - startTime).Milliseconds
+        printfn "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
+        0
+    with ex ->
+        let endTime = DateTime.Now
+        Logger.errorfn "[%s] Generation of '%s' failed. " (endTime.ToString("HH:mm:ss")) path'
+        1
 
 ///`projectRoot` - path to the root of website
 ///`path` - path to `.less` file that should be copied
@@ -423,11 +454,18 @@ let generateFromSass (projectRoot : string) (path : string) =
         let endTime = DateTime.Now
         let ms = (endTime - startTime).Milliseconds
         printfn "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
+        0
     with
         | :? System.ComponentModel.Win32Exception as ex ->
             let endTime = DateTime.Now
             Logger.error  "[%s] Generation of '%s' failed. " (endTime.ToString("HH:mm:ss")) path'
             Logger.errorfn "Please check you have installed the Sass compiler if you are going to be using files with extension .scss. https://sass-lang.com/install"
+            1
+        | _ ->
+            let endTime = DateTime.Now
+            Logger.errorfn  "[%s] Generation of '%s' failed. " (endTime.ToString("HH:mm:ss")) path'
+            1
+
 
 let private (|Ignored|Markdown|Less|Sass|StaticFile|) (filename : string) =
     let ext = Path.GetExtension filename
@@ -451,9 +489,9 @@ let generateFolder (projectRoot : string) =
     let posts = getPosts projectRoot
 
     Directory.GetFiles(projectRoot, "*", SearchOption.AllDirectories)
-    |> Array.iter (fun n ->
+    |> Array.map (fun n ->
         match n with
-        | Ignored -> ()
+        | Ignored -> 0
         | Markdown -> n |> relative projectRoot |> generate posts projectRoot
         | Less -> n |> relative projectRoot |> generateFromLess projectRoot
         | Sass  -> n |> relative projectRoot |> generateFromSass projectRoot

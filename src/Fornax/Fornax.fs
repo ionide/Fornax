@@ -96,7 +96,7 @@ let main argv =
             // Fornax.Core.dll, which is used to provide Intellisense/autocomplete
             // in the .fsx files.
             Directory.CreateDirectory(Path.Combine(cwd, "_bin")) |> ignore
-            
+
             // Copy the Fornax.Core.dll into _bin
             File.Copy(corePath, "./_bin/Fornax.Core.dll")
 
@@ -105,10 +105,10 @@ let main argv =
             0
         | Some Build ->
             Generator.generateFolder cwd
-            0
+            |> Array.sum
         | Some Watch ->
             let mutable lastAccessed = Map.empty<string, DateTime>
-            generateFolder cwd
+            generateFolder cwd |> ignore
             use watcher = createFileWatcher cwd (fun e ->
                 if not (e.FullPath.Contains "_public") && not (e.FullPath.Contains ".sass-cache") && not (e.FullPath.Contains ".git") then
                     let lastTimeWrite = File.GetLastWriteTime(e.FullPath)
@@ -117,7 +117,7 @@ let main argv =
                     | _ ->
                         printfn "[%s] Changes detected: %s" (DateTime.Now.ToString("HH:mm:ss")) e.FullPath
                         lastAccessed <- lastAccessed.Add(e.FullPath, lastTimeWrite)
-                        Generator.generateFolder cwd)
+                        Generator.generateFolder cwd |> ignore)
             startWebServerAsync defaultConfig (router cwd) |> snd |> Async.Start
             printfn "[%s] Watch mode started. Press any key to exit." (DateTime.Now.ToString("HH:mm:ss"))
             Console.ReadKey() |> ignore
