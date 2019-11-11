@@ -38,7 +38,7 @@ module internal Utils =
                 cache := (!cache).Add(x,res)
                 res
 
-    let memoizeScriptFile f =
+    let memoizeScriptFile (f : string -> Result<'a, string>) =
         let resultCache = ref Map.empty
         let contentCache = ref Map.empty
         fun (x : string) ->
@@ -54,22 +54,28 @@ module internal Utils =
                         let pth = Path.Combine(dir, e)
                         [yield! acc; yield! getContent pth ]) contetnMap'
                 else contetnMap'
-            let ctn = getContent x
 
-            match (!resultCache).TryFind(x) with
-            | Some res ->
-                match (!contentCache).TryFind(x) with
-                | Some r when r = ctn -> res
-                | _ ->
+            try
+                let ctn = getContent x
+
+                match (!resultCache).TryFind(x) with
+                | Some res ->
+                    match (!contentCache).TryFind(x) with
+                    | Some r when r = ctn -> res
+                    | _ ->
+                        let res = f x
+                        resultCache := (!resultCache).Add(x,res)
+                        contentCache := (!contentCache).Add(x,ctn)
+                        res
+                | None ->
                     let res = f x
                     resultCache := (!resultCache).Add(x,res)
                     contentCache := (!contentCache).Add(x,ctn)
                     res
-            | None ->
-                let res = f x
-                resultCache := (!resultCache).Add(x,res)
-                contentCache := (!contentCache).Add(x,ctn)
-                res
+            with
+            | :? FileNotFoundException as fnf ->
+                Error fnf.Message
+            | _ -> reraise ()
 
 module Evaluator =
     open System.Globalization
@@ -80,7 +86,7 @@ module Evaluator =
 
     let private sbOut = StringBuilder()
     let private sbErr = StringBuilder()
-    let private fsi =
+    let internal fsi () =
         let inStream = new StringReader("")
         let outStream = new StringWriter(sbOut)
         let errStream = new StringWriter(sbErr)
@@ -135,46 +141,71 @@ module Evaluator =
         let genExpr = input.ReflectionValue :?> Quotations.Expr
         QuotationEvaluator.CompileUntyped genExpr
 
-    let private getContentFromLayout' (layoutPath : string) =
+    let private getContentFromLayout' (fsi : FsiEvaluationSession) (layoutPath : string) =
         let filename = getOpen layoutPath
         let load = getLoad layoutPath
 
-        let _, errs = fsi.EvalInteractionNonThrowing(sprintf "#load \"%s\";;" load)
-        if errs.Length > 0 then printfn "[ERROR 1] Load Errors : %A" errs
+        let tryFormatErrorMessage message (errors : 'a []) =
+            if errors.Length > 0 then
+                sprintf "%s: %A" message errors |> Some
+            else
+                None
 
-        let _, errs = fsi.EvalInteractionNonThrowing(sprintf "open %s;;" filename)
-        if errs.Length > 0 then printfn "[ERROR 2] Open Errors : %A" errs
+        let _, loadErrors = fsi.EvalInteractionNonThrowing(sprintf "#load \"%s\";;" load)
+        let loadErrorMessage =
+            tryFormatErrorMessage "Load Errors" loadErrors
 
-        let modelType, errs = fsi.EvalExpressionNonThrowing "typeof<Model>"
-        if errs.Length > 0 then printfn "[ERROR 3] Get model Errors : %A" errs
+        let _, openErrors = fsi.EvalInteractionNonThrowing(sprintf "open %s;;" filename)
+        let openErrorMessage =
+            tryFormatErrorMessage "Open Errors" openErrors
 
-        let siteModelType, errs = fsi.EvalExpressionNonThrowing "typeof<SiteModel.SiteModel>"
-        if errs.Length > 0 then printfn "[ERROR 4] Get site model Errors : %A" errs
+        let modelType, modelErrors = fsi.EvalExpressionNonThrowing "typeof<Model>"
+        let modelErrorMesage =
+            tryFormatErrorMessage "Get model Errors" modelErrors
 
-        let funType,errs = fsi.EvalExpressionNonThrowing "<@@ fun a b c d -> (generate a b (Post.Construct c) d) |> HtmlElement.ToString @@>"
-        if errs.Length > 0 then printfn "[ERROR 5] Get layout Errors : %A" errs
+        let siteModelType, siteModelErrors = fsi.EvalExpressionNonThrowing "typeof<SiteModel.SiteModel>"
+        let siteModelErrorMessage =
+            tryFormatErrorMessage "Get site model Errors" siteModelErrors
+
+        let funType, layoutErrors = fsi.EvalExpressionNonThrowing "<@@ fun a b c d -> (generate a b (Post.Construct c) d) |> HtmlElement.ToString @@>"
+        let layoutErrorMessage =
+            tryFormatErrorMessage "Get layout Errors" layoutErrors
+
+        let completeErrorReport =
+            [ loadErrorMessage
+              openErrorMessage
+              modelErrorMesage
+              siteModelErrorMessage
+              layoutErrorMessage ]
+            |> List.filter (Option.isSome)
+            |> List.map (fun v -> v.Value)
+            |> List.fold (fun state message -> state + Environment.NewLine + message) ""
+            |> (fun s -> s.Trim(Environment.NewLine.ToCharArray()))
 
         match modelType, siteModelType, funType with
         | Choice1Of2 (Some mt), Choice1Of2 (Some smt), Choice1Of2 (Some ft) ->
-            Some (mt, smt, ft)
-        | _ -> None
+            Ok (mt, smt, ft)
+        | _ -> Error completeErrorReport
 
-    let private getContentFromLayout = Utils.memoizeScriptFile getContentFromLayout'
-
+    // let private getContentFromLayout = Utils.memoizeScriptFile getContentFromLayout'
+    let private getContentFromLayout = getContentFromLayout'
 
     ///`layoutPath` - absolute path to `.fsx` file containing the layout
     ///`getSiteModel` - function generating instance of site settings model of given type
     ///`getContentModel` - function generating instance of page mode of given type
     ///`body` - content of the post (in html)
-    let evaluate posts (layoutPath : string) (getSiteModel : System.Type -> obj) (getContentModel : System.Type -> obj * string) =
-        match getContentFromLayout layoutPath with
-        |  Some (mt, smt, ft) ->
+    let evaluate (fsi : FsiEvaluationSession) posts (layoutPath : string) (getSiteModel : System.Type -> obj) (getContentModel : System.Type -> obj * string) =
+        getContentFromLayout fsi layoutPath
+        |> Result.bind (fun (mt, smt, ft) ->
             let modelInput, body = getContentModel (mt.ReflectionValue :?> Type)
             let siteInput = getSiteModel (smt.ReflectionValue :?> Type)
             let generator = compileExpression ft
+
             invokeFunction generator [siteInput; modelInput; box posts; box body]
             |> Option.bind (tryUnbox<string>)
-        | _ -> None
+            |> function
+                | Some s -> Ok s
+                | None -> sprintf "The expression for %s couldn't be compiled" layoutPath |> Error)
 
 // Module to print colored message in the console
 module Logger =
@@ -337,6 +368,8 @@ let getPosts (projectRoot : string) =
 
         ((link:Link), (title:Title), (author:Author), (published:Published), (tags:Tags), (content:Content)))
 
+exception FornaxGeneratorException of string
+
 type GeneratorMessage = string
 
 type GeneratorResult =
@@ -364,10 +397,11 @@ let generate posts (projectRoot : string) (page : string) =
         let modelLoader = contentParser contentText
         let layoutPath = Path.Combine(projectRoot, "layouts", layout + ".fsx")
 
-        let result = Evaluator.evaluate posts layoutPath settingsLoader modelLoader
+        use fsiSession = Evaluator.fsi ()
+        let result = Evaluator.evaluate fsiSession posts layoutPath settingsLoader modelLoader
 
         match result with
-        | Some r ->
+        | Ok r ->
             let dir = Path.GetDirectoryName outputPath
             if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
             File.WriteAllText(outputPath, r)
@@ -376,9 +410,10 @@ let generate posts (projectRoot : string) (page : string) =
             sprintf "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
             |> Some
             |> GeneratorSuccess
-        | None ->
+        | Error message ->
             let endTime = DateTime.Now
             sprintf "[%s] '%s' generation failed" (endTime.ToString("HH:mm:ss")) outputPath
+            |> (fun s -> message + Environment.NewLine + s)
             |> GeneratorFailure
     else
         let r = compileMarkdown contentText
@@ -447,7 +482,7 @@ let generateFromSass (projectRoot : string) (path : string) =
         | :? System.ComponentModel.Win32Exception as ex ->
             let endTime = DateTime.Now
             sprintf "[%s] Generation of '%s' failed. " (endTime.ToString("HH:mm:ss")) path'
-            |> fun s -> s + "\n" + "Please check you have installed the Sass compiler if you are going to be using files with extension .scss. https://sass-lang.com/install"
+            |> fun s -> s + Environment.NewLine + "Please check you have installed the Sass compiler if you are going to be using files with extension .scss. https://sass-lang.com/install"
             |> GeneratorFailure
 
 let private (|Ignored|Markdown|Less|Sass|StaticFile|) (filename : string) =
@@ -478,11 +513,11 @@ let generateFolder (projectRoot : string) =
         | GeneratorSuccess (Some message) ->
             Logger.informationfn "%s" message
         | GeneratorFailure message ->
-            Logger.errorfn "%s" message
-        result
+            // if one generator fails we want to exit early and report the problem to the operator
+            raise (FornaxGeneratorException message)
 
     Directory.GetFiles(projectRoot, "*", SearchOption.AllDirectories)
-    |> Array.map (fun n ->
+    |> Array.iter (fun n ->
         match n with
         | Ignored -> GeneratorIgnored
         | Markdown -> n |> relative projectRoot |> generate posts projectRoot
