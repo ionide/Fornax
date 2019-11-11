@@ -61,14 +61,6 @@ let router basePath =
         (Files.browse (Path.Combine(basePath, "_public")))
     ]
 
-let hasGeneratorErrors (generatorResults : GeneratorResult []) =
-    generatorResults
-    |> Array.tryFind
-        (function
-         | GeneratorFailure _ -> true
-         | _ -> false)
-    |> Option.isSome
-
 [<EntryPoint>]
 let main argv =
     let parser = ArgumentParser.Create<Arguments>(programName = "fornax", errorHandler = FornaxExiter ())
@@ -112,15 +104,32 @@ let main argv =
 
             0
         | Some Build ->
-            let results = Generator.generateFolder cwd
-            if hasGeneratorErrors results then
-                1
-            else
+            try
+                let results = Generator.generateFolder cwd
                 0
+            with
+            | FornaxGeneratorException message ->
+                Console.WriteLine message
+                1
+            | exn ->
+                printfn "An unexpected error happend: %s%s%s" exn.Message Environment.NewLine exn.StackTrace
+                1
         | Some Watch ->
             let mutable lastAccessed = Map.empty<string, DateTime>
-            let results = generateFolder cwd
-            if hasGeneratorErrors results then printfn "Generated site with errors. Waiting for changes..."
+            let waitingForChangesMessage = "Generated site with errors. Waiting for changes..."
+
+            let guardedGenerate () =
+                try
+                    generateFolder cwd
+                with
+                | FornaxGeneratorException message ->
+                    printfn "%s%s%s" message Environment.NewLine waitingForChangesMessage
+                | exn ->
+                    printfn "An unexpected error happend: %s%s%s" exn.Message Environment.NewLine exn.StackTrace
+                    exit 1
+
+            guardedGenerate ()
+
             use watcher = createFileWatcher cwd (fun e ->
                 if not (e.FullPath.Contains "_public") && not (e.FullPath.Contains ".sass-cache") && not (e.FullPath.Contains ".git") && not (e.FullPath.Contains ".ionide") then
                     let lastTimeWrite = File.GetLastWriteTime(e.FullPath)
@@ -129,8 +138,8 @@ let main argv =
                     | _ ->
                         printfn "[%s] Changes detected: %s" (DateTime.Now.ToString("HH:mm:ss")) e.FullPath
                         lastAccessed <- lastAccessed.Add(e.FullPath, lastTimeWrite)
-                        let watchedResults = Generator.generateFolder cwd
-                        if hasGeneratorErrors watchedResults then printfn "Generated site with errors. Waiting for changes...")
+                        guardedGenerate ())
+
             startWebServerAsync defaultConfig (router cwd) |> snd |> Async.Start
             printfn "[%s] Watch mode started. Press any key to exit." (DateTime.Now.ToString("HH:mm:ss"))
             Console.ReadKey() |> ignore
