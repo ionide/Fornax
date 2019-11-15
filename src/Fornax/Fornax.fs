@@ -7,6 +7,10 @@ open Suave
 open Suave.Filters
 open Suave.Operators
 
+open Suave.Sockets
+open Suave.Sockets.Control
+open Suave.WebSocket
+
 type FornaxExiter () =
     interface IExiter with
         member x.Name = "fornax exiter"
@@ -44,6 +48,8 @@ let toArguments (result : ParseResults<Arguments>) =
 
     else None
 
+let mutable contentChanged = false
+
 let createFileWatcher dir handler =
     let fileSystemWatcher = new FileSystemWatcher()
     fileSystemWatcher.Path <- dir
@@ -53,12 +59,30 @@ let createFileWatcher dir handler =
     fileSystemWatcher.Created.Add handler
     fileSystemWatcher.Changed.Add handler
     fileSystemWatcher.Deleted.Add handler
+
+    let contentChangedHandler _ = printfn "content changed."; contentChanged <- true
+    
+    fileSystemWatcher.Created.Add contentChangedHandler
+    fileSystemWatcher.Changed.Add contentChangedHandler
+    fileSystemWatcher.Deleted.Add contentChangedHandler
+
     fileSystemWatcher
+
+let ws (webSocket : WebSocket) (context: HttpContext) =
+    socket {
+        while true do
+            let emptyResponse = [||] |> ByteSegment
+            if contentChanged then
+                printfn "content changing"
+                do! webSocket.send Close emptyResponse true
+                contentChanged <- false
+    }
 
 let router basePath =
     choose [
         path "/" >=> Redirection.redirect "/index.html"
         (Files.browse (Path.Combine(basePath, "_public")))
+        path "/websocket" >=> handShake ws
     ]
 
 [<EntryPoint>]
