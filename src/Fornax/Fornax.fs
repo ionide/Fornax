@@ -22,11 +22,21 @@ type FornaxExiter () =
                 printfn "Error with code %A received - exiting." errorCode
                 printfn "%s" msg
                 exit 1
+[<CliPrefix(CliPrefix.DoubleDash)>]
+type WatchArgs = | Disable_Live_Refesh
+with
+    interface IArgParserTemplate with
+        member s.Usage = 
+            match s with
+            | Disable_Live_Refesh ->
+                "The watch command will inject some live-refresh Javascript "
+                    + "into your pages to automatically update them by default.  "
+                    + "This command will disable that behavior."
 
-type [<CliPrefixAttribute("")>] Arguments =
+type [<CliPrefix(CliPrefix.None)>] Arguments =
     | New
     | Build
-    | Watch
+    | Watch of ParseResults<WatchArgs> 
     | Version
     | Clean
 with
@@ -35,19 +45,21 @@ with
             match s with
             | New -> "Create new web site"
             | Build -> "Build web site"
-            | Watch -> "Start watch mode rebuilding "
+            | Watch _ -> "Start watch mode rebuilding "
             | Version -> "Print version"
             | Clean -> "Clean output and temp files"
 
 let toArguments (result : ParseResults<Arguments>) =
     if result.Contains <@ New @> then Some New
     elif result.Contains <@ Build @> then Some Build
-    elif result.Contains <@ Watch @> then Some Watch
+    elif result.Contains <@ Watch @> then result.GetResult <@ Watch @> |> Watch |> Some
     elif result.Contains <@ Version @> then Some Version
     elif result.Contains <@ Clean @> then Some Clean
-
     else None
 
+/// Used to keep track of when content has changed,
+/// thus triggering the websocket to update
+/// any listeners to refresh.
 let mutable contentChanged = false
 
 let createFileWatcher dir handler =
@@ -60,20 +72,21 @@ let createFileWatcher dir handler =
     fileSystemWatcher.Changed.Add handler
     fileSystemWatcher.Deleted.Add handler
 
-    let contentChangedHandler _ = printfn "content changed."; contentChanged <- true
-    
+    /// Adding handler to trigger websocket/live refresh
+    let contentChangedHandler _ = contentChanged <- true
     fileSystemWatcher.Created.Add contentChangedHandler
     fileSystemWatcher.Changed.Add contentChangedHandler
     fileSystemWatcher.Deleted.Add contentChangedHandler
 
     fileSystemWatcher
 
+/// Websocket function that a page listens to so it
+/// knows when to refresh.
 let ws (webSocket : WebSocket) (context: HttpContext) =
     socket {
         while true do
             let emptyResponse = [||] |> ByteSegment
             if contentChanged then
-                printfn "content changing"
                 do! webSocket.send Close emptyResponse true
                 contentChanged <- false
     }
@@ -88,17 +101,18 @@ let router basePath =
 [<EntryPoint>]
 let main argv =
     let parser = ArgumentParser.Create<Arguments>(programName = "fornax", errorHandler = FornaxExiter ())
+    let args = parser.Parse(argv).GetAllResults()
 
-    if argv.Length = 0 then
+    if List.isEmpty args then
         printfn "No arguments provided.  Try 'fornax help' for additional details."
         printfn "%s" <| parser.PrintUsage()
         1
     elif argv.Length > 1 then
-        printfn "More than one argument was provided.  Please provide only a single argument.  Try 'fornax help' for additional details."
+        printfn "More than one command was provided.  Please provide only a single command.  Try 'fornax help' for additional details."
         printfn "%s" <| parser.PrintUsage()
         1
     else
-        let result = parser.Parse argv |> toArguments
+        let result = parser.Parse(argv) |> toArguments
         let cwd = Directory.GetCurrentDirectory ()
         match result with
         | Some New ->
@@ -130,10 +144,11 @@ let main argv =
         | Some Build ->
             Generator.generateFolder cwd
             0
-        | Some Watch ->
+        | Some (Watch (parseResults)) ->
+            let subcommand = parseResults.GetSubCommand()
             let mutable lastAccessed = Map.empty<string, DateTime>
             generateFolder cwd
-            use watcher = createFileWatcher cwd (fun e ->
+            use _watcher = createFileWatcher cwd (fun e ->
                 if not (e.FullPath.Contains "_public") && not (e.FullPath.Contains ".sass-cache") && not (e.FullPath.Contains ".git") then
                     let lastTimeWrite = File.GetLastWriteTime(e.FullPath)
                     match lastAccessed.TryFind e.FullPath with

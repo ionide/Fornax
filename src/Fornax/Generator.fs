@@ -261,7 +261,7 @@ type Title = string
 type Author = string option
 
 /// Optional published date.
-type Published = DateTime option
+type Published = DateTimeOffset option
 
 /// Tags associated with the post.
 type Tags = string list
@@ -321,7 +321,7 @@ let getPosts (projectRoot : string) =
 
         let published =
             try
-                config |> List.tryFind (fun n -> n.ToLower().StartsWith "published" ) |> Option.map (fun n -> n.Split(':').[1] |> trimString |> DateTime.Parse)
+                config |> List.tryFind (fun n -> n.ToLower().StartsWith "published" ) |> Option.map (fun n -> n.Split(':').[1] |> trimString |> DateTimeOffset.Parse)
             with
             | _ -> None
 
@@ -340,7 +340,7 @@ let getPosts (projectRoot : string) =
 ///`projectRoot` - path to the root of website
 ///`page` - path to page that should be generated
 let generate posts (projectRoot : string) (page : string) =
-    let startTime = DateTime.Now
+    let startTime = DateTimeOffset.Now
     let contentPath = Path.Combine(projectRoot, page)
     let settingsPath = Path.Combine(projectRoot, "_config.yml")
     let outputPath =
@@ -364,11 +364,11 @@ let generate posts (projectRoot : string) (page : string) =
             let dir = Path.GetDirectoryName outputPath
             if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
             File.WriteAllText(outputPath, r)
-            let endTime = DateTime.Now
+            let endTime = DateTimeOffset.Now
             let ms = (endTime - startTime).Milliseconds
             printfn "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
         | None ->
-            let endTime = DateTime.Now
+            let endTime = DateTimeOffset.Now
             printfn "[%s] '%s' generation failed" (endTime.ToString("HH:mm:ss")) outputPath
     else
         let r = compileMarkdown contentText
@@ -388,7 +388,7 @@ let copyStaticFile  (projectRoot : string) (path : string) =
 ///`projectRoot` - path to the root of website
 ///`path` - path to `.less` file that should be copied
 let generateFromLess (projectRoot : string) (path : string) =
-    let startTime = DateTime.Now
+    let startTime = DateTimeOffset.Now
     let inputPath = Path.Combine(projectRoot, path)
     let path' = Path.ChangeExtension(path, ".css")
     let outputPath = Path.Combine(projectRoot, "_public", path')
@@ -396,14 +396,14 @@ let generateFromLess (projectRoot : string) (path : string) =
     if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
     let res = Utils.retry 2 (fun _ -> File.ReadAllText inputPath) |> parseLess
     File.WriteAllText(outputPath, res)
-    let endTime = DateTime.Now
+    let endTime = DateTimeOffset.Now
     let ms = (endTime - startTime).Milliseconds
     printfn "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
 
 ///`projectRoot` - path to the root of website
 ///`path` - path to `.less` file that should be copied
 let generateFromSass (projectRoot : string) (path : string) =
-    let startTime = DateTime.Now
+    let startTime = DateTimeOffset.Now
     let inputPath = Path.Combine(projectRoot, path)
     let path' = Path.ChangeExtension(path, ".css")
     let outputPath = Path.Combine(projectRoot, "_public", path')
@@ -420,12 +420,12 @@ let generateFromSass (projectRoot : string) (path : string) =
     try
         let proc = Process.Start psi
         proc.WaitForExit()
-        let endTime = DateTime.Now
+        let endTime = DateTimeOffset.Now
         let ms = (endTime - startTime).Milliseconds
         printfn "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
     with
         | :? System.ComponentModel.Win32Exception as ex ->
-            let endTime = DateTime.Now
+            let endTime = DateTimeOffset.Now
             Logger.error  "[%s] Generation of '%s' failed. " (endTime.ToString("HH:mm:ss")) path'
             Logger.errorfn "Please check you have installed the Sass compiler if you are going to be using files with extension .scss. https://sass-lang.com/install"
 
