@@ -351,7 +351,7 @@ let injectWebsocketCode (webpage:string) =
       {
         console.log('closing');
         websocket.close();
-        // document.location.reload();
+        document.location.reload();
       }
       window.addEventListener("load", init, false);
       </script>
