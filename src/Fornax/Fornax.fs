@@ -22,13 +22,13 @@ type FornaxExiter () =
                 printfn "Error with code %A received - exiting." errorCode
                 printfn "%s" msg
                 exit 1
-[<CliPrefix(CliPrefix.DoubleDash)>]
-type WatchArgs = | Disable_Live_Refesh
+
+type [<CliPrefix(CliPrefix.DoubleDash)>] WatchArgs = | Disable_Live_Refresh
 with
     interface IArgParserTemplate with
         member s.Usage = 
             match s with
-            | Disable_Live_Refesh ->
+            | Disable_Live_Refresh ->
                 "The watch command will inject some live-refresh Javascript "
                     + "into your pages to automatically update them by default.  "
                     + "This command will disable that behavior."
@@ -49,10 +49,15 @@ with
             | Version -> "Print version"
             | Clean -> "Clean output and temp files"
 
+
+
 let toArguments (result : ParseResults<Arguments>) =
     if result.Contains <@ New @> then Some New
     elif result.Contains <@ Build @> then Some Build
-    elif result.Contains <@ Watch @> then result.GetResult <@ Watch @> |> Watch |> Some
+    elif result.Contains <@ Watch @> then
+        let temp = result.GetResult <@ Watch @>
+        printfn "temp %A" temp
+        temp |> Watch |> Some
     elif result.Contains <@ Version @> then Some Version
     elif result.Contains <@ Clean @> then Some Clean
     else None
@@ -100,20 +105,26 @@ let router basePath =
 
 [<EntryPoint>]
 let main argv =
-    let parser = ArgumentParser.Create<Arguments>(programName = "fornax", errorHandler = FornaxExiter ())
-    let args = parser.Parse(argv).GetAllResults()
+    printfn "In prog"
+    let argv = [| "watch" |]
+    let parser = ArgumentParser.Create<Arguments>(programName = "fornax",errorHandler=FornaxExiter())
+    let parseResults = parser.ParseCommandLine(inputs = argv) 
+    let results = parseResults.GetAllResults()
+    printfn "all res %A" results
 
-    if List.isEmpty args then
+    if List.isEmpty results then
         printfn "No arguments provided.  Try 'fornax help' for additional details."
         printfn "%s" <| parser.PrintUsage()
         1
-    elif argv.Length > 1 then
+    elif List.length results > 1 then
         printfn "More than one command was provided.  Please provide only a single command.  Try 'fornax help' for additional details."
         printfn "%s" <| parser.PrintUsage()
         1
     else
-        let result = parser.Parse(argv) |> toArguments
-        let cwd = Directory.GetCurrentDirectory ()
+        let result = List.tryHead results
+        printfn "The result is %A" result
+        let cwd = "/Users/nat/Projects/Fornax/src/Fornax/test"// Directory.GetCurrentDirectory ()
+        printfn "cwd %s" cwd
         match result with
         | Some New ->
             // The path of the directory that holds the scaffolding for a new website.
@@ -142,12 +153,12 @@ let main argv =
 
             0
         | Some Build ->
-            Generator.generateFolder cwd
+            Generator.generateFolder true cwd
             0
         | Some (Watch (parseResults)) ->
-            let subcommand = parseResults.GetSubCommand()
+            let disableLiveRefresh = parseResults.Contains <@ Disable_Live_Refresh @> 
             let mutable lastAccessed = Map.empty<string, DateTime>
-            generateFolder cwd
+            generateFolder disableLiveRefresh cwd
             use _watcher = createFileWatcher cwd (fun e ->
                 if not (e.FullPath.Contains "_public") && not (e.FullPath.Contains ".sass-cache") && not (e.FullPath.Contains ".git") then
                     let lastTimeWrite = File.GetLastWriteTime(e.FullPath)
@@ -156,7 +167,7 @@ let main argv =
                     | _ ->
                         printfn "[%s] Changes detected: %s" (DateTime.Now.ToString("HH:mm:ss")) e.FullPath
                         lastAccessed <- lastAccessed.Add(e.FullPath, lastTimeWrite)
-                        Generator.generateFolder cwd)
+                        Generator.generateFolder disableLiveRefresh cwd)
             startWebServerAsync defaultConfig (router cwd) |> snd |> Async.Start
             printfn "[%s] Watch mode started. Press any key to exit." (DateTime.Now.ToString("HH:mm:ss"))
             Console.ReadKey() |> ignore
