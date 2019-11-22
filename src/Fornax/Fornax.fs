@@ -105,12 +105,9 @@ let router basePath =
 
 [<EntryPoint>]
 let main argv =
-    printfn "In prog"
-    let argv = [| "watch" |]
     let parser = ArgumentParser.Create<Arguments>(programName = "fornax",errorHandler=FornaxExiter())
-    let parseResults = parser.ParseCommandLine(inputs = argv) 
-    let results = parseResults.GetAllResults()
-    printfn "all res %A" results
+
+    let results = parser.ParseCommandLine(inputs = argv).GetAllResults()
 
     if List.isEmpty results then
         printfn "No arguments provided.  Try 'fornax help' for additional details."
@@ -122,9 +119,8 @@ let main argv =
         1
     else
         let result = List.tryHead results
-        printfn "The result is %A" result
-        let cwd = "/Users/nat/Projects/Fornax/src/Fornax/test"// Directory.GetCurrentDirectory ()
-        printfn "cwd %s" cwd
+        let cwd = Directory.GetCurrentDirectory ()
+
         match result with
         | Some New ->
             // The path of the directory that holds the scaffolding for a new website.

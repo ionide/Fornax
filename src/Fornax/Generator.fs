@@ -337,6 +337,29 @@ let getPosts (projectRoot : string) =
 
         ((link:Link), (title:Title), (author:Author), (published:Published), (tags:Tags), (content:Content)))
 
+let injectWebsocketCode (webpage:string) = 
+    let websocketScript =
+        """
+        <script type="text/javascript">
+          var wsUri = "ws://localhost:8080/websocket";
+      function init()
+      {
+        websocket = new WebSocket(wsUri);
+        websocket.onclose = function(evt) { onClose(evt) };
+      }
+      function onClose(evt)
+      {
+        console.log('closing');
+        websocket.close();
+        // document.location.reload();
+      }
+      window.addEventListener("load", init, false);
+      </script>
+        """
+    let head = "<head>"
+    let index = webpage.IndexOf head
+    webpage.Insert ( (index + head.Length),websocketScript)
+
 ///`projectRoot` - path to the root of website
 ///`page` - path to page that should be generated
 let generate (disableLiveRefresh:bool) posts (projectRoot : string) (page : string) =
@@ -350,20 +373,20 @@ let generate (disableLiveRefresh:bool) posts (projectRoot : string) (page : stri
     let contentText = Utils.retry 2 (fun _ -> File.ReadAllText contentPath)
 
     if containsLayout contentText then
-        printfn "Layout contained"
         let settingsText = Utils.retry 2 (fun _ -> File.ReadAllText settingsPath)
         let layout = getLayout contentText
-        printfn "Layout"
 
         let settingsLoader = settingsParser settingsText
         let modelLoader = contentParser contentText
         let layoutPath = Path.Combine(projectRoot, "layouts", layout + ".fsx")
-        printfn "Layout path %A" layoutPath
-        printfn "printing posts"
-        printfn "%A" posts
 
-        let result = Evaluator.evaluate posts layoutPath settingsLoader modelLoader
-        printfn "after posts"
+        let result =
+            Evaluator.evaluate posts layoutPath settingsLoader modelLoader
+            |> Option.map(fun strContent ->
+                if not disableLiveRefresh then
+                    injectWebsocketCode strContent
+                else strContent
+            )
 
         match result with
         | Some r ->
@@ -377,10 +400,7 @@ let generate (disableLiveRefresh:bool) posts (projectRoot : string) (page : stri
             let endTime = DateTime.Now
             printfn "[%s] '%s' generation failed" (endTime.ToString("HH:mm:ss")) outputPath
     else
-        printfn "No layout"
         let r = compileMarkdown contentText
-        printfn "Da text"
-        printfn "%s" r
         let dir = Path.GetDirectoryName outputPath
         if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
         File.WriteAllText(outputPath, r)
