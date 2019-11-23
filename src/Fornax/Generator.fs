@@ -4,6 +4,7 @@ module Generator
 open System
 open System.IO
 open System.Diagnostics
+open System.ServiceModel.Syndication
 
 module internal Utils =
     let rec retry times fn =
@@ -484,6 +485,23 @@ let generateFromSass (projectRoot : string) (path : string) =
             sprintf "[%s] Generation of '%s' failed. " (endTime.ToString("HH:mm:ss")) path'
             |> fun s -> s + Environment.NewLine + "Please check you have installed the Sass compiler if you are going to be using files with extension .scss. https://sass-lang.com/install"
             |> GeneratorFailure
+
+let generateSyndicationDocument (posts : (Link * Author * Published * Tags) list) =
+    match posts with
+    | [] -> None
+    | (link, author, published, tags)::xs ->
+        let title =
+            author
+            |> Option.map (sprintf "%s's Blog")
+            |> Option.defaultWith (fun _ -> "A Blog")
+
+        let description =
+            author
+            |> Option.map (sprintf "A blog created by %s. Powered by Fornax.")
+            |> Option.defaultWith (fun _ -> "A blog powerd by Fornax.")
+
+        // TODO : we first have to solve the settings part before we can generate feeds
+        Some ""
 
 let private (|Ignored|Markdown|Less|Sass|StaticFile|) (filename : string) =
     let ext = Path.GetExtension filename
