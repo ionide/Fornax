@@ -10,7 +10,7 @@ Fornax is a static site generator using type safe F# DSL to define page layouts.
 * Creating pages using templates from `.md` files with `layout` entry
 * Creating plain pages without templates from `md` files without `layout` entry
 * Transforming `.less` files to `.css` files
-* Transforming `.scss` files to `.css` files (requires having `sass` installed)
+* Transforming `.scss` files to `.css` files (requires having `sass` installed - https://sass-lang.com/install)
 * Copying other static content to the output directory
 
 ## Planned features
