@@ -3,6 +3,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <PackAsTool>true</PackAsTool>
+    <ToolCommandName>fornax</ToolCommandName>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Fornax.Core\Fornax.Core.fsproj" />
