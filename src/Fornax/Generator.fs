@@ -39,45 +39,6 @@ module internal Utils =
                 cache := (!cache).Add(x,res)
                 res
 
-    let memoizeScriptFile (f : string -> Result<'a, string>) =
-        let resultCache = ref Map.empty
-        let contentCache = ref Map.empty
-        fun (x : string) ->
-            let rec getContent (f : string) =
-                let dir = Path.GetDirectoryName f
-                let content = retry 2 (fun _ -> File.ReadAllLines f)
-                let contetnMap' = [(f, content)]
-                let loads = content |> Array.where (fun n -> n.Contains "#load")
-                let relativeFiles = loads |> Array.map (fun n -> (n.Split '"').[1])
-                if relativeFiles.Length > 0 then
-                    relativeFiles
-                    |> Array.fold (fun acc e ->
-                        let pth = Path.Combine(dir, e)
-                        [yield! acc; yield! getContent pth ]) contetnMap'
-                else contetnMap'
-
-            try
-                let ctn = getContent x
-
-                match (!resultCache).TryFind(x) with
-                | Some res ->
-                    match (!contentCache).TryFind(x) with
-                    | Some r when r = ctn -> res
-                    | _ ->
-                        let res = f x
-                        resultCache := (!resultCache).Add(x,res)
-                        contentCache := (!contentCache).Add(x,ctn)
-                        res
-                | None ->
-                    let res = f x
-                    resultCache := (!resultCache).Add(x,res)
-                    contentCache := (!contentCache).Add(x,ctn)
-                    res
-            with
-            | :? FileNotFoundException as fnf ->
-                Error fnf.Message
-            | _ -> reraise ()
-
 module Evaluator =
     open System.Globalization
     open System.Text
@@ -142,15 +103,29 @@ module Evaluator =
         let genExpr = input.ReflectionValue :?> Quotations.Expr
         QuotationEvaluator.CompileUntyped genExpr
 
-    let private getContentFromLayout' (fsi : FsiEvaluationSession) (layoutPath : string) =
-        let filename = getOpen layoutPath
-        let load = getLoad layoutPath
+    type ErrorReportSoFar = string
 
-        let tryFormatErrorMessage message (errors : 'a []) =
-            if errors.Length > 0 then
-                sprintf "%s: %A" message errors |> Some
-            else
-                None
+    let private createErrorReport (reportSoFar : ErrorReportSoFar) (errors : string option list ) =
+            errors
+            |> List.filter (Option.isSome)
+            |> List.map (fun v -> v.Value)
+            |> List.fold (fun state message -> state + Environment.NewLine + message) reportSoFar
+            |> (fun s -> s.Trim(Environment.NewLine.ToCharArray()))
+
+    let private tryFormatErrorMessage message (errors : 'a []) =
+        if errors.Length > 0 then
+            sprintf "%s: %A" message errors |> Some
+        else
+            None
+
+    type EvaluatedSiteModelType = Choice<FsiValue option, exn>
+    type Evaluate<'a> = FsiEvaluationSession -> ErrorReportSoFar -> EvaluatedSiteModelType -> Result<'a, string>
+
+    let private getContentFromScript (fsi : FsiEvaluationSession)
+                                     (scriptPath : string)
+                                     (evaluate : Evaluate<'a>) =
+        let filename = getOpen scriptPath
+        let load = getLoad scriptPath
 
         let _, loadErrors = fsi.EvalInteractionNonThrowing(sprintf "#load \"%s\";;" load)
         let loadErrorMessage =
@@ -160,36 +135,56 @@ module Evaluator =
         let openErrorMessage =
             tryFormatErrorMessage "Open Errors" openErrors
 
-        let modelType, modelErrors = fsi.EvalExpressionNonThrowing "typeof<Model>"
-        let modelErrorMesage =
-            tryFormatErrorMessage "Get model Errors" modelErrors
-
         let siteModelType, siteModelErrors = fsi.EvalExpressionNonThrowing "typeof<SiteModel.SiteModel>"
         let siteModelErrorMessage =
             tryFormatErrorMessage "Get site model Errors" siteModelErrors
 
-        let funType, layoutErrors = fsi.EvalExpressionNonThrowing "<@@ fun a b c d -> (generate a b (Post.Construct c) d) |> HtmlElement.ToString @@>"
-        let layoutErrorMessage =
-            tryFormatErrorMessage "Get layout Errors" layoutErrors
-
-        let completeErrorReport =
+        let errorReportSoFar =
             [ loadErrorMessage
               openErrorMessage
-              modelErrorMesage
-              siteModelErrorMessage
-              layoutErrorMessage ]
-            |> List.filter (Option.isSome)
-            |> List.map (fun v -> v.Value)
-            |> List.fold (fun state message -> state + Environment.NewLine + message) ""
-            |> (fun s -> s.Trim(Environment.NewLine.ToCharArray()))
+              siteModelErrorMessage ]
+            |> createErrorReport ""
 
-        match modelType, siteModelType, funType with
-        | Choice1Of2 (Some mt), Choice1Of2 (Some smt), Choice1Of2 (Some ft) ->
-            Ok (mt, smt, ft)
-        | _ -> Error completeErrorReport
+        evaluate fsi errorReportSoFar siteModelType
 
-    // let private getContentFromLayout = Utils.memoizeScriptFile getContentFromLayout'
-    let private getContentFromLayout = getContentFromLayout'
+    let private getContentFromLayout (fsi : FsiEvaluationSession) (layoutPath : string) =
+        let evaluate : Evaluate<FsiValue * FsiValue * FsiValue> =
+            fun fsi reportSoFar siteModelType ->
+                let modelType, modelErrors = fsi.EvalExpressionNonThrowing "typeof<Model>"
+                let modelErrorMesage =
+                    tryFormatErrorMessage "Get model Errors" modelErrors
+
+                let funType, layoutErrors = fsi.EvalExpressionNonThrowing "<@@ fun a b c d -> (generate a b (Post.Construct c) d) |> HtmlElement.ToString @@>"
+                let layoutErrorMessage =
+                    tryFormatErrorMessage "Get layout Errors" layoutErrors
+
+                let completeErrorReport =
+                    [ modelErrorMesage
+                      layoutErrorMessage ]
+                    |> createErrorReport reportSoFar
+
+                match modelType, siteModelType, funType with
+                | Choice1Of2 (Some mt), Choice1Of2 (Some smt), Choice1Of2 (Some ft) ->
+                    Ok (mt, smt, ft)
+                | _ -> Error completeErrorReport
+        
+        getContentFromScript fsi layoutPath evaluate
+
+    let private getContentFromCustomGenerator (fsi : FsiEvaluationSession) (generatorPath : string) =
+        let evaluate : Evaluate<FsiValue * FsiValue> =
+            fun fsi reportSoFar siteModelType ->
+                let funType, customGeneratorErrors = fsi.EvalExpressionNonThrowing "<@@ fun siteModel posts -> generate siteModel posts @@>"
+                let customGeneratorErrorMessage =
+                    tryFormatErrorMessage "Get custom generator Errors" customGeneratorErrors
+                
+                let completeErrorReport = [ customGeneratorErrorMessage ] |> createErrorReport reportSoFar
+
+                match siteModelType, funType with
+                | Choice1Of2(Some smt), Choice1Of2(Some ft) ->
+                    Ok(smt, ft)
+                | _ -> Error completeErrorReport
+
+        getContentFromScript fsi generatorPath evaluate
 
     ///`layoutPath` - absolute path to `.fsx` file containing the layout
     ///`getSiteModel` - function generating instance of site settings model of given type
@@ -378,12 +373,16 @@ type GeneratorResult =
     | GeneratorSuccess of GeneratorMessage option
     | GeneratorFailure of GeneratorMessage
 
+let getSiteSettingsLoader (projectRoot : string) =
+    let settingsPath = Path.Combine(projectRoot, "_config.yml")
+    let settingsText = Utils.retry 2 (fun _ -> File.ReadAllText settingsPath)
+    settingsParser settingsText
+
 ///`projectRoot` - path to the root of website
 ///`page` - path to page that should be generated
 let generate posts (projectRoot : string) (page : string) =
     let startTime = DateTime.Now
     let contentPath = Path.Combine(projectRoot, page)
-    let settingsPath = Path.Combine(projectRoot, "_config.yml")
     let outputPath =
         let p = Path.ChangeExtension(page, ".html")
         Path.Combine(projectRoot, "_public", p)
@@ -391,10 +390,9 @@ let generate posts (projectRoot : string) (page : string) =
     let contentText = Utils.retry 2 (fun _ -> File.ReadAllText contentPath)
 
     if containsLayout contentText then
-        let settingsText = Utils.retry 2 (fun _ -> File.ReadAllText settingsPath)
         let layout = getLayout contentText
 
-        let settingsLoader = settingsParser settingsText
+        let settingsLoader = getSiteSettingsLoader projectRoot
         let modelLoader = contentParser contentText
         let layoutPath = Path.Combine(projectRoot, "layouts", layout + ".fsx")
 

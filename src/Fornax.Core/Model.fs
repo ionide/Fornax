@@ -1284,3 +1284,12 @@ with
                 content = content
             })
         |> Array.toList
+
+type CustomGeneratorScript = string
+type SiteModel<'a> = 'a
+type Posts = Post list
+type FileContent = string
+type VirtualOriginPath = string
+type Extension = string
+
+type CustomGenerator<'a> = CustomGeneratorScript -> SiteModel<'a> -> Posts -> FileContent * VirtualOriginPath * Extension
