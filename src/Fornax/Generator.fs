@@ -498,7 +498,7 @@ let generateFromSass (projectRoot : string) (path : string) =
             |> fun s -> s + Environment.NewLine + "Please check you have installed the Sass compiler if you are going to be using files with extension .scss. https://sass-lang.com/install"
             |> GeneratorFailure
 
-let private isWithinIgnoredDiretories (excluded : string list) (filename : string) =
+let private isWithinIgnoredFilenameFragments (excluded : string list) (filename : string) =
     let alwaysIgnored = [
         "_public"
         "_bin"
@@ -515,13 +515,13 @@ let private isWithinIgnoredDiretories (excluded : string list) (filename : strin
     alwaysIgnored @ excluded
     |> List.fold (fun prev current -> filename.Contains current || prev) false
 
-let private (|Ignored|_|) (config : Configuration.FornaxConfiguration.FornaxConfiguration) (filename : string) =
-    let ext = Path.GetExtension filename
-    if isWithinIgnoredDiretories config.Exclude filename || ext = ".fsx" then Some Ignored
+let private (|Ignored|_|) (config : Configuration.FornaxConfiguration.FornaxConfiguration) (fullFileName : string) =
+    let ext = Path.GetExtension fullFileName
+    if isWithinIgnoredFilenameFragments config.Exclude fullFileName || ext = ".fsx" then Some Ignored
     else None
 
-let private (|Markdown|Less|Sass|StaticFile|) (filename : string) =
-    let ext = Path.GetExtension filename
+let private (|Markdown|Less|Sass|StaticFile|) (fullFileName : string) =
+    let ext = Path.GetExtension fullFileName
     if ext = ".md" then Markdown
     elif ext = ".less" then Less
     elif ext = ".sass" || ext =".scss" then Sass

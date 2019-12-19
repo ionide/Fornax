@@ -37,6 +37,27 @@ The main functionality of Fornax comes from CLI applications that lets user scaf
 
 Fornax is using normal F# code (F# script files) to define layouts and data types representing content, and yaml and Markdown to provide content (fitting defined models) for the layouts. A sample website can be found in the `samples` folder - to build it, run `fornax build` in this folder.
 
+### Fornax Configuration
+
+You can use the `_config.yml` file to configure the site generation. It has the following schema.
+
+```yml
+exclude:
+  - "..."
+
+style:
+  entry: "..."
+```
+
+#### Exclude
+
+This section contains a list of file name fragments which will be used to check whether a file should be ignored or not.
+Be aware that the generator bluntly checks if the fragment is contained in the full file path.
+
+#### Style
+
+The style section allows you define a **single** entry point for your less or sass stylings. Use this if you want to create a single style bundle containing all your css.
+
 ### Site Settings
 
 Site settings are information passed to every page during generation - every layout has access to this data.

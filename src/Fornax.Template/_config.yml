@@ -1,8 +1,10 @@
-# In case you need to exclude directories you can use the `exclude` option
+# In case you need to exclude files or directories you can use the `exclude` option
 # exclude:
-#   - "node_modules/"
-#   - "packages/"
+#   - "node_modules"
+#   - "packages"
+#   - "package.json"
+#   - "package-lock.json"
 
 # In case you want to bundle your less/scss define a single entry point
 # style:
-#  entry: "main.scss"
+#   entry: "main.scss"
