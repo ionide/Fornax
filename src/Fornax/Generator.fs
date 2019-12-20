@@ -192,6 +192,8 @@ module Evaluator =
             | Some s -> Ok s
             | None -> sprintf "The expression for %s couldn't be compiled" scriptPath |> Error
 
+    ///`fsi` - F# interactive session to be used for the generator evaluation
+    ///`posts` - array of data tuples from which to construct the posts in the fsi evaluation
     ///`layoutPath` - absolute path to `.fsx` file containing the layout
     ///`getSiteModel` - function generating instance of site settings model of given type
     ///`getContentModel` - function generating instance of page mode of given type
@@ -206,7 +208,10 @@ module Evaluator =
             invokeFunction generator [siteInput; modelInput; box posts; box body]
             |> tryExtractInvocationResultAs layoutPath)
 
-    // TODO: document this as it is API
+    ///`fsi` - F# interactive session to be used for the generator evaluation
+    ///`posts` - array of data tuples from which to construct the posts in the fsi evaluation
+    ///`generatorPath` - absolute path to `.fsx` file containing the custom generator
+    ///`getSiteModel` - function generating instance of site settings model of given type
     let evaluateCustomGenerator (fsi : FsiEvaluationSession) posts (generatorPath : string) (getSiteModel : System.Type -> obj) : Result<CustomGeneratorResult, string> =
         getContentFromCustomGenerator fsi generatorPath
         |> Result.bind (fun (smt, ft) ->
@@ -386,10 +391,20 @@ type GeneratorResult =
     | GeneratorSuccess of GeneratorMessage option
     | GeneratorFailure of GeneratorMessage
 
-let getSiteSettingsLoader (projectRoot : string) =
+let private getSiteSettingsLoader (projectRoot : string) =
     let settingsPath = Path.Combine(projectRoot, "_config.yml")
     let settingsText = Utils.retry 2 (fun _ -> File.ReadAllText settingsPath)
     settingsParser settingsText
+
+let private writeGeneratedContentToFile (content : string) (outputPath : string) (startTime : DateTime) =
+    let dir = Path.GetDirectoryName outputPath
+    if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
+    File.WriteAllText(outputPath, content)
+    let endTime = DateTime.Now
+    let ms = (endTime - startTime).Milliseconds
+    sprintf "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
+    |> Some
+    |> GeneratorSuccess
 
 ///`projectRoot` - path to the root of website
 ///`page` - path to page that should be generated
@@ -414,14 +429,7 @@ let generate posts (projectRoot : string) (page : string) =
 
         match result with
         | Ok r ->
-            let dir = Path.GetDirectoryName outputPath
-            if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
-            File.WriteAllText(outputPath, r)
-            let endTime = DateTime.Now
-            let ms = (endTime - startTime).Milliseconds
-            sprintf "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
-            |> Some
-            |> GeneratorSuccess
+            writeGeneratedContentToFile r outputPath startTime
         | Error message ->
             let endTime = DateTime.Now
             sprintf "[%s] '%s' generation failed" (endTime.ToString("HH:mm:ss")) outputPath
@@ -438,7 +446,8 @@ let generate posts (projectRoot : string) (page : string) =
         |> Some
         |> GeneratorSuccess
 
-// TODO: document this as it is public api
+///`projectRoot` - path to the root of website
+///`customGeneratorPath` - path to the custom generator's `fsx` file
 let customGenerate posts (projectRoot : string) (customGeneratorPath : string) =
     let startTime = DateTime.Now
     let settingsLoader = getSiteSettingsLoader projectRoot
@@ -453,16 +462,7 @@ let customGenerate posts (projectRoot : string) (customGeneratorPath : string) =
             |> (fun s -> s.Trim('\\'))
             |> (fun s -> s.Trim('/'))
         let outputPath = Path.Combine(projectRoot, "_public", p)
-
-        // TODO parameterize this part
-        let dir = Path.GetDirectoryName outputPath
-        if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
-        File.WriteAllText(outputPath, fileContent)
-        let endTime = DateTime.Now
-        let ms = (endTime - startTime).Milliseconds
-        sprintf "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
-        |> Some
-        |> GeneratorSuccess
+        writeGeneratedContentToFile fileContent outputPath startTime
     | Error message ->
         let endTime = DateTime.Now
         sprintf "[%s] custom generation failed for %s" (endTime.ToString("HH:mm:ss")) customGeneratorPath
