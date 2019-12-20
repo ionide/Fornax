@@ -1285,11 +1285,8 @@ with
             })
         |> Array.toList
 
-type CustomGeneratorScript = string
-type SiteModel<'a> = 'a
-type Posts = Post list
 type FileContent = string
-type VirtualOriginPath = string
-type Extension = string
+type VirtualFilePath = string
+type CustomGeneratorResult = FileContent * VirtualFilePath
 
-type CustomGenerator<'a> = CustomGeneratorScript -> SiteModel<'a> -> Posts -> FileContent * VirtualOriginPath * Extension
+type CustomGenerator<'a> = 'a -> Post list -> CustomGeneratorResult

@@ -4,7 +4,6 @@ module Generator
 open System
 open System.IO
 open System.Diagnostics
-open System.ServiceModel.Syndication
 
 module internal Utils =
     let rec retry times fn =
@@ -119,7 +118,8 @@ module Evaluator =
             None
 
     type EvaluatedSiteModelType = Choice<FsiValue option, exn>
-    type Evaluate<'a> = FsiEvaluationSession -> ErrorReportSoFar -> EvaluatedSiteModelType -> Result<'a, string>
+    type EvaluationResult<'a> = Result<'a, string>
+    type Evaluate<'a> = FsiEvaluationSession -> ErrorReportSoFar -> EvaluatedSiteModelType -> EvaluationResult<'a>
 
     let private getContentFromScript (fsi : FsiEvaluationSession)
                                      (scriptPath : string)
@@ -173,7 +173,7 @@ module Evaluator =
     let private getContentFromCustomGenerator (fsi : FsiEvaluationSession) (generatorPath : string) =
         let evaluate : Evaluate<FsiValue * FsiValue> =
             fun fsi reportSoFar siteModelType ->
-                let funType, customGeneratorErrors = fsi.EvalExpressionNonThrowing "<@@ fun siteModel posts -> generate siteModel posts @@>"
+                let funType, customGeneratorErrors = fsi.EvalExpressionNonThrowing "<@@ fun siteModel p -> generate siteModel (Post.Construct p) @@>"
                 let customGeneratorErrorMessage =
                     tryFormatErrorMessage "Get custom generator Errors" customGeneratorErrors
                 
@@ -186,11 +186,17 @@ module Evaluator =
 
         getContentFromScript fsi generatorPath evaluate
 
+    let private tryExtractInvocationResultAs<'a> (scriptPath : string) (res : obj option) : Result<'a, string> =
+        Option.bind (tryUnbox<'a>) res
+        |> function
+            | Some s -> Ok s
+            | None -> sprintf "The expression for %s couldn't be compiled" scriptPath |> Error
+
     ///`layoutPath` - absolute path to `.fsx` file containing the layout
     ///`getSiteModel` - function generating instance of site settings model of given type
     ///`getContentModel` - function generating instance of page mode of given type
     ///`body` - content of the post (in html)
-    let evaluate (fsi : FsiEvaluationSession) posts (layoutPath : string) (getSiteModel : System.Type -> obj) (getContentModel : System.Type -> obj * string) =
+    let evaluate (fsi : FsiEvaluationSession) posts (layoutPath : string) (getSiteModel : System.Type -> obj) (getContentModel : System.Type -> obj * string) : Result<string, string> =
         getContentFromLayout fsi layoutPath
         |> Result.bind (fun (mt, smt, ft) ->
             let modelInput, body = getContentModel (mt.ReflectionValue :?> Type)
@@ -198,10 +204,17 @@ module Evaluator =
             let generator = compileExpression ft
 
             invokeFunction generator [siteInput; modelInput; box posts; box body]
-            |> Option.bind (tryUnbox<string>)
-            |> function
-                | Some s -> Ok s
-                | None -> sprintf "The expression for %s couldn't be compiled" layoutPath |> Error)
+            |> tryExtractInvocationResultAs layoutPath)
+
+    // TODO: document this as it is API
+    let evaluateCustomGenerator (fsi : FsiEvaluationSession) posts (generatorPath : string) (getSiteModel : System.Type -> obj) : Result<CustomGeneratorResult, string> =
+        getContentFromCustomGenerator fsi generatorPath
+        |> Result.bind (fun (smt, ft) ->
+            let siteModelInput = getSiteModel (smt.ReflectionValue :?> Type)
+            let generator = compileExpression ft
+            
+            invokeFunction generator [ siteModelInput; box posts ]
+            |> tryExtractInvocationResultAs generatorPath)
 
 // Module to print colored message in the console
 module Logger =
@@ -425,6 +438,37 @@ let generate posts (projectRoot : string) (page : string) =
         |> Some
         |> GeneratorSuccess
 
+// TODO: document this as it is public api
+let customGenerate posts (projectRoot : string) (customGeneratorPath : string) =
+    let startTime = DateTime.Now
+    let settingsLoader = getSiteSettingsLoader projectRoot
+
+    use fsiSession = Evaluator.fsi ()
+    let result = Evaluator.evaluateCustomGenerator fsiSession posts customGeneratorPath settingsLoader
+
+    match result with
+    | Ok (fileContent, virtualFilePath) ->
+        let p =
+            virtualFilePath
+            |> (fun s -> s.Trim('\\'))
+            |> (fun s -> s.Trim('/'))
+        let outputPath = Path.Combine(projectRoot, "_public", p)
+
+        // TODO parameterize this part
+        let dir = Path.GetDirectoryName outputPath
+        if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
+        File.WriteAllText(outputPath, fileContent)
+        let endTime = DateTime.Now
+        let ms = (endTime - startTime).Milliseconds
+        sprintf "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
+        |> Some
+        |> GeneratorSuccess
+    | Error message ->
+        let endTime = DateTime.Now
+        sprintf "[%s] custom generation failed for %s" (endTime.ToString("HH:mm:ss")) customGeneratorPath
+        |> (fun s -> message + Environment.NewLine + s)
+        |> GeneratorFailure
+
 ///`projectRoot` - path to the root of website
 ///`path` - path to file that should be copied
 let copyStaticFile  (projectRoot : string) (path : string) =
@@ -484,23 +528,6 @@ let generateFromSass (projectRoot : string) (path : string) =
             |> fun s -> s + Environment.NewLine + "Please check you have installed the Sass compiler if you are going to be using files with extension .scss. https://sass-lang.com/install"
             |> GeneratorFailure
 
-let generateSyndicationDocument (posts : (Link * Author * Published * Tags) list) =
-    match posts with
-    | [] -> None
-    | (link, author, published, tags)::xs ->
-        let title =
-            author
-            |> Option.map (sprintf "%s's Blog")
-            |> Option.defaultWith (fun _ -> "A Blog")
-
-        let description =
-            author
-            |> Option.map (sprintf "A blog created by %s. Powered by Fornax.")
-            |> Option.defaultWith (fun _ -> "A blog powerd by Fornax.")
-
-        // TODO : we first have to solve the settings part before we can generate feeds
-        Some ""
-
 let private (|Ignored|Markdown|Less|Sass|StaticFile|) (filename : string) =
     let ext = Path.GetExtension filename
     if filename.Contains "_public" || filename.Contains "_bin" || filename.Contains "_lib" || filename.Contains "_data" || filename.Contains "_settings" || filename.Contains "_config.yml" || ext = ".fsx" || filename.Contains ".sass-cache" || filename.Contains ".git" || filename.Contains ".ionide" then Ignored
@@ -541,3 +568,9 @@ let generateFolder (projectRoot : string) =
         | Sass  -> n |> relative projectRoot |> generateFromSass projectRoot
         | StaticFile -> n |> relative projectRoot |> copyStaticFile projectRoot
         |> logResult)
+        
+    let customGeneratorDirectory = Path.Combine(projectRoot, "_generators")
+    if Directory.Exists customGeneratorDirectory then
+        Directory.GetFiles(customGeneratorDirectory, "*", SearchOption.TopDirectoryOnly)
+        |> Array.iter (fun n -> n |> relative projectRoot |> customGenerate posts projectRoot |> logResult)
+    else ()
