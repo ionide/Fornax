@@ -149,21 +149,43 @@ let main argv =
 
             0
         | Some Build ->
-            Generator.generateFolder true cwd
-            0
+            try
+                do generateFolder true cwd
+                0
+            with
+            | FornaxGeneratorException message ->
+                Console.WriteLine message
+                1
+            | exn ->
+                printfn "An unexpected error happend: %s%s%s" exn.Message Environment.NewLine exn.StackTrace
+                1
         | Some (Watch (parseResults)) ->
             let disableLiveRefresh = parseResults.Contains <@ Disable_Live_Refresh @> 
             let mutable lastAccessed = Map.empty<string, DateTime>
-            generateFolder disableLiveRefresh cwd
-            use _watcher = createFileWatcher cwd (fun e ->
-                if not (e.FullPath.Contains "_public") && not (e.FullPath.Contains ".sass-cache") && not (e.FullPath.Contains ".git") then
+            let waitingForChangesMessage = "Generated site with errors. Waiting for changes..."
+
+            let guardedGenerate () =
+                try
+                    generateFolder disableLiveRefresh cwd
+                with
+                | FornaxGeneratorException message ->
+                    printfn "%s%s%s" message Environment.NewLine waitingForChangesMessage
+                | exn ->
+                    printfn "An unexpected error happend: %s%s%s" exn.Message Environment.NewLine exn.StackTrace
+                    exit 1
+
+            guardedGenerate ()
+
+            use watcher = createFileWatcher cwd (fun e ->
+                if not (e.FullPath.Contains "_public") && not (e.FullPath.Contains ".sass-cache") && not (e.FullPath.Contains ".git") && not (e.FullPath.Contains ".ionide") then
                     let lastTimeWrite = File.GetLastWriteTime(e.FullPath)
                     match lastAccessed.TryFind e.FullPath with
                     | Some lt when Math.Abs((lt - lastTimeWrite).Seconds) < 1 -> ()
                     | _ ->
                         printfn "[%s] Changes detected: %s" (DateTime.Now.ToString("HH:mm:ss")) e.FullPath
                         lastAccessed <- lastAccessed.Add(e.FullPath, lastTimeWrite)
-                        Generator.generateFolder disableLiveRefresh cwd)
+                        guardedGenerate ())
+
             startWebServerAsync defaultConfig (router cwd) |> snd |> Async.Start
             printfn "[%s] Watch mode started. Press any key to exit." (DateTime.Now.ToString("HH:mm:ss"))
             Console.ReadKey() |> ignore
