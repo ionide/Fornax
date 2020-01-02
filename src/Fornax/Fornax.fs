@@ -7,6 +7,10 @@ open Suave
 open Suave.Filters
 open Suave.Operators
 
+open Suave.Sockets
+open Suave.Sockets.Control
+open Suave.WebSocket
+
 type FornaxExiter () =
     interface IExiter with
         member x.Name = "fornax exiter"
@@ -19,10 +23,20 @@ type FornaxExiter () =
                 printfn "%s" msg
                 exit 1
 
-type [<CliPrefixAttribute("")>] Arguments =
+type [<CliPrefix(CliPrefix.DoubleDash)>] WatchArgs = | Disable_Live_Refresh
+with
+    interface IArgParserTemplate with
+        member s.Usage = 
+            match s with
+            | Disable_Live_Refresh ->
+                "The watch command will inject some live-refresh Javascript "
+                    + "into your pages to automatically update them by default.  "
+                    + "This command will disable that behavior."
+
+type [<CliPrefix(CliPrefix.None)>] Arguments =
     | New
     | Build
-    | Watch
+    | Watch of ParseResults<WatchArgs> 
     | Version
     | Clean
 with
@@ -31,18 +45,27 @@ with
             match s with
             | New -> "Create new web site"
             | Build -> "Build web site"
-            | Watch -> "Start watch mode rebuilding "
+            | Watch _ -> "Start watch mode rebuilding "
             | Version -> "Print version"
             | Clean -> "Clean output and temp files"
+
+
 
 let toArguments (result : ParseResults<Arguments>) =
     if result.Contains <@ New @> then Some New
     elif result.Contains <@ Build @> then Some Build
-    elif result.Contains <@ Watch @> then Some Watch
+    elif result.Contains <@ Watch @> then
+        let temp = result.GetResult <@ Watch @>
+        printfn "temp %A" temp
+        temp |> Watch |> Some
     elif result.Contains <@ Version @> then Some Version
     elif result.Contains <@ Clean @> then Some Clean
-
     else None
+
+/// Used to keep track of when content has changed,
+/// thus triggering the websocket to update
+/// any listeners to refresh.
+let mutable contentChanged = false
 
 let createFileWatcher dir handler =
     let fileSystemWatcher = new FileSystemWatcher()
@@ -53,29 +76,51 @@ let createFileWatcher dir handler =
     fileSystemWatcher.Created.Add handler
     fileSystemWatcher.Changed.Add handler
     fileSystemWatcher.Deleted.Add handler
+
+    /// Adding handler to trigger websocket/live refresh
+    let contentChangedHandler _ = contentChanged <- true
+    fileSystemWatcher.Created.Add contentChangedHandler
+    fileSystemWatcher.Changed.Add contentChangedHandler
+    fileSystemWatcher.Deleted.Add contentChangedHandler
+
     fileSystemWatcher
+
+/// Websocket function that a page listens to so it
+/// knows when to refresh.
+let ws (webSocket : WebSocket) (context: HttpContext) =
+    socket {
+        while true do
+            let emptyResponse = [||] |> ByteSegment
+            if contentChanged then
+                do! webSocket.send Close emptyResponse true
+                contentChanged <- false
+    }
 
 let router basePath =
     choose [
         path "/" >=> Redirection.redirect "/index.html"
         (Files.browse (Path.Combine(basePath, "_public")))
+        path "/websocket" >=> handShake ws
     ]
 
 [<EntryPoint>]
 let main argv =
-    let parser = ArgumentParser.Create<Arguments>(programName = "fornax", errorHandler = FornaxExiter ())
+    let parser = ArgumentParser.Create<Arguments>(programName = "fornax",errorHandler=FornaxExiter())
 
-    if argv.Length = 0 then
+    let results = parser.ParseCommandLine(inputs = argv).GetAllResults()
+
+    if List.isEmpty results then
         printfn "No arguments provided.  Try 'fornax help' for additional details."
         printfn "%s" <| parser.PrintUsage()
         1
-    elif argv.Length > 1 then
-        printfn "More than one argument was provided.  Please provide only a single argument.  Try 'fornax help' for additional details."
+    elif List.length results > 1 then
+        printfn "More than one command was provided.  Please provide only a single command.  Try 'fornax help' for additional details."
         printfn "%s" <| parser.PrintUsage()
         1
     else
-        let result = parser.Parse argv |> toArguments
+        let result = List.tryHead results
         let cwd = Directory.GetCurrentDirectory ()
+
         match result with
         | Some New ->
             // The path of the directory that holds the scaffolding for a new website.
@@ -105,7 +150,7 @@ let main argv =
             0
         | Some Build ->
             try
-                let results = Generator.generateFolder cwd
+                do generateFolder true cwd
                 0
             with
             | FornaxGeneratorException message ->
@@ -114,13 +159,14 @@ let main argv =
             | exn ->
                 printfn "An unexpected error happend: %s%s%s" exn.Message Environment.NewLine exn.StackTrace
                 1
-        | Some Watch ->
+        | Some (Watch (parseResults)) ->
+            let disableLiveRefresh = parseResults.Contains <@ Disable_Live_Refresh @> 
             let mutable lastAccessed = Map.empty<string, DateTime>
             let waitingForChangesMessage = "Generated site with errors. Waiting for changes..."
 
             let guardedGenerate () =
                 try
-                    generateFolder cwd
+                    generateFolder disableLiveRefresh cwd
                 with
                 | FornaxGeneratorException message ->
                     printfn "%s%s%s" message Environment.NewLine waitingForChangesMessage

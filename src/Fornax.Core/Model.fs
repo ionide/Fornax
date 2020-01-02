@@ -613,6 +613,7 @@ type CSSProperties =
         | Kind of string
         | Label of string
         | Lang of string
+        | Language of string
         | List of string
         | Loop of bool
         | Low of float
@@ -691,6 +692,7 @@ type CSSProperties =
         | Results of float
         | Security of string
         | Unselectable of bool
+        | Custom of string * string
 
         static member ToString = function
             | DefaultChecked s -> sprintf "defaultChecked=\"%s\"" (if s then "true" else "false")
@@ -756,6 +758,7 @@ type CSSProperties =
             | Kind s -> sprintf "kind=\"%s\"" s
             | Label s -> sprintf "label=\"%s\"" s
             | Lang s -> sprintf "lang=\"%s\"" s
+            | Language s -> sprintf "language=\"%s\"" s
             | List s -> sprintf "list=\"%s\"" s
             | Loop s -> sprintf "loop=\"%s\"" (if s then "true" else "false")
             | Low s -> sprintf "low=\"%g\"" s
@@ -834,6 +837,7 @@ type CSSProperties =
             | Results s -> sprintf "results=\"%g\"" s
             | Security s -> sprintf "security=\"%s\"" s
             | Unselectable s -> sprintf "unselectable=\"%s\"" (if s then "true" else "false")
+            | Custom (k,v) -> sprintf "%s=\"%s\"" k v
 
     type HtmlElement =
         private

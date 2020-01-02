@@ -368,6 +368,28 @@ let getPosts (projectRoot : string) =
 
         ((link:Link), (title:Title), (author:Author), (published:Published), (tags:Tags), (content:Content)))
 
+let injectWebsocketCode (webpage:string) = 
+    let websocketScript =
+        """
+        <script type="text/javascript">
+          var wsUri = "ws://localhost:8080/websocket";
+      function init()
+      {
+        websocket = new WebSocket(wsUri);
+        websocket.onclose = function(evt) { onClose(evt) };
+      }
+      function onClose(evt)
+      {
+        console.log('closing');
+        websocket.close();
+        document.location.reload();
+      }
+      window.addEventListener("load", init, false);
+      </script>
+        """
+    let head = "<head>"
+    let index = webpage.IndexOf head
+    webpage.Insert ( (index + head.Length),websocketScript)
 exception FornaxGeneratorException of string
 
 type GeneratorMessage = string
@@ -379,7 +401,7 @@ type GeneratorResult =
 
 ///`projectRoot` - path to the root of website
 ///`page` - path to page that should be generated
-let generate posts (projectRoot : string) (page : string) =
+let generate (disableLiveRefresh:bool) posts (projectRoot : string) (page : string) =
     let startTime = DateTime.Now
     let contentPath = Path.Combine(projectRoot, page)
     let settingsPath = Path.Combine(projectRoot, "_config.yml")
@@ -398,7 +420,13 @@ let generate posts (projectRoot : string) (page : string) =
         let layoutPath = Path.Combine(projectRoot, "layouts", layout + ".fsx")
 
         use fsiSession = Evaluator.fsi ()
-        let result = Evaluator.evaluate fsiSession posts layoutPath settingsLoader modelLoader
+        let result =
+            Evaluator.evaluate fsiSession posts layoutPath settingsLoader modelLoader
+            |> Result.map(fun strContent ->
+                if not disableLiveRefresh then
+                    injectWebsocketCode strContent
+                else strContent
+            )
 
         match result with
         | Ok r ->
@@ -494,7 +522,7 @@ let private (|Ignored|Markdown|Less|Sass|StaticFile|) (filename : string) =
     else StaticFile
 
 ///`projectRoot` - path to the root of website
-let generateFolder (projectRoot : string) =
+let generateFolder (disableLiveRefresh:bool) (projectRoot : string) =
     let relative toPath fromPath =
         let toUri = Uri(toPath)
         let fromUri = Uri(fromPath)
@@ -520,7 +548,7 @@ let generateFolder (projectRoot : string) =
     |> Array.iter (fun n ->
         match n with
         | Ignored -> GeneratorIgnored
-        | Markdown -> n |> relative projectRoot |> generate posts projectRoot
+        | Markdown -> n |> relative projectRoot |> generate disableLiveRefresh posts projectRoot
         | Less -> n |> relative projectRoot |> generateFromLess projectRoot
         | Sass  -> n |> relative projectRoot |> generateFromSass projectRoot
         | StaticFile -> n |> relative projectRoot |> copyStaticFile projectRoot
