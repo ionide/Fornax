@@ -149,6 +149,14 @@ And you don't just have to write code. You can help out by writing documentation
 
 Thank you for contributing!
 
+## Build process
+
+ * You need [.NET Core 3.0 SDK](https://dotnet.microsoft.com/download/dotnet-core/3.0)
+ * Run `dotnet tool restore` to restore the .NET Core 3 local tools defined at .config/dotnet-tools.json
+ * To build the project run `dotnet fake build`
+ * To run unit tests run `dotnet fake build -t Test`
+
+
 ## Contributing and copyright
 
 The project is hosted on [GitHub](https://github.com/LambdaFactory/Fornax) where you can [report issues](https://github.com/LambdaFactory/Fornax/issues), fork
