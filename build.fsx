@@ -44,18 +44,17 @@ let buildDir = __SOURCE_DIRECTORY__ </> "temp"
 // Helpers
 // --------------------------------------------------------------------------------------
 let isNullOrWhiteSpace = System.String.IsNullOrWhiteSpace
-let exec cmd args dir =
-    if Process.execSimple( fun info ->
 
-        { info with
-            FileName = cmd
-            WorkingDirectory =
-                if (isNullOrWhiteSpace dir) then info.WorkingDirectory
-                else dir
-            Arguments = args
-            }
-    ) System.TimeSpan.MaxValue <> 0 then
+let runTool cmd args workingDir =
+    let arguments = args |> String.split ' ' |> Arguments.OfArgs
+    let r =
+        Command.RawCommand (cmd, arguments)
+        |> CreateProcess.fromCommand
+        |> CreateProcess.withWorkingDirectory workingDir
+        |> Proc.run
+    if r.ExitCode <> 0 then 
         failwithf "Error while running '%s' with args: %s" cmd args
+
 let getBuildParam = Environment.environVar
 
 let DoNothing = ignore
@@ -104,11 +103,10 @@ Target.create "Build" (fun _ ->
 
 Target.create "Publish" (fun _ ->
     DotNet.publish (fun p -> {p with OutputPath = Some buildDir}) "src/Fornax"
-
 )
 
 Target.create "Test" (fun _ ->
-    exec "dotnet"  @"run --project .\test\Fornax.Core.UnitTests\Fornax.Core.UnitTests.fsproj" "."
+    runTool "dotnet" @"run --project .\test\Fornax.Core.UnitTests\Fornax.Core.UnitTests.fsproj" "."
 )
 
 // --------------------------------------------------------------------------------------
