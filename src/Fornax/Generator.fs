@@ -77,6 +77,108 @@ module internal Utils =
                 Error fnf.Message
             | _ -> reraise ()
 
+module LoaderEvaluator =
+    open System.Globalization
+    open System.Text
+    open Microsoft.FSharp.Compiler.Interactive.Shell
+    open FSharp.Quotations.Evaluator
+    open FSharp.Reflection
+
+    let private sbOut = StringBuilder()
+    let private sbErr = StringBuilder()
+    let internal fsi () =
+        let inStream = new StringReader("")
+        let outStream = new StringWriter(sbOut)
+        let errStream = new StringWriter(sbErr)
+        try
+            let fsiConfig = FsiEvaluationSession.GetDefaultConfiguration()
+            let argv = [| "/temp/fsi.exe"; "--define:FORNAX"|]
+            FsiEvaluationSession.Create(fsiConfig, argv, inStream, outStream, errStream)
+        with
+        | ex ->
+            printfn "Error: %A" ex
+            printfn "Inner: %A" ex.InnerException
+            printfn "ErrorStream: %s" (errStream.ToString())
+            raise ex
+
+    let private getOpen (path : string) =
+        let filename = Path.GetFileNameWithoutExtension path
+        let textInfo = (CultureInfo("en-US", false)).TextInfo
+        textInfo.ToTitleCase filename
+
+    let private getLoad (path : string) =
+        path.Replace("\\", "\\\\")
+
+    let private invokeFunction (f : obj) (args : obj seq) =
+        let rec helper (next : obj) (args : obj list)  =
+            match args.IsEmpty with
+            | false ->
+                let fType = next.GetType()
+                if FSharpType.IsFunction fType then
+                    let methodInfo =
+                        fType.GetMethods()
+                        |> Array.filter (fun x -> x.Name = "Invoke" && x.GetParameters().Length = 1)
+                        |> Array.head
+                    let res = methodInfo.Invoke(next, [| args.Head |])
+                    helper res args.Tail
+                else None
+            | true ->
+                Some next
+        helper f (args |> List.ofSeq )
+
+    let private compileExpression (input : FsiValue) =
+        let genExpr = input.ReflectionValue :?> Quotations.Expr
+        QuotationEvaluator.CompileUntyped genExpr
+
+    let private runLoader (fsi : FsiEvaluationSession) (layoutPath : string) =
+        let filename = getOpen layoutPath
+        let load = getLoad layoutPath
+
+        let tryFormatErrorMessage message (errors : 'a []) =
+            if errors.Length > 0 then
+                sprintf "%s: %A" message errors |> Some
+            else
+                None
+
+        let _, loadErrors = fsi.EvalInteractionNonThrowing(sprintf "#load \"%s\";;" load)
+        let loadErrorMessage =
+            tryFormatErrorMessage "Load Errors" loadErrors
+
+        let _, openErrors = fsi.EvalInteractionNonThrowing(sprintf "open %s;;" filename)
+        let openErrorMessage =
+            tryFormatErrorMessage "Open Errors" openErrors
+
+        let funType, layoutErrors = fsi.EvalExpressionNonThrowing "<@@ fun a b -> loader a b @@>"
+        let layoutErrorMessage =
+            tryFormatErrorMessage "Get layout Errors" layoutErrors
+
+        let completeErrorReport =
+            [ loadErrorMessage
+              openErrorMessage
+              layoutErrorMessage ]
+            |> List.filter (Option.isSome)
+            |> List.map (fun v -> v.Value)
+            |> List.fold (fun state message -> state + Environment.NewLine + message) ""
+            |> (fun s -> s.Trim(Environment.NewLine.ToCharArray()))
+
+        match funType with
+        | Choice1Of2 (Some ft) ->
+            Ok ft
+        | _ -> Error completeErrorReport
+
+
+    ///`loaderPath` - absolute path to `.fsx` file containing the loader
+    let evaluate (fsi : FsiEvaluationSession) (siteContent : SiteContents) (loaderPath : string) (projectRoot : string)  =
+        runLoader fsi loaderPath
+        |> Result.bind (fun ft ->
+            let generator = compileExpression ft
+
+            invokeFunction generator [box projectRoot; box siteContent]
+            |> Option.bind (tryUnbox<SiteContents>)
+            |> function
+                | Some s -> Ok s
+                | None -> sprintf "The expression for %s couldn't be compiled" loaderPath |> Error)
+
 module Evaluator =
     open System.Globalization
     open System.Text
@@ -126,17 +228,6 @@ module Evaluator =
                 Some next
         helper f (args |> List.ofSeq )
 
-    let private createInstance (input : FsiValue) (args : Map<string, obj>) =
-        let mType = input.ReflectionValue :?> Type
-        let fields =
-            mType.GetMembers()
-            |> Array.skipWhile (fun n -> n.Name <> ".ctor")
-            |> Array.skip 1
-            |> Array.map (fun n -> args.[n.Name])
-
-        let ctor = mType.GetConstructors().[0]
-        ctor.Invoke(fields)
-
     let private compileExpression (input : FsiValue) =
         let genExpr = input.ReflectionValue :?> Quotations.Expr
         QuotationEvaluator.CompileUntyped genExpr
@@ -163,11 +254,7 @@ module Evaluator =
         let modelErrorMesage =
             tryFormatErrorMessage "Get model Errors" modelErrors
 
-        let siteModelType, siteModelErrors = fsi.EvalExpressionNonThrowing "typeof<SiteModel.SiteModel>"
-        let siteModelErrorMessage =
-            tryFormatErrorMessage "Get site model Errors" siteModelErrors
-
-        let funType, layoutErrors = fsi.EvalExpressionNonThrowing "<@@ fun a b c d -> (generate a b (Post.Construct c) d) |> HtmlElement.ToString @@>"
+        let funType, layoutErrors = fsi.EvalExpressionNonThrowing "<@@ fun a b c -> (generate a b c) |> HtmlElement.ToString @@>"
         let layoutErrorMessage =
             tryFormatErrorMessage "Get layout Errors" layoutErrors
 
@@ -175,33 +262,30 @@ module Evaluator =
             [ loadErrorMessage
               openErrorMessage
               modelErrorMesage
-              siteModelErrorMessage
               layoutErrorMessage ]
             |> List.filter (Option.isSome)
             |> List.map (fun v -> v.Value)
             |> List.fold (fun state message -> state + Environment.NewLine + message) ""
             |> (fun s -> s.Trim(Environment.NewLine.ToCharArray()))
 
-        match modelType, siteModelType, funType with
-        | Choice1Of2 (Some mt), Choice1Of2 (Some smt), Choice1Of2 (Some ft) ->
-            Ok (mt, smt, ft)
+        match modelType, funType with
+        | Choice1Of2 (Some mt), Choice1Of2 (Some ft) ->
+            Ok (mt, ft)
         | _ -> Error completeErrorReport
 
     // let private getContentFromLayout = Utils.memoizeScriptFile getContentFromLayout'
     let private getContentFromLayout = getContentFromLayout'
 
     ///`layoutPath` - absolute path to `.fsx` file containing the layout
-    ///`getSiteModel` - function generating instance of site settings model of given type
     ///`getContentModel` - function generating instance of page mode of given type
     ///`body` - content of the post (in html)
-    let evaluate (fsi : FsiEvaluationSession) posts (layoutPath : string) (getSiteModel : System.Type -> obj) (getContentModel : System.Type -> obj * string) =
+    let evaluate (fsi : FsiEvaluationSession) (siteContent : SiteContents) (layoutPath : string) (getContentModel : System.Type -> obj * string) =
         getContentFromLayout fsi layoutPath
-        |> Result.bind (fun (mt, smt, ft) ->
+        |> Result.bind (fun (mt, ft) ->
             let modelInput, body = getContentModel (mt.ReflectionValue :?> Type)
-            let siteInput = getSiteModel (smt.ReflectionValue :?> Type)
             let generator = compileExpression ft
 
-            invokeFunction generator [siteInput; modelInput; box posts; box body]
+            invokeFunction generator [box siteContent; modelInput; box body]
             |> Option.bind (tryUnbox<string>)
             |> function
                 | Some s -> Ok s
@@ -368,7 +452,7 @@ let getPosts (projectRoot : string) =
 
         ((link:Link), (title:Title), (author:Author), (published:Published), (tags:Tags), (content:Content)))
 
-let injectWebsocketCode (webpage:string) = 
+let injectWebsocketCode (webpage:string) =
     let websocketScript =
         """
         <script type="text/javascript">
@@ -401,10 +485,9 @@ type GeneratorResult =
 
 ///`projectRoot` - path to the root of website
 ///`page` - path to page that should be generated
-let generate (disableLiveRefresh:bool) posts (projectRoot : string) (page : string) =
+let generate fsi (disableLiveRefresh:bool) (siteContent : SiteContents) (projectRoot : string) (page : string) =
     let startTime = DateTime.Now
     let contentPath = Path.Combine(projectRoot, page)
-    let settingsPath = Path.Combine(projectRoot, "_config.yml")
     let outputPath =
         let p = Path.ChangeExtension(page, ".html")
         Path.Combine(projectRoot, "_public", p)
@@ -412,16 +495,14 @@ let generate (disableLiveRefresh:bool) posts (projectRoot : string) (page : stri
     let contentText = Utils.retry 2 (fun _ -> File.ReadAllText contentPath)
 
     if containsLayout contentText then
-        let settingsText = Utils.retry 2 (fun _ -> File.ReadAllText settingsPath)
         let layout = getLayout contentText
 
-        let settingsLoader = settingsParser settingsText
         let modelLoader = contentParser contentText
         let layoutPath = Path.Combine(projectRoot, "layouts", layout + ".fsx")
 
-        use fsiSession = Evaluator.fsi ()
+        // use fsiSession = Evaluator.fsi ()
         let result =
-            Evaluator.evaluate fsiSession posts layoutPath settingsLoader modelLoader
+            Evaluator.evaluate fsi siteContent layoutPath modelLoader
             |> Result.map(fun strContent ->
                 if not disableLiveRefresh then
                     injectWebsocketCode strContent
@@ -521,6 +602,16 @@ let private (|Ignored|Markdown|Less|Sass|StaticFile|) (filename : string) =
     elif ext = ".sass" || ext =".scss" then Sass
     else StaticFile
 
+let evalLoader fsi (projectRoot : string) (sc: SiteContents) =
+
+    let path = Path.Combine("loaders", "postloader.fsx")
+    match LoaderEvaluator.evaluate fsi sc path projectRoot with
+    | Ok sc ->
+        sc
+    | Error er ->
+        printfn "LOADER ERROR: %s" er
+        sc
+
 ///`projectRoot` - path to the root of website
 let generateFolder (disableLiveRefresh:bool) (projectRoot : string) =
     let relative toPath fromPath =
@@ -532,7 +623,13 @@ let generateFolder (disableLiveRefresh:bool) (projectRoot : string) =
         if projectRoot.EndsWith (string Path.DirectorySeparatorChar) then projectRoot
         else projectRoot + (string Path.DirectorySeparatorChar)
 
-    let posts = getPosts projectRoot
+    use fsi = Evaluator.fsi ()
+    let sc = SiteContents ()
+    let sc = evalLoader fsi projectRoot sc
+
+    getPosts projectRoot
+    |> Post.Construct
+    |> List.iter (sc.Add)
 
     let logResult (result : GeneratorResult) =
         match result with
@@ -548,7 +645,7 @@ let generateFolder (disableLiveRefresh:bool) (projectRoot : string) =
     |> Array.iter (fun n ->
         match n with
         | Ignored -> GeneratorIgnored
-        | Markdown -> n |> relative projectRoot |> generate disableLiveRefresh posts projectRoot
+        | Markdown -> n |> relative projectRoot |> generate fsi disableLiveRefresh sc projectRoot
         | Less -> n |> relative projectRoot |> generateFromLess projectRoot
         | Sass  -> n |> relative projectRoot |> generateFromSass projectRoot
         | StaticFile -> n |> relative projectRoot |> copyStaticFile projectRoot

@@ -1288,3 +1288,31 @@ with
                 content = content
             })
         |> Array.toList
+
+open System.Collections.Generic
+
+type SiteContents () =
+    let container = new System.ComponentModel.Design.ServiceContainer()
+
+    member __.Add(value:'a) =
+        let key = typeof<List<'a>>
+        match container.GetService(key) with
+        | :? List<'a> as result ->
+            result.Add(value)
+        | _ ->
+            container.AddService(key, List<'a>([|value|]))
+
+    member __.GetValues<'a> () : seq<'a> =
+        let key = typeof<List<'a>>
+        let result = container.GetService(key)
+        result :?> IEnumerable<'a>
+
+    member this.TryGetValues<'a> () =
+        let key = typeof<List<'a>>
+        if container.GetService(key) |> isNull then
+            None
+        else this.GetValues<'a>() |> Some
+
+    member this.TryGetValue<'a> () =
+        this.TryGetValues<'a> ()
+        |> Option.bind (Seq.tryHead)
