@@ -6,28 +6,6 @@ open System.IO
 open System.Diagnostics
 
 module internal Utils =
-    let rec retry times fn =
-        if times > 1 then
-            try
-                fn()
-            with
-            | _ ->
-                System.Threading.Thread.Sleep 50
-                retry (times - 1) fn
-        else
-            fn()
-
-    let memoizeParser f =
-        let cache = ref Map.empty
-        fun (x : string) (y : System.Type) ->
-            let input = (x,y.GetHashCode())
-            match (!cache).TryFind(input) with
-            | Some res -> res
-            | None ->
-                let res = f x y
-                cache := (!cache).Add(input,res)
-                res
-
     let memoize f =
         let cache = ref Map.empty
         fun x ->
@@ -37,45 +15,6 @@ module internal Utils =
                 let res = f x
                 cache := (!cache).Add(x,res)
                 res
-
-    let memoizeScriptFile (f : string -> Result<'a, string>) =
-        let resultCache = ref Map.empty
-        let contentCache = ref Map.empty
-        fun (x : string) ->
-            let rec getContent (f : string) =
-                let dir = Path.GetDirectoryName f
-                let content = retry 2 (fun _ -> File.ReadAllLines f)
-                let contetnMap' = [(f, content)]
-                let loads = content |> Array.where (fun n -> n.Contains "#load")
-                let relativeFiles = loads |> Array.map (fun n -> (n.Split '"').[1])
-                if relativeFiles.Length > 0 then
-                    relativeFiles
-                    |> Array.fold (fun acc e ->
-                        let pth = Path.Combine(dir, e)
-                        [yield! acc; yield! getContent pth ]) contetnMap'
-                else contetnMap'
-
-            try
-                let ctn = getContent x
-
-                match (!resultCache).TryFind(x) with
-                | Some res ->
-                    match (!contentCache).TryFind(x) with
-                    | Some r when r = ctn -> res
-                    | _ ->
-                        let res = f x
-                        resultCache := (!resultCache).Add(x,res)
-                        contentCache := (!contentCache).Add(x,ctn)
-                        res
-                | None ->
-                    let res = f x
-                    resultCache := (!resultCache).Add(x,res)
-                    contentCache := (!contentCache).Add(x,ctn)
-                    res
-            with
-            | :? FileNotFoundException as fnf ->
-                Error fnf.Message
-            | _ -> reraise ()
 
 module EvaluatorHelpers =
     open FSharp.Quotations.Evaluator
@@ -194,13 +133,13 @@ module LoaderEvaluator =
                 | Some s -> Ok s
                 | None -> sprintf "The expression for %s couldn't be compiled" loaderPath |> Error)
 
-module Evaluator =
+module GeneratorEvaluator =
     open Microsoft.FSharp.Compiler.Interactive.Shell
     open EvaluatorHelpers
 
-    let private getContentFromLayout (fsi : FsiEvaluationSession) (layoutPath : string) =
-        let filename = getOpen layoutPath
-        let load = getLoad layoutPath
+    let private getGeneratorContent (fsi : FsiEvaluationSession) (generatorPath : string) =
+        let filename = getOpen generatorPath
+        let load = getLoad generatorPath
 
         let tryFormatErrorMessage message (errors : 'a []) =
             if errors.Length > 0 then
@@ -216,40 +155,35 @@ module Evaluator =
         let openErrorMessage =
             tryFormatErrorMessage "Open Errors" openErrors
 
-        let modelType, modelErrors = fsi.EvalExpressionNonThrowing "typeof<Model>"
-        let modelErrorMesage =
-            tryFormatErrorMessage "Get model Errors" modelErrors
-
-        let funType, layoutErrors = fsi.EvalExpressionNonThrowing "<@@ fun a b c -> (generate a b c) |> HtmlElement.ToString @@>"
+        let funType, layoutErrors = fsi.EvalExpressionNonThrowing "<@@ fun a b -> generate a b @@>"
         let layoutErrorMessage =
-            tryFormatErrorMessage "Get layout Errors" layoutErrors
+            tryFormatErrorMessage "Get generator Errors" layoutErrors
 
         let completeErrorReport =
             [ loadErrorMessage
               openErrorMessage
-              modelErrorMesage
               layoutErrorMessage ]
             |> List.filter (Option.isSome)
             |> List.map (fun v -> v.Value)
             |> List.fold (fun state message -> state + Environment.NewLine + message) ""
             |> (fun s -> s.Trim(Environment.NewLine.ToCharArray()))
 
-        match modelType, funType with
-        | Choice1Of2 (Some mt), Choice1Of2 (Some ft) ->
-            Ok (mt, ft)
+        match funType with
+        | Choice1Of2 (Some ft) ->
+            Ok (ft)
         | _ -> Error completeErrorReport
 
 
     ///`layoutPath` - absolute path to `.fsx` file containing the layout
     ///`getContentModel` - function generating instance of page mode of given type
     ///`body` - content of the post (in html)
-    let evaluate (fsi : FsiEvaluationSession) (siteContent : SiteContents) (layoutPath : string) (getContentModel : System.Type -> obj * string) =
-        getContentFromLayout fsi layoutPath
-        |> Result.bind (fun (mt, ft) ->
-            let modelInput, body = getContentModel (mt.ReflectionValue :?> Type)
+    let evaluate (fsi : FsiEvaluationSession) (siteContent : SiteContents) (layoutPath : string) (page: string)  =
+        getGeneratorContent fsi layoutPath
+        |> Result.bind (fun ft ->
+            // let modelInput, body = getContentModel (mt.ReflectionValue :?> Type)
             let generator = compileExpression ft
 
-            invokeFunction generator [box siteContent; modelInput; box body]
+            invokeFunction generator [box siteContent; box page ]
             |> Option.bind (tryUnbox<string>)
             |> function
                 | Some s -> Ok s
@@ -267,53 +201,6 @@ module Logger =
     let error str = Printf.kprintf (fun s -> use c = consoleColor ConsoleColor.Red in printf "%s" s) str
     let errorfn str = Printf.kprintf (fun s -> use c = consoleColor ConsoleColor.Red in printfn "%s" s) str
 
-module ContentParser =
-    open Configuration
-    open Markdig
-
-    let private isSeparator (input : string) =
-        input.StartsWith "---"
-
-    let private isLayout (input : string) =
-        input.StartsWith "layout:"
-
-    let markdownPipeline =
-        MarkdownPipelineBuilder()
-            .UsePipeTables()
-            .UseGridTables()
-            .Build()
-
-    ///`fileContent` - content of page to parse. Usually whole content of `.md` file
-    ///`modelType` - `System.Type` representing type used as model of the page
-    /// returns tupple of:
-    /// - instance of model record
-    /// - transformed to HTML page content
-    let parse (fileContent : string) (modelType : Type) =
-        let fileContent = fileContent.Split '\n'
-        let fileContent = fileContent |> Array.skip 1 //First line must be ---
-        let indexOfSeperator = fileContent |> Array.findIndex isSeparator
-        let config, content = fileContent |> Array.splitAt indexOfSeperator
-
-        let content = content |> Array.skip 1 |> String.concat "\n"
-        let config = config |> String.concat "\n"
-        let contentOutput = Markdown.ToHtml(content, markdownPipeline)
-        let configOutput = Yaml.parse modelType config
-        configOutput, contentOutput
-
-    ///`fileContent` - content of page to parse. Usually whole content of `.md` file
-    ///returns name of layout that should be used for the page
-    let getLayout (fileContent : string) =
-        fileContent.Split '\n'
-        |> Array.find isLayout
-        |> fun n -> n.Replace("layout:", "").Trim()
-
-    let containsLayout (fileContent : string) =
-        fileContent.Split '\n'
-        |> Array.exists isLayout
-
-    let compileMarkdown (fileContent : string) =
-        Markdown.ToHtml(fileContent, markdownPipeline)
-
 
 module StyleParser =
 
@@ -321,35 +208,8 @@ module StyleParser =
     let parseLess fileContent =
         dotless.Core.Less.Parse fileContent
 
-let private contentParser : string -> System.Type -> obj * string  = Utils.memoizeParser ContentParser.parse
-let private getLayout : string -> string = Utils.memoize  ContentParser.getLayout
-
-let private containsLayout : string -> bool = Utils.memoize ContentParser.containsLayout
-let private compileMarkdown : string -> string = Utils.memoize ContentParser.compileMarkdown
 let private parseLess : string -> string = Utils.memoize StyleParser.parseLess
 
-let injectWebsocketCode (webpage:string) =
-    let websocketScript =
-        """
-        <script type="text/javascript">
-          var wsUri = "ws://localhost:8080/websocket";
-      function init()
-      {
-        websocket = new WebSocket(wsUri);
-        websocket.onclose = function(evt) { onClose(evt) };
-      }
-      function onClose(evt)
-      {
-        console.log('closing');
-        websocket.close();
-        document.location.reload();
-      }
-      window.addEventListener("load", init, false);
-      </script>
-        """
-    let head = "<head>"
-    let index = webpage.IndexOf head
-    webpage.Insert ( (index + head.Length),websocketScript)
 exception FornaxGeneratorException of string
 
 type GeneratorMessage = string
@@ -359,49 +219,27 @@ type GeneratorResult =
     | GeneratorSuccess of GeneratorMessage option
     | GeneratorFailure of GeneratorMessage
 
-///`projectRoot` - path to the root of website
-///`page` - path to page that should be generated
-let generate fsi (disableLiveRefresh:bool) (siteContent : SiteContents) (projectRoot : string) (page : string) =
-    let startTime = DateTime.Now
-    let contentPath = Path.Combine(projectRoot, page)
+let pickGenerator (siteContent : SiteContents) (projectRoot : string) (page: string) =
+    //TODO: COME UP WITH SOME REAL STRATEGY FOR CHOSING GENERATORS
+    let layoutPath = Path.Combine(projectRoot, "generators", "post.fsx")
     let outputPath =
         let p = Path.ChangeExtension(page, ".html")
         Path.Combine(projectRoot, "_public", p)
+    Some(layoutPath, outputPath)
 
-    let contentText = Utils.retry 2 (fun _ -> File.ReadAllText contentPath)
 
-    if containsLayout contentText then
-        let layout = getLayout contentText
+///`projectRoot` - path to the root of website
+///`page` - path to page that should be generated
+let generate fsi (siteContent : SiteContents) (projectRoot : string) (page : string) =
+    let startTime = DateTime.Now
+    match pickGenerator siteContent projectRoot page with
+    | None -> GeneratorFailure (sprintf "Couldn't find generator for file %s" page)
+    | Some (layoutPath, outputPath) ->
 
-        let modelLoader = contentParser contentText
-        let layoutPath = Path.Combine(projectRoot, "layouts", layout + ".fsx")
+    let result = GeneratorEvaluator.evaluate fsi siteContent layoutPath page
 
-        // use fsiSession = Evaluator.fsi ()
-        let result =
-            Evaluator.evaluate fsi siteContent layoutPath modelLoader
-            |> Result.map(fun strContent ->
-                if not disableLiveRefresh then
-                    injectWebsocketCode strContent
-                else strContent
-            )
-
-        match result with
-        | Ok r ->
-            let dir = Path.GetDirectoryName outputPath
-            if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
-            File.WriteAllText(outputPath, r)
-            let endTime = DateTime.Now
-            let ms = (endTime - startTime).Milliseconds
-            sprintf "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
-            |> Some
-            |> GeneratorSuccess
-        | Error message ->
-            let endTime = DateTime.Now
-            sprintf "[%s] '%s' generation failed" (endTime.ToString("HH:mm:ss")) outputPath
-            |> (fun s -> message + Environment.NewLine + s)
-            |> GeneratorFailure
-    else
-        let r = compileMarkdown contentText
+    match result with
+    | Ok r ->
         let dir = Path.GetDirectoryName outputPath
         if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
         File.WriteAllText(outputPath, r)
@@ -410,6 +248,11 @@ let generate fsi (disableLiveRefresh:bool) (siteContent : SiteContents) (project
         sprintf "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
         |> Some
         |> GeneratorSuccess
+    | Error message ->
+        let endTime = DateTime.Now
+        sprintf "[%s] '%s' generation failed" (endTime.ToString("HH:mm:ss")) outputPath
+        |> (fun s -> message + Environment.NewLine + s)
+        |> GeneratorFailure
 
 ///`projectRoot` - path to the root of website
 ///`path` - path to file that should be copied
@@ -430,7 +273,7 @@ let generateFromLess (projectRoot : string) (path : string) =
     let outputPath = Path.Combine(projectRoot, "_public", path')
     let dir = Path.GetDirectoryName outputPath
     if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
-    let res = Utils.retry 2 (fun _ -> File.ReadAllText inputPath) |> parseLess
+    let res = File.ReadAllText inputPath |> parseLess
     File.WriteAllText(outputPath, res)
     let endTime = DateTime.Now
     let ms = (endTime - startTime).Milliseconds
@@ -478,18 +321,9 @@ let private (|Ignored|Markdown|Less|Sass|StaticFile|) (filename : string) =
     elif ext = ".sass" || ext =".scss" then Sass
     else StaticFile
 
-let evalLoader fsi (projectRoot : string) (sc: SiteContents) path =
-
-    // let path = Path.Combine("loaders", "postloader.fsx")
-    match LoaderEvaluator.evaluate fsi sc path projectRoot with
-    | Ok sc ->
-        sc
-    | Error er ->
-        printfn "LOADER ERROR: %s" er
-        sc
 
 ///`projectRoot` - path to the root of website
-let generateFolder (disableLiveRefresh:bool) (projectRoot : string) =
+let generateFolder  (projectRoot : string) =
 
     let relative toPath fromPath =
         let toUri = Uri(toPath)
@@ -502,7 +336,15 @@ let generateFolder (disableLiveRefresh:bool) (projectRoot : string) =
 
     use fsi = EvaluatorHelpers.fsi ()
     let loaders = Directory.GetFiles(Path.Combine(projectRoot, "loaders"), "*.fsx")
-    let sc = (SiteContents (), loaders) ||> Array.fold (fun state e -> evalLoader fsi projectRoot state e)
+    let sc =
+        (SiteContents (), loaders)
+        ||> Array.fold (fun state e ->
+            match LoaderEvaluator.evaluate fsi state e projectRoot with
+            | Ok sc ->
+                sc
+            | Error er ->
+                printfn "LOADER ERROR: %s" er
+                state)
 
 
     let logResult (result : GeneratorResult) =
@@ -519,7 +361,7 @@ let generateFolder (disableLiveRefresh:bool) (projectRoot : string) =
     |> Array.iter (fun n ->
         match n with
         | Ignored -> GeneratorIgnored
-        | Markdown -> n |> relative projectRoot |> generate fsi disableLiveRefresh sc projectRoot
+        | Markdown -> n |> relative projectRoot |> generate fsi sc projectRoot
         | Less -> n |> relative projectRoot |> generateFromLess projectRoot
         | Sass  -> n |> relative projectRoot |> generateFromSass projectRoot
         | StaticFile -> n |> relative projectRoot |> copyStaticFile projectRoot

@@ -23,20 +23,11 @@ type FornaxExiter () =
                 printfn "%s" msg
                 exit 1
 
-type [<CliPrefix(CliPrefix.DoubleDash)>] WatchArgs = | Disable_Live_Refresh
-with
-    interface IArgParserTemplate with
-        member s.Usage = 
-            match s with
-            | Disable_Live_Refresh ->
-                "The watch command will inject some live-refresh Javascript "
-                    + "into your pages to automatically update them by default.  "
-                    + "This command will disable that behavior."
 
 type [<CliPrefix(CliPrefix.None)>] Arguments =
     | New
     | Build
-    | Watch of ParseResults<WatchArgs> 
+    | Watch
     | Version
     | Clean
 with
@@ -45,22 +36,9 @@ with
             match s with
             | New -> "Create new web site"
             | Build -> "Build web site"
-            | Watch _ -> "Start watch mode rebuilding "
+            | Watch -> "Start watch mode rebuilding "
             | Version -> "Print version"
             | Clean -> "Clean output and temp files"
-
-
-
-let toArguments (result : ParseResults<Arguments>) =
-    if result.Contains <@ New @> then Some New
-    elif result.Contains <@ Build @> then Some Build
-    elif result.Contains <@ Watch @> then
-        let temp = result.GetResult <@ Watch @>
-        printfn "temp %A" temp
-        temp |> Watch |> Some
-    elif result.Contains <@ Version @> then Some Version
-    elif result.Contains <@ Clean @> then Some Clean
-    else None
 
 /// Used to keep track of when content has changed,
 /// thus triggering the websocket to update
@@ -141,7 +119,7 @@ let main argv =
             // Fornax.Core.dll, which is used to provide Intellisense/autocomplete
             // in the .fsx files.
             Directory.CreateDirectory(Path.Combine(cwd, "_bin")) |> ignore
-            
+
             // Copy the Fornax.Core.dll into _bin
             File.Copy(corePath, "./_bin/Fornax.Core.dll")
 
@@ -150,7 +128,7 @@ let main argv =
             0
         | Some Build ->
             try
-                do generateFolder true cwd
+                do generateFolder cwd
                 0
             with
             | FornaxGeneratorException message ->
@@ -159,14 +137,13 @@ let main argv =
             | exn ->
                 printfn "An unexpected error happend: %s%s%s" exn.Message Environment.NewLine exn.StackTrace
                 1
-        | Some (Watch (parseResults)) ->
-            let disableLiveRefresh = parseResults.Contains <@ Disable_Live_Refresh @> 
+        | Some (Watch) ->
             let mutable lastAccessed = Map.empty<string, DateTime>
             let waitingForChangesMessage = "Generated site with errors. Waiting for changes..."
 
             let guardedGenerate () =
                 try
-                    generateFolder disableLiveRefresh cwd
+                    generateFolder cwd
                 with
                 | FornaxGeneratorException message ->
                     printfn "%s%s%s" message Environment.NewLine waitingForChangesMessage

@@ -3,7 +3,11 @@
 
 open Markdig
 
+type PostConfig = {
+    disableLiveRefresh: bool
+}
 type Post = {
+    file: string
     link : string
     title: string
     author: string option
@@ -11,19 +15,7 @@ type Post = {
     tags: string list
     content: string
 }
-with
-    static member Construct (lst : (string * string * string option * System.DateTime option * string list * string) []) =
-        lst
-        |> Array.map (fun (link, title, author, published, tags, content) ->
-            {
-                link = link
-                title = title
-                author = author
-                published = published
-                tags = tags
-                content = content
-            })
-        |> Array.toList
+
 
 let markdownPipeline =
     MarkdownPipelineBuilder()
@@ -67,6 +59,7 @@ let loadFile n =
 
     let content = getContent text
 
+    let file = System.IO.Path.Combine("posts", (n |> System.IO.Path.GetFileNameWithoutExtension) + ".md").Replace("\\", "/")
     let link = "/" + System.IO.Path.Combine("posts", (n |> System.IO.Path.GetFileNameWithoutExtension) + ".html").Replace("\\", "/")
 
     let title = config |> List.find (fun n -> n.ToLower().StartsWith "title" ) |> fun n -> n.Split(':').[1] |> trimString
@@ -93,14 +86,20 @@ let loadFile n =
         with
         | _ -> []
 
-    (link, title, author, published, tags, content)
+    { file = file
+      link = link
+      title = title
+      author = author
+      published = published
+      tags = tags
+      content = content }
 
 let loader (projectRoot: string) (siteContet: SiteContents) =
     let postsPath = System.IO.Path.Combine(projectRoot, "posts")
     System.IO.Directory.GetFiles postsPath
     |> Array.filter (fun n -> n.EndsWith ".md")
     |> Array.map loadFile
-    |> Post.Construct
-    |> List.iter (fun p -> siteContet.Add p)
+    |> Array.iter (fun p -> siteContet.Add p)
 
+    siteContet.Add({disableLiveRefresh = false})
     siteContet
