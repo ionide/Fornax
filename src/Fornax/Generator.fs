@@ -8,7 +8,7 @@ module EvaluatorHelpers =
     open FSharp.Quotations.Evaluator
     open FSharp.Reflection
     open System.Globalization
-    open Microsoft.FSharp.Compiler.Interactive.Shell
+    open FSharp.Compiler.Interactive.Shell
     open System.Text
 
     let private sbOut = StringBuilder()
@@ -68,7 +68,7 @@ module EvaluatorHelpers =
         QuotationEvaluator.CompileUntyped genExpr
 
 module LoaderEvaluator =
-    open Microsoft.FSharp.Compiler.Interactive.Shell
+    open FSharp.Compiler.Interactive.Shell
     open EvaluatorHelpers
 
     let private runLoader (fsi : FsiEvaluationSession) (layoutPath : string) =
@@ -122,7 +122,7 @@ module LoaderEvaluator =
                 | None -> sprintf "The expression for %s couldn't be compiled" loaderPath |> Error)
 
 module GeneratorEvaluator =
-    open Microsoft.FSharp.Compiler.Interactive.Shell
+    open FSharp.Compiler.Interactive.Shell
     open EvaluatorHelpers
 
     let private getGeneratorContent (fsi : FsiEvaluationSession) (generatorPath : string) =

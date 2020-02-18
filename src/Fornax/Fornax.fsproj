@@ -9,7 +9,6 @@
     <ProjectReference Include="..\Fornax.Core\Fornax.Core.fsproj" />
 
     <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="Configuration.fs" />
     <Compile Include="FSIRefs.fs" />
     <Compile Include="Generator.fs" />
     <Compile Include="Fornax.fs" />
