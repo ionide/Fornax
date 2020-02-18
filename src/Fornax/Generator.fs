@@ -177,13 +177,13 @@ module GeneratorEvaluator =
     ///`layoutPath` - absolute path to `.fsx` file containing the layout
     ///`getContentModel` - function generating instance of page mode of given type
     ///`body` - content of the post (in html)
-    let evaluate (fsi : FsiEvaluationSession) (siteContent : SiteContents) (layoutPath : string) (page: string)  =
+    let evaluate (fsi : FsiEvaluationSession) (siteContent : SiteContents) (layoutPath : string) (projectRoot: string) (page: string)  =
         getGeneratorContent fsi layoutPath
         |> Result.bind (fun ft ->
             // let modelInput, body = getContentModel (mt.ReflectionValue :?> Type)
             let generator = compileExpression ft
 
-            invokeFunction generator [box siteContent; box page ]
+            invokeFunction generator [box siteContent; box projectRoot; box page ]
             |> Option.bind (tryUnbox<string>)
             |> function
                 | Some s -> Ok s
@@ -220,23 +220,51 @@ type GeneratorResult =
     | GeneratorFailure of GeneratorMessage
 
 let pickGenerator (siteContent : SiteContents) (projectRoot : string) (page: string) =
-    //TODO: COME UP WITH SOME REAL STRATEGY FOR CHOSING GENERATORS
-    let layoutPath = Path.Combine(projectRoot, "generators", "post.fsx")
-    let outputPath =
-        let p = Path.ChangeExtension(page, ".html")
-        Path.Combine(projectRoot, "_public", p)
-    Some(layoutPath, outputPath)
-
+    //TODO: THIS ALL SHOULD BE BASED ON SOME KIND OF CONFIGURATION
+    let (|Ignored|Markdown|Less|Sass|StaticFile|) (filename : string) =
+        let ext = Path.GetExtension filename
+        if filename.Contains "_public" || filename.Contains "_bin" || filename.Contains "_lib" || filename.Contains "_data" || filename.Contains "_settings" || filename.Contains "_config.yml" || ext = ".fsx" || filename.Contains ".sass-cache" || filename.Contains ".git" || filename.Contains ".ionide" then Ignored
+        elif ext = ".md" then Markdown
+        elif ext = ".less" then Less
+        elif ext = ".sass" || ext =".scss" then Sass
+        else StaticFile
+    match page with
+    | Markdown ->
+        let layoutPath = Path.Combine(projectRoot, "generators", "post.fsx")
+        let outputPath =
+            let p = Path.ChangeExtension(page, ".html")
+            Path.Combine(projectRoot, "_public", p)
+        Some(layoutPath, outputPath)
+    | Less ->
+        let layoutPath = Path.Combine(projectRoot, "generators", "less.fsx")
+        let outputPath =
+            let p = Path.ChangeExtension(page, ".css")
+            Path.Combine(projectRoot, "_public", p)
+        Some(layoutPath, outputPath)
+    | Sass ->
+        let layoutPath = Path.Combine(projectRoot, "generators", "sass.fsx")
+        let outputPath =
+            let p = Path.ChangeExtension(page, ".css")
+            Path.Combine(projectRoot, "_public", p)
+        Some(layoutPath, outputPath)
+    | StaticFile ->
+        let layoutPath = Path.Combine(projectRoot, "generators", "staticfile.fsx")
+        let outputPath = Path.Combine(projectRoot, "_public", page)
+        Some(layoutPath, outputPath)
+    | Ignored ->
+        None
 
 ///`projectRoot` - path to the root of website
 ///`page` - path to page that should be generated
 let generate fsi (siteContent : SiteContents) (projectRoot : string) (page : string) =
     let startTime = DateTime.Now
     match pickGenerator siteContent projectRoot page with
-    | None -> GeneratorFailure (sprintf "Couldn't find generator for file %s" page)
+    | None ->
+        GeneratorIgnored
+        //GeneratorFailure (sprintf "Couldn't find generator for file %s" page)
     | Some (layoutPath, outputPath) ->
 
-    let result = GeneratorEvaluator.evaluate fsi siteContent layoutPath page
+    let result = GeneratorEvaluator.evaluate fsi siteContent layoutPath projectRoot page
 
     match result with
     | Ok r ->
@@ -254,32 +282,7 @@ let generate fsi (siteContent : SiteContents) (projectRoot : string) (page : str
         |> (fun s -> message + Environment.NewLine + s)
         |> GeneratorFailure
 
-///`projectRoot` - path to the root of website
-///`path` - path to file that should be copied
-let copyStaticFile  (projectRoot : string) (path : string) =
-    let inputPath = Path.Combine(projectRoot, path)
-    let outputPath = Path.Combine(projectRoot, "_public", path)
-    let dir = Path.GetDirectoryName outputPath
-    if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
-    File.Copy(inputPath, outputPath, true)
-    GeneratorSuccess None
 
-///`projectRoot` - path to the root of website
-///`path` - path to `.less` file that should be copied
-let generateFromLess (projectRoot : string) (path : string) =
-    let startTime = DateTime.Now
-    let inputPath = Path.Combine(projectRoot, path)
-    let path' = Path.ChangeExtension(path, ".css")
-    let outputPath = Path.Combine(projectRoot, "_public", path')
-    let dir = Path.GetDirectoryName outputPath
-    if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
-    let res = File.ReadAllText inputPath |> parseLess
-    File.WriteAllText(outputPath, res)
-    let endTime = DateTime.Now
-    let ms = (endTime - startTime).Milliseconds
-    sprintf "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
-    |> Some
-    |> GeneratorSuccess
 
 ///`projectRoot` - path to the root of website
 ///`path` - path to `.scss` or `.sass` file that should be copied
@@ -313,13 +316,6 @@ let generateFromSass (projectRoot : string) (path : string) =
             |> fun s -> s + Environment.NewLine + "Please check you have installed the Sass compiler if you are going to be using files with extension .scss. https://sass-lang.com/install"
             |> GeneratorFailure
 
-let private (|Ignored|Markdown|Less|Sass|StaticFile|) (filename : string) =
-    let ext = Path.GetExtension filename
-    if filename.Contains "_public" || filename.Contains "_bin" || filename.Contains "_lib" || filename.Contains "_data" || filename.Contains "_settings" || filename.Contains "_config.yml" || ext = ".fsx" || filename.Contains ".sass-cache" || filename.Contains ".git" || filename.Contains ".ionide" then Ignored
-    elif ext = ".md" then Markdown
-    elif ext = ".less" then Less
-    elif ext = ".sass" || ext =".scss" then Sass
-    else StaticFile
 
 
 ///`projectRoot` - path to the root of website
@@ -358,11 +354,9 @@ let generateFolder  (projectRoot : string) =
             raise (FornaxGeneratorException message)
 
     Directory.GetFiles(projectRoot, "*", SearchOption.AllDirectories)
-    |> Array.iter (fun n ->
-        match n with
-        | Ignored -> GeneratorIgnored
-        | Markdown -> n |> relative projectRoot |> generate fsi sc projectRoot
-        | Less -> n |> relative projectRoot |> generateFromLess projectRoot
-        | Sass  -> n |> relative projectRoot |> generateFromSass projectRoot
-        | StaticFile -> n |> relative projectRoot |> copyStaticFile projectRoot
+    |> Array.iter (fun filePath ->
+        filePath
+        |> relative projectRoot
+        |> generate fsi sc projectRoot
         |> logResult)
+
