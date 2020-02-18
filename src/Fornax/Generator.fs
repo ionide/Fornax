@@ -478,9 +478,9 @@ let private (|Ignored|Markdown|Less|Sass|StaticFile|) (filename : string) =
     elif ext = ".sass" || ext =".scss" then Sass
     else StaticFile
 
-let evalLoader fsi (projectRoot : string) (sc: SiteContents) =
+let evalLoader fsi (projectRoot : string) (sc: SiteContents) path =
 
-    let path = Path.Combine("loaders", "postloader.fsx")
+    // let path = Path.Combine("loaders", "postloader.fsx")
     match LoaderEvaluator.evaluate fsi sc path projectRoot with
     | Ok sc ->
         sc
@@ -501,8 +501,9 @@ let generateFolder (disableLiveRefresh:bool) (projectRoot : string) =
         else projectRoot + (string Path.DirectorySeparatorChar)
 
     use fsi = EvaluatorHelpers.fsi ()
-    let sc = SiteContents ()
-    let sc = evalLoader fsi projectRoot sc
+    let loaders = Directory.GetFiles(Path.Combine(projectRoot, "loaders"), "*.fsx")
+    let sc = (SiteContents (), loaders) ||> Array.fold (fun state e -> evalLoader fsi projectRoot state e)
+
 
     let logResult (result : GeneratorResult) =
         match result with
