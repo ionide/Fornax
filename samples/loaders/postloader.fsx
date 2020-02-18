@@ -55,7 +55,6 @@ let loadFile n =
     let text = System.IO.File.ReadAllText n
 
     let config = (getConfig text).Split( '\n') |> List.ofArray
-    printfn "CONFIG: %A" config
 
     let content = getContent text
 

@@ -50,7 +50,7 @@ let generate' (ctx : SiteContents) (page: string) =
         div [] psts
     ]
 
-let generate (ctx : SiteContents) (page: string) =
+let generate (ctx : SiteContents) (projectRoot: string) (page: string) =
     let disableLiveRefresh = ctx.TryGetValue<Postloader.PostConfig> () |> Option.map (fun n -> n.disableLiveRefresh) |> Option.defaultValue false
     generate' ctx page
     |> HtmlElement.ToString
