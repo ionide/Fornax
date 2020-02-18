@@ -1,5 +1,5 @@
-#if !FORNAX
 #r "../../src/Fornax.Core/bin/Release/netstandard2.0/Fornax.Core.dll"
+#if !FORNAX
 #load "../loaders/postloader.fsx"
 #endif
 
@@ -13,10 +13,10 @@ type Model = {
 
 
 let generate (ctx : SiteContents) (mdl : Model)  (content : string) =
-    let tests = ctx.TryGetValues<Postloader.Test> ()
-    printfn "TESTS: %A" tests
 
-    let posts = ctx.TryGetValues<Post> ()
+    let posts = ctx.TryGetValues<Postloader.Post> ()
+    printfn "POSTS: %A" posts
+
     let psts =
         match posts with
         | Some posts ->
