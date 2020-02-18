@@ -3,18 +3,6 @@ module Generator
 
 open System
 open System.IO
-open System.Diagnostics
-
-module internal Utils =
-    let memoize f =
-        let cache = ref Map.empty
-        fun x ->
-            match (!cache).TryFind(x) with
-            | Some res -> res
-            | None ->
-                let res = f x
-                cache := (!cache).Add(x,res)
-                res
 
 module EvaluatorHelpers =
     open FSharp.Quotations.Evaluator
@@ -174,41 +162,19 @@ module GeneratorEvaluator =
         | _ -> Error completeErrorReport
 
 
-    ///`layoutPath` - absolute path to `.fsx` file containing the layout
-    ///`getContentModel` - function generating instance of page mode of given type
-    ///`body` - content of the post (in html)
-    let evaluate (fsi : FsiEvaluationSession) (siteContent : SiteContents) (layoutPath : string) (projectRoot: string) (page: string)  =
-        getGeneratorContent fsi layoutPath
+    ///`generatorPath` - absolute path to `.fsx` file containing the generator
+    ///`projectRoot` - path to root of the site project
+    ///`page` - path to the file that should be transformed
+    let evaluate (fsi : FsiEvaluationSession) (siteContent : SiteContents) (generatorPath : string) (projectRoot: string) (page: string)  =
+        getGeneratorContent fsi generatorPath
         |> Result.bind (fun ft ->
-            // let modelInput, body = getContentModel (mt.ReflectionValue :?> Type)
             let generator = compileExpression ft
 
             invokeFunction generator [box siteContent; box projectRoot; box page ]
             |> Option.bind (tryUnbox<string>)
             |> function
                 | Some s -> Ok s
-                | None -> sprintf "The expression for %s couldn't be compiled" layoutPath |> Error)
-
-// Module to print colored message in the console
-module Logger =
-    let consoleColor (fc : ConsoleColor) =
-        let current = Console.ForegroundColor
-        Console.ForegroundColor <- fc
-        { new IDisposable with
-              member x.Dispose() = Console.ForegroundColor <- current }
-
-    let informationfn str = Printf.kprintf (fun s -> use c = consoleColor ConsoleColor.Green in printfn "%s" s) str
-    let error str = Printf.kprintf (fun s -> use c = consoleColor ConsoleColor.Red in printf "%s" s) str
-    let errorfn str = Printf.kprintf (fun s -> use c = consoleColor ConsoleColor.Red in printfn "%s" s) str
-
-
-module StyleParser =
-
-    //`fileContent` - content of `.less` file to parse
-    let parseLess fileContent =
-        dotless.Core.Less.Parse fileContent
-
-let private parseLess : string -> string = Utils.memoize StyleParser.parseLess
+                | None -> sprintf "The expression for %s couldn't be compiled" generatorPath |> Error)
 
 exception FornaxGeneratorException of string
 
@@ -261,11 +227,9 @@ let generate fsi (siteContent : SiteContents) (projectRoot : string) (page : str
     match pickGenerator siteContent projectRoot page with
     | None ->
         GeneratorIgnored
-        //GeneratorFailure (sprintf "Couldn't find generator for file %s" page)
     | Some (layoutPath, outputPath) ->
 
     let result = GeneratorEvaluator.evaluate fsi siteContent layoutPath projectRoot page
-
     match result with
     | Ok r ->
         let dir = Path.GetDirectoryName outputPath
@@ -283,40 +247,17 @@ let generate fsi (siteContent : SiteContents) (projectRoot : string) (page : str
         |> GeneratorFailure
 
 
+// Module to print colored message in the console
+module Logger =
+    let consoleColor (fc : ConsoleColor) =
+        let current = Console.ForegroundColor
+        Console.ForegroundColor <- fc
+        { new IDisposable with
+              member x.Dispose() = Console.ForegroundColor <- current }
 
-///`projectRoot` - path to the root of website
-///`path` - path to `.scss` or `.sass` file that should be copied
-let generateFromSass (projectRoot : string) (path : string) =
-    let startTime = DateTime.Now
-    let inputPath = Path.Combine(projectRoot, path)
-    let path' = Path.ChangeExtension(path, ".css")
-    let outputPath = Path.Combine(projectRoot, "_public", path')
-    let dir = Path.GetDirectoryName outputPath
-    if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
-
-    let psi = ProcessStartInfo()
-    psi.FileName <- "sass"
-    psi.Arguments <- sprintf "%s %s" inputPath outputPath
-    psi.CreateNoWindow <- true
-    psi.WindowStyle <- ProcessWindowStyle.Hidden
-    psi.UseShellExecute <- true
-
-    try
-        let proc = Process.Start psi
-        proc.WaitForExit()
-        let endTime = DateTime.Now
-        let ms = (endTime - startTime).Milliseconds
-        sprintf "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
-        |> Some
-        |> GeneratorSuccess
-    with
-        | :? System.ComponentModel.Win32Exception as ex ->
-            let endTime = DateTime.Now
-            sprintf "[%s] Generation of '%s' failed. " (endTime.ToString("HH:mm:ss")) path'
-            |> fun s -> s + Environment.NewLine + "Please check you have installed the Sass compiler if you are going to be using files with extension .scss. https://sass-lang.com/install"
-            |> GeneratorFailure
-
-
+    let informationfn str = Printf.kprintf (fun s -> use c = consoleColor ConsoleColor.Green in printfn "%s" s) str
+    let error str = Printf.kprintf (fun s -> use c = consoleColor ConsoleColor.Red in printf "%s" s) str
+    let errorfn str = Printf.kprintf (fun s -> use c = consoleColor ConsoleColor.Red in printfn "%s" s) str
 
 ///`projectRoot` - path to the root of website
 let generateFolder  (projectRoot : string) =
