@@ -27,7 +27,7 @@ let injectWebsocketCode (webpage:string) =
         """
     let head = "<head>"
     let index = webpage.IndexOf head
-    webpage.Insert ( (index + head.Length),websocketScript)
+    webpage.Insert ( (index + head.Length + 1),websocketScript)
 
 let generate' (ctx : SiteContents) (page: string) =
     let posts = ctx.TryGetValues<Postloader.Post> () |> Option.defaultValue Seq.empty
