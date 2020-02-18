@@ -1,5 +1,5 @@
 #r "../../src/Fornax.Core/bin/Release/netstandard2.0/Fornax.Core.dll"
-#r "Markdig.dll"
+#r "../_lib/Markdig.dll"
 
 open Markdig
 
@@ -63,6 +63,7 @@ let loadFile n =
     let text = System.IO.File.ReadAllText n
 
     let config = (getConfig text).Split( '\n') |> List.ofArray
+    printfn "CONFIG: %A" config
 
     let content = getContent text
 
