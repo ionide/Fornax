@@ -11,10 +11,6 @@ nuget FSharp.Quotations.Evaluator
 nuget Argu
 nuget Suave
 
-nuget Markdig
-nuget dotless.Core
-nuget YamlDotNet
-
 group Build
   source https://www.nuget.org/api/v2
   storage: none
