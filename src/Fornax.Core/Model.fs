@@ -1267,27 +1267,7 @@ type CSSProperties =
         let string str = HtmlElement.String str
         let (!!) str = HtmlElement.String str
 
-type Post = {
-    link : string
-    title: string
-    author: string option
-    published: System.DateTime option
-    tags: string list
-    content: string
-}
-with
-    static member Construct (lst : (string * string * string option * System.DateTime option * string list * string) []) =
-        lst
-        |> Array.map (fun (link, title, author, published, tags, content) ->
-            {
-                link = link
-                title = title
-                author = author
-                published = published
-                tags = tags
-                content = content
-            })
-        |> Array.toList
+
 
 open System.Collections.Generic
 

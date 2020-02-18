@@ -77,22 +77,31 @@ module internal Utils =
                 Error fnf.Message
             | _ -> reraise ()
 
-module LoaderEvaluator =
-    open System.Globalization
-    open System.Text
-    open Microsoft.FSharp.Compiler.Interactive.Shell
+module EvaluatorHelpers =
     open FSharp.Quotations.Evaluator
     open FSharp.Reflection
+    open System.Globalization
+    open Microsoft.FSharp.Compiler.Interactive.Shell
+    open System.Text
 
     let private sbOut = StringBuilder()
     let private sbErr = StringBuilder()
     let internal fsi () =
+        let refs =
+            ProjectSystem.FSIRefs.getRefs ()
+            |> List.map (fun n -> sprintf "-r:%s" n)
+
+
         let inStream = new StringReader("")
         let outStream = new StringWriter(sbOut)
         let errStream = new StringWriter(sbErr)
         try
             let fsiConfig = FsiEvaluationSession.GetDefaultConfiguration()
-            let argv = [| "/temp/fsi.exe"; "--define:FORNAX"|]
+            let argv = [|
+                yield! refs
+                yield "--noframework"
+                yield "/temp/fsi.exe";
+                yield "--define:FORNAX"|]
             FsiEvaluationSession.Create(fsiConfig, argv, inStream, outStream, errStream)
         with
         | ex ->
@@ -101,15 +110,16 @@ module LoaderEvaluator =
             printfn "ErrorStream: %s" (errStream.ToString())
             raise ex
 
-    let private getOpen (path : string) =
+
+    let internal getOpen (path : string) =
         let filename = Path.GetFileNameWithoutExtension path
         let textInfo = (CultureInfo("en-US", false)).TextInfo
         textInfo.ToTitleCase filename
 
-    let private getLoad (path : string) =
+    let internal getLoad (path : string) =
         path.Replace("\\", "\\\\")
 
-    let private invokeFunction (f : obj) (args : obj seq) =
+    let internal invokeFunction (f : obj) (args : obj seq) =
         let rec helper (next : obj) (args : obj list)  =
             match args.IsEmpty with
             | false ->
@@ -126,9 +136,13 @@ module LoaderEvaluator =
                 Some next
         helper f (args |> List.ofSeq )
 
-    let private compileExpression (input : FsiValue) =
+    let internal compileExpression (input : FsiValue) =
         let genExpr = input.ReflectionValue :?> Quotations.Expr
         QuotationEvaluator.CompileUntyped genExpr
+
+module LoaderEvaluator =
+    open Microsoft.FSharp.Compiler.Interactive.Shell
+    open EvaluatorHelpers
 
     let private runLoader (fsi : FsiEvaluationSession) (layoutPath : string) =
         let filename = getOpen layoutPath
@@ -172,67 +186,19 @@ module LoaderEvaluator =
         runLoader fsi loaderPath
         |> Result.bind (fun ft ->
             let generator = compileExpression ft
+            let res = invokeFunction generator [box projectRoot; box siteContent]
 
-            invokeFunction generator [box projectRoot; box siteContent]
+            res
             |> Option.bind (tryUnbox<SiteContents>)
             |> function
                 | Some s -> Ok s
                 | None -> sprintf "The expression for %s couldn't be compiled" loaderPath |> Error)
 
 module Evaluator =
-    open System.Globalization
-    open System.Text
     open Microsoft.FSharp.Compiler.Interactive.Shell
-    open FSharp.Quotations.Evaluator
-    open FSharp.Reflection
+    open EvaluatorHelpers
 
-    let private sbOut = StringBuilder()
-    let private sbErr = StringBuilder()
-    let internal fsi () =
-        let inStream = new StringReader("")
-        let outStream = new StringWriter(sbOut)
-        let errStream = new StringWriter(sbErr)
-        try
-            let fsiConfig = FsiEvaluationSession.GetDefaultConfiguration()
-            let argv = [| "/temp/fsi.exe"; "--define:FORNAX"|]
-            FsiEvaluationSession.Create(fsiConfig, argv, inStream, outStream, errStream)
-        with
-        | ex ->
-            printfn "Error: %A" ex
-            printfn "Inner: %A" ex.InnerException
-            printfn "ErrorStream: %s" (errStream.ToString())
-            raise ex
-
-    let private getOpen (path : string) =
-        let filename = Path.GetFileNameWithoutExtension path
-        let textInfo = (CultureInfo("en-US", false)).TextInfo
-        textInfo.ToTitleCase filename
-
-    let private getLoad (path : string) =
-        path.Replace("\\", "\\\\")
-
-    let private invokeFunction (f : obj) (args : obj seq) =
-        let rec helper (next : obj) (args : obj list)  =
-            match args.IsEmpty with
-            | false ->
-                let fType = next.GetType()
-                if FSharpType.IsFunction fType then
-                    let methodInfo =
-                        fType.GetMethods()
-                        |> Array.filter (fun x -> x.Name = "Invoke" && x.GetParameters().Length = 1)
-                        |> Array.head
-                    let res = methodInfo.Invoke(next, [| args.Head |])
-                    helper res args.Tail
-                else None
-            | true ->
-                Some next
-        helper f (args |> List.ofSeq )
-
-    let private compileExpression (input : FsiValue) =
-        let genExpr = input.ReflectionValue :?> Quotations.Expr
-        QuotationEvaluator.CompileUntyped genExpr
-
-    let private getContentFromLayout' (fsi : FsiEvaluationSession) (layoutPath : string) =
+    let private getContentFromLayout (fsi : FsiEvaluationSession) (layoutPath : string) =
         let filename = getOpen layoutPath
         let load = getLoad layoutPath
 
@@ -273,8 +239,6 @@ module Evaluator =
             Ok (mt, ft)
         | _ -> Error completeErrorReport
 
-    // let private getContentFromLayout = Utils.memoizeScriptFile getContentFromLayout'
-    let private getContentFromLayout = getContentFromLayout'
 
     ///`layoutPath` - absolute path to `.fsx` file containing the layout
     ///`getContentModel` - function generating instance of page mode of given type
@@ -343,28 +307,6 @@ module ContentParser =
         |> Array.find isLayout
         |> fun n -> n.Replace("layout:", "").Trim()
 
-    ///`fileContent` - content of page to parse. Usually whole content of `.md` file
-    ///returns content of config that should be used for the page
-    let getConfig (fileContent : string) =
-        let fileContent = fileContent.Split '\n'
-        let fileContent = fileContent |> Array.skip 1 //First line must be ---
-        let indexOfSeperator = fileContent |> Array.findIndex isSeparator
-        fileContent
-        |> Array.splitAt indexOfSeperator
-        |> fst
-        |> String.concat "\n"
-
-    ///`fileContent` - content of page to parse. Usually whole content of `.md` file
-    ///returns HTML version of content of the page
-    let getContent (fileContent : string) =
-        let fileContent = fileContent.Split '\n'
-        let fileContent = fileContent |> Array.skip 1 //First line must be ---
-        let indexOfSeperator = fileContent |> Array.findIndex isSeparator
-        let _, content = fileContent |> Array.splitAt indexOfSeperator
-
-        let content = content |> Array.skip 1 |> String.concat "\n"
-        Markdown.ToHtml(content, markdownPipeline)
-
     let containsLayout (fileContent : string) =
         fileContent.Split '\n'
         |> Array.exists isLayout
@@ -372,26 +314,6 @@ module ContentParser =
     let compileMarkdown (fileContent : string) =
         Markdown.ToHtml(fileContent, markdownPipeline)
 
-type Link = string
-type Title = string
-type Author = string option
-
-/// Optional published date.
-type Published = DateTime option
-
-/// Tags associated with the post.
-type Tags = string list
-
-/// Represents the converted HTML of the .md content.
-type Content = string
-
-module SiteSettingsParser =
-    open Configuration
-
-    ///`fileContent` - site settings to parse. Usually whole content of `site.yml` file
-    ///`modelType` - `System.Type` representing type used as model of the global site settings
-    let parse fileContent (modelType : Type) =
-        Yaml.parse modelType fileContent
 
 module StyleParser =
 
@@ -400,57 +322,11 @@ module StyleParser =
         dotless.Core.Less.Parse fileContent
 
 let private contentParser : string -> System.Type -> obj * string  = Utils.memoizeParser ContentParser.parse
-let private settingsParser : string -> System.Type -> obj = Utils.memoizeParser SiteSettingsParser.parse
 let private getLayout : string -> string = Utils.memoize  ContentParser.getLayout
-let private getConfig : string -> string = Utils.memoize  ContentParser.getConfig
-let private getContent : string -> string = Utils.memoize  ContentParser.getContent
 
 let private containsLayout : string -> bool = Utils.memoize ContentParser.containsLayout
 let private compileMarkdown : string -> string = Utils.memoize ContentParser.compileMarkdown
 let private parseLess : string -> string = Utils.memoize StyleParser.parseLess
-
-let private trimString (str : string) =
-    str.Trim().TrimEnd('"').TrimStart('"')
-
-let getPosts (projectRoot : string) =
-    let postsPath = Path.Combine(projectRoot, "posts")
-    Directory.GetFiles postsPath
-    |> Array.filter (fun n -> n.EndsWith ".md")
-    |> Array.map (fun n ->
-        // All the text in the .md file.
-        let text = Utils.retry 2 (fun _ -> File.ReadAllText n)
-
-        let config = getConfig text |> String.split '\n'
-
-        let content = getContent text
-
-        let link = "/" + Path.Combine("posts", (n |> Path.GetFileNameWithoutExtension) + ".html").Replace("\\", "/")
-
-        let title = config |> List.find (fun n -> n.ToLower().StartsWith "title" ) |> fun n -> n.Split(':').[1] |> trimString
-
-        let author =
-            try
-                config |> List.tryFind (fun n -> n.ToLower().StartsWith "author" ) |> Option.map (fun n -> n.Split(':').[1] |> trimString)
-            with
-            | _ -> None
-
-        let published =
-            try
-                config |> List.tryFind (fun n -> n.ToLower().StartsWith "published" ) |> Option.map (fun n -> n.Split(':').[1] |> trimString |> DateTime.Parse)
-            with
-            | _ -> None
-
-        let tags =
-            try
-                let x =
-                    config
-                    |> List.tryFind (fun n -> n.ToLower().StartsWith "tags" )
-                    |> Option.map (fun n -> n.Split(':').[1] |> trimString |> fun n -> n.Split ',' |> Array.toList )
-                defaultArg x []
-            with
-            | _ -> []
-
-        ((link:Link), (title:Title), (author:Author), (published:Published), (tags:Tags), (content:Content)))
 
 let injectWebsocketCode (webpage:string) =
     let websocketScript =
@@ -614,6 +490,7 @@ let evalLoader fsi (projectRoot : string) (sc: SiteContents) =
 
 ///`projectRoot` - path to the root of website
 let generateFolder (disableLiveRefresh:bool) (projectRoot : string) =
+
     let relative toPath fromPath =
         let toUri = Uri(toPath)
         let fromUri = Uri(fromPath)
@@ -623,13 +500,9 @@ let generateFolder (disableLiveRefresh:bool) (projectRoot : string) =
         if projectRoot.EndsWith (string Path.DirectorySeparatorChar) then projectRoot
         else projectRoot + (string Path.DirectorySeparatorChar)
 
-    use fsi = Evaluator.fsi ()
+    use fsi = EvaluatorHelpers.fsi ()
     let sc = SiteContents ()
     let sc = evalLoader fsi projectRoot sc
-
-    getPosts projectRoot
-    |> Post.Construct
-    |> List.iter (sc.Add)
 
     let logResult (result : GeneratorResult) =
         match result with
