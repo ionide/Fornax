@@ -35,6 +35,7 @@ let config = {
         {Script = "sass.fsx"; Trigger = OnFileExt ".scss"; OutputFile = ChangeExtension "css" }
         {Script = "post.fsx"; Trigger = OnFilePredicate postPredicate; OutputFile = ChangeExtension "html" }
         {Script = "staticfile.fsx"; Trigger = OnFilePredicate staticPredicate; OutputFile = SameFileName }
+        {Script = "index.fsx"; Trigger = Once; OutputFile = NewFileName "index.html" }
 
     ]
 }

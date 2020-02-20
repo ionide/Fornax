@@ -290,6 +290,36 @@ let generate fsi (cfg: Config.Config) (siteContent : SiteContents) (projectRoot 
         |> (fun s -> message + Environment.NewLine + s)
         |> GeneratorFailure
 
+let runOnceGenerators fsi (cfg: Config.Config) (siteContent : SiteContents) (projectRoot : string) =
+    cfg.Generators
+    |> List.filter (fun n -> match n.Trigger with | Once -> true | _ -> false)
+    |> List.filter (fun n -> match n.OutputFile with | NewFileName _ -> true | _ -> false)
+    |> List.map (fun generator ->
+        let startTime = DateTime.Now
+        let outputPath =
+            let newPage =
+                match generator.OutputFile with
+                | NewFileName(newFileName) -> newFileName
+                | _ -> failwith "Shouldn't happen"
+            Path.Combine(projectRoot, "_public", newPage)
+        let generatorPath = Path.Combine(projectRoot, "generators", generator.Script)
+        let result = GeneratorEvaluator.evaluate fsi siteContent generatorPath projectRoot ""
+        match result with
+        | Ok r ->
+            let dir = Path.GetDirectoryName outputPath
+            if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
+            File.WriteAllText(outputPath, r)
+            let endTime = DateTime.Now
+            let ms = (endTime - startTime).Milliseconds
+            sprintf "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
+            |> Some
+            |> GeneratorSuccess
+        | Error message ->
+            let endTime = DateTime.Now
+            sprintf "[%s] '%s' generation failed" (endTime.ToString("HH:mm:ss")) outputPath
+            |> (fun s -> message + Environment.NewLine + s)
+            |> GeneratorFailure
+    )
 
 // Module to print colored message in the console
 module Logger =
@@ -351,6 +381,9 @@ let generateFolder (projectRoot : string) =
             | GeneratorFailure message ->
                 // if one generator fails we want to exit early and report the problem to the operator
                 raise (FornaxGeneratorException message)
+
+        runOnceGenerators fsi config sc projectRoot
+        |> List.iter logResult
 
         Directory.GetFiles(projectRoot, "*", SearchOption.AllDirectories)
         |> Array.iter (fun filePath ->
