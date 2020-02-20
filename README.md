@@ -111,6 +111,8 @@ let generate (ctx : SiteContents) (projectRoot: string) (page: string) =
     |> HtmlElement.ToString
 ```
 
+**Important note**: You can (and probably should) define multiple generators - they will generate different kinds of pages and/or content, such as `post`, `index`, `about`, `rss` etc. 
+
 ### Configuration
 
 `Configuration` is a F# script file that defines when which analyzers need to be run, and how to save its output. `Config.fsx` file needs to be put in the root of your site project (the place from which you run `fornax` CLI tool)
