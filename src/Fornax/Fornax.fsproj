@@ -15,7 +15,7 @@
     <Content
       Include="../Fornax.Template/**"
       Exclude="../Fornax.Template/_public/**"
-      LinkBase="newTemplate"
+      LinkBase="blogTemplate"
       CopyToOutputDirectory="PreserveNewest" />
     <None Include="paket.references" />
   </ItemGroup>

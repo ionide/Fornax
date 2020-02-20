@@ -102,7 +102,7 @@ let main argv =
         match result with
         | Some New ->
             // The path of the directory that holds the scaffolding for a new website.
-            let newTemplateDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "newTemplate")
+            let newTemplateDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "blogTemplate")
 
             // The path of Fornax.Core.dll, which is located where the dotnet tool is installed.
             let corePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Fornax.Core.dll")
@@ -118,10 +118,10 @@ let main argv =
             // Create the _bin directory in the current folder.  It holds
             // Fornax.Core.dll, which is used to provide Intellisense/autocomplete
             // in the .fsx files.
-            Directory.CreateDirectory(Path.Combine(cwd, "_bin")) |> ignore
+            Directory.CreateDirectory(Path.Combine(cwd, "_lib")) |> ignore
 
             // Copy the Fornax.Core.dll into _bin
-            File.Copy(corePath, "./_bin/Fornax.Core.dll")
+            File.Copy(corePath, "./_lib/Fornax.Core.dll")
 
             printfn "New project successfully created."
 
