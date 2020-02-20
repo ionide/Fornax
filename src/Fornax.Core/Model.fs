@@ -1296,3 +1296,31 @@ type SiteContents () =
     member this.TryGetValue<'a> () =
         this.TryGetValues<'a> ()
         |> Option.bind (Seq.tryHead)
+
+module Config =
+
+    type GeneratorTrigger =
+        ///Generator runs once, globally.
+        | Once
+        ///Generator runs once, for given filename (file name is relative to project root, for example `post/post.md`). It runs only if the given file exist.
+        | OnFile of filename : string
+        ///Generator runs for any file with given extension (for example `md`)
+        | OnFileExt of extension: string
+        ///Generator runs for any file matching predicate. Parameters of predicate are absolut path to project root, and path to the file relative to project root.
+        | OnFilePredicate of predicate: ((string * string) -> bool)
+
+    type GeneratorOutput =
+        | SameFileName
+        | ChangeExtension of newExtension: string
+        | NewFileName of newFileName: string
+        | Custom of (string -> string)
+
+    type GeneratorConfig = {
+        Script: string
+        Trigger: GeneratorTrigger
+        OutputFile: GeneratorOutput
+    }
+
+    type Config = {
+        Generators: GeneratorConfig list
+    }
