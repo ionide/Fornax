@@ -3,6 +3,7 @@ module Generator
 
 open System
 open System.IO
+open Config
 
 module EvaluatorHelpers =
     open FSharp.Quotations.Evaluator
@@ -176,6 +177,61 @@ module GeneratorEvaluator =
                 | Some s -> Ok s
                 | None -> sprintf "The expression for %s couldn't be compiled" generatorPath |> Error)
 
+module ConfigEvaluator =
+    open FSharp.Compiler.Interactive.Shell
+    open EvaluatorHelpers
+
+    let private getConfig (fsi : FsiEvaluationSession) (configPath : string) =
+        let filename = getOpen configPath
+        let load = getLoad configPath
+
+        let tryFormatErrorMessage message (errors : 'a []) =
+            if errors.Length > 0 then
+                sprintf "%s: %A" message errors |> Some
+            else
+                None
+
+        let _, loadErrors = fsi.EvalInteractionNonThrowing(sprintf "#load \"%s\";;" load)
+        let loadErrorMessage =
+            tryFormatErrorMessage "Load Errors" loadErrors
+
+        let _, openErrors = fsi.EvalInteractionNonThrowing(sprintf "open %s;;" filename)
+        let openErrorMessage =
+            tryFormatErrorMessage "Open Errors" openErrors
+
+        let funType, layoutErrors = fsi.EvalExpressionNonThrowing "config"
+        let layoutErrorMessage =
+            tryFormatErrorMessage "Get generator Errors" layoutErrors
+
+        let completeErrorReport =
+            [ loadErrorMessage
+              openErrorMessage
+              layoutErrorMessage ]
+            |> List.filter (Option.isSome)
+            |> List.map (fun v -> v.Value)
+            |> List.fold (fun state message -> state + Environment.NewLine + message) ""
+            |> (fun s -> s.Trim(Environment.NewLine.ToCharArray()))
+
+        match funType with
+        | Choice1Of2 (Some ft) ->
+            Ok (ft)
+        | _ -> Error completeErrorReport
+
+
+    ///`generatorPath` - absolute path to `.fsx` file containing the generator
+    ///`projectRoot` - path to root of the site project
+    ///`page` - path to the file that should be transformed
+    let evaluate (fsi : FsiEvaluationSession) (siteContent : SiteContents) (generatorPath : string) =
+        getConfig fsi generatorPath
+        |> Result.bind (fun ft ->
+            ft.ReflectionValue
+            |> tryUnbox<Config.Config>
+            |> function
+                | Some s ->
+                    siteContent.Add s
+                    Ok s
+                | None -> sprintf "The expression for %s couldn't be compiled" generatorPath |> Error)
+
 exception FornaxGeneratorException of string
 
 type GeneratorMessage = string
@@ -185,46 +241,34 @@ type GeneratorResult =
     | GeneratorSuccess of GeneratorMessage option
     | GeneratorFailure of GeneratorMessage
 
-let pickGenerator (siteContent : SiteContents) (projectRoot : string) (page: string) =
-    //TODO: THIS ALL SHOULD BE BASED ON SOME KIND OF CONFIGURATION
-    let (|Ignored|Markdown|Less|Sass|StaticFile|) (filename : string) =
-        let ext = Path.GetExtension filename
-        if filename.Contains "_public" || filename.Contains "_bin" || filename.Contains "_lib" || filename.Contains "_data" || filename.Contains "_settings" || filename.Contains "_config.yml" || ext = ".fsx" || filename.Contains ".sass-cache" || filename.Contains ".git" || filename.Contains ".ionide" then Ignored
-        elif ext = ".md" then Markdown
-        elif ext = ".less" then Less
-        elif ext = ".sass" || ext =".scss" then Sass
-        else StaticFile
-    match page with
-    | Markdown ->
-        let layoutPath = Path.Combine(projectRoot, "generators", "post.fsx")
+let pickGenerator (cfg: Config.Config)  (siteContent : SiteContents) (projectRoot : string) (page: string) =
+    let generator = cfg.Generators |> List.tryFind (fun n ->
+        match n.Trigger with
+        | Once -> false //Once-trigger run globally, not for particular file
+        | OnFile fn -> fn = page
+        | OnFileExt ex -> ex = Path.GetExtension page
+        | OnFilePredicate pred -> pred (projectRoot, page)
+    )
+    match generator with
+    | None -> None
+    | Some generator ->
         let outputPath =
-            let p = Path.ChangeExtension(page, ".html")
-            Path.Combine(projectRoot, "_public", p)
-        Some(layoutPath, outputPath)
-    | Less ->
-        let layoutPath = Path.Combine(projectRoot, "generators", "less.fsx")
-        let outputPath =
-            let p = Path.ChangeExtension(page, ".css")
-            Path.Combine(projectRoot, "_public", p)
-        Some(layoutPath, outputPath)
-    | Sass ->
-        let layoutPath = Path.Combine(projectRoot, "generators", "sass.fsx")
-        let outputPath =
-            let p = Path.ChangeExtension(page, ".css")
-            Path.Combine(projectRoot, "_public", p)
-        Some(layoutPath, outputPath)
-    | StaticFile ->
-        let layoutPath = Path.Combine(projectRoot, "generators", "staticfile.fsx")
-        let outputPath = Path.Combine(projectRoot, "_public", page)
-        Some(layoutPath, outputPath)
-    | Ignored ->
-        None
+            let newPage =
+                match generator.OutputFile with
+                | SameFileName -> page
+                | ChangeExtension(newExtension) -> Path.ChangeExtension(page, newExtension)
+                | NewFileName(newFileName) -> newFileName
+                | Custom(handler) -> handler page
+            Path.Combine(projectRoot, "_public", newPage)
+        let generatorPath = Path.Combine(projectRoot, "generators", generator.Script)
+        Some(generatorPath, outputPath)
+
 
 ///`projectRoot` - path to the root of website
 ///`page` - path to page that should be generated
-let generate fsi (siteContent : SiteContents) (projectRoot : string) (page : string) =
+let generate fsi (cfg: Config.Config) (siteContent : SiteContents) (projectRoot : string) (page : string) =
     let startTime = DateTime.Now
-    match pickGenerator siteContent projectRoot page with
+    match pickGenerator cfg siteContent projectRoot page with
     | None ->
         GeneratorIgnored
     | Some (layoutPath, outputPath) ->
@@ -260,7 +304,7 @@ module Logger =
     let errorfn str = Printf.kprintf (fun s -> use c = consoleColor ConsoleColor.Red in printfn "%s" s) str
 
 ///`projectRoot` - path to the root of website
-let generateFolder  (projectRoot : string) =
+let generateFolder (projectRoot : string) =
 
     let relative toPath fromPath =
         let toUri = Uri(toPath)
@@ -272,32 +316,46 @@ let generateFolder  (projectRoot : string) =
         else projectRoot + (string Path.DirectorySeparatorChar)
 
     use fsi = EvaluatorHelpers.fsi ()
-    let loaders = Directory.GetFiles(Path.Combine(projectRoot, "loaders"), "*.fsx")
-    let sc =
-        (SiteContents (), loaders)
-        ||> Array.fold (fun state e ->
-            match LoaderEvaluator.evaluate fsi state e projectRoot with
-            | Ok sc ->
-                sc
-            | Error er ->
-                printfn "LOADER ERROR: %s" er
-                state)
+    let sc = SiteContents ()
+    let config =
+        let configPath = Path.Combine(projectRoot, "config.fsx")
+        if File.Exists configPath then
+            match ConfigEvaluator.evaluate fsi sc configPath with
+            | Ok cfg -> Some cfg
+            | _ -> None
+        else
+            None
+
+    match config with
+    | None ->
+        raise (FornaxGeneratorException "Cpuldn't find or load config")
+    | Some config ->
+        let loaders = Directory.GetFiles(Path.Combine(projectRoot, "loaders"), "*.fsx")
+        let sc =
+            (sc, loaders)
+            ||> Array.fold (fun state e ->
+                match LoaderEvaluator.evaluate fsi state e projectRoot with
+                | Ok sc ->
+                    sc
+                | Error er ->
+                    printfn "LOADER ERROR: %s" er
+                    state)
 
 
-    let logResult (result : GeneratorResult) =
-        match result with
-        | GeneratorIgnored -> ()
-        | GeneratorSuccess None -> ()
-        | GeneratorSuccess (Some message) ->
-            Logger.informationfn "%s" message
-        | GeneratorFailure message ->
-            // if one generator fails we want to exit early and report the problem to the operator
-            raise (FornaxGeneratorException message)
+        let logResult (result : GeneratorResult) =
+            match result with
+            | GeneratorIgnored -> ()
+            | GeneratorSuccess None -> ()
+            | GeneratorSuccess (Some message) ->
+                Logger.informationfn "%s" message
+            | GeneratorFailure message ->
+                // if one generator fails we want to exit early and report the problem to the operator
+                raise (FornaxGeneratorException message)
 
-    Directory.GetFiles(projectRoot, "*", SearchOption.AllDirectories)
-    |> Array.iter (fun filePath ->
-        filePath
-        |> relative projectRoot
-        |> generate fsi sc projectRoot
-        |> logResult)
+        Directory.GetFiles(projectRoot, "*", SearchOption.AllDirectories)
+        |> Array.iter (fun filePath ->
+            filePath
+            |> relative projectRoot
+            |> generate fsi config sc projectRoot
+            |> logResult)
 
