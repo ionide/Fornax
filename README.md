@@ -2,21 +2,15 @@
 
 ![Logo](https://raw.githubusercontent.com/LambdaFactory/Fornax/master/logo/Fornax.png)
 
-Fornax is a static site generator using type safe F# DSL to define page layouts.
+Fornax is a **scriptable static site generator** using type safe F# DSL to define page layouts.
 
 ## Working features
 
-* Defining layouts in F# DSL
-* Creating pages using templates from `.md` files with `layout` entry
-* Creating plain pages without templates from `md` files without `layout` entry
-* Transforming `.less` files to `.css` files
-* Transforming `.scss` files to `.css` files (requires having `sass` installed - https://sass-lang.com/install)
-* Copying other static content to the output directory
+* Creating custom data loaders using `.fsx` files, meaning you can use as a source of data for your site anything you can imagine, not only predefined `.md` or `.yml` files
+* Creating custom generators using `.fsx` files, meaning you can generate any type of output you want
+* Dynamic configuration using `.fsx` file
+* Watch mode that rebuilds your page whenever you change data, or any script file.
 
-## Planned features
-
-* Defining `.css` styles using F# DSL
-* Handling site settings defined in multiple files (a la Jekyll's `_data` folder) (multiple models? unified model?)
 
 ## Installation
 
@@ -33,105 +27,138 @@ The main functionality of Fornax comes from CLI applications that lets user scaf
 * `fornax version` - prints out the currently-installed version of Fornax
 * `fornax help` - prints out help
 
+## Getting started
+
+Easiest way to get started with `fornax` is running `fornax new` and than `fornax watch` - this will create fairly minimal blog site template, start `fornax` in watch mode and start webserver. Then you can go to the `localhost:8080` in your browser to see the page, and edit the scaffolded files in editor to make changes.
+Additionally, you can take a look at `samples` folder in this repository - it have couple more `loaders` and `generators` that you can potentially use in your website.
+
 ## Website definition
 
-Fornax is using normal F# code (F# script files) to define layouts and data types representing content, and yaml and Markdown to provide content (fitting defined models) for the layouts. A sample website can be found in the `samples` folder - to build it, run `fornax build` in this folder.
+Fornax is using normal F# code (F# script files) to define any of it's core concepts: `loaders`, `generators` and `config`.
 
-### Site Settings
+### SiteContents
 
-Site settings are information passed to every page during generation - every layout has access to this data.
+`SiteContents` is fairly simple type that provides access to any information available to the Fornax. The information is put into it by using `loaders` and then can be accessed in the `generators`.
 
-The model representing site settings is defined in `siteModel.fsx` file in the root folder of the website, content of settings is defined in `_config.yml` file in the root folder of the website.
+`SiteContents` has several functions in it's public API:
 
-Sample `siteModel.fsx`:
+```
+type A = {a: string}
+type B = {b: int; c: int}
 
-```fsharp
-type SiteModel = {
-    SomeGlobalValue : string
+let sc = SiteContents()
+sc.Add({a = "test"})
+sc.Add({a = "test2"})
+sc.Add({a = "test3"})
+
+sc.Add({b = 1; c = 3}) //You can add objects of different types, `Add` method is generic.
+
+let as = sc.TryGetValues<A>() //This will return option of sequence of all added elements for given type - in this case it will be 3 elements
+let b = sc.TryGetValue<B>() //This will return option of element for given type
+```
+
+### Loaders
+
+`Loader` is an F# script responsible for loading external data into generation context. The data typically includes things like content of `.md` files, some global site configuration, etc. But since those are normal F# functions, you can do whatever you need.
+Want to load information from local database, or from internet? Sure, why not. Want to use World Bank TP to include some of the World Bank statistics? That's also possible - you can use in `loader` any dependency as in normal F# script.
+
+`Loaders` are normal F# functions that takes as an input `SiteContents` and absolute path to the page root, and returns `SiteContents`:
+
+```
+#r "../_lib/Fornax.Core.dll"
+
+type Page = {
+    title: string
+    link: string
 }
+
+let loader (projectRoot: string) (siteContet: SiteContents) =
+    siteContet.Add({title = "Home"; link = "/"})
+    siteContet.Add({title = "About"; link = "/about.html"})
+    siteContet.Add({title = "Contact"; link = "/contact.html"})
+
+    siteContet
 ```
 
-Sample `_config.yml`:
+**Important note**: You can (and probably should) define multiple loaders - they will all be executed before generation of site, and will propagate information into `SiteContents`
 
-```yml
-SomeGlobalValue: "Test global value"
+### Generators
+
+`Generator` is an F# script responsible for generating output of the Fornax process. This is usually `.html` file, but can be anything else - actually `generator` API just requires to return `string` that will be saved to file. Generators are, again, plain F# functions that as an input takes `SiteContents`, absolute path to the page root, relative path to the file that's currently processed (may be empty for the global generators) and returns `string`:
+
 ```
-
-### Layouts
-
-Layouts are F# script files representing different layouts that can be used in the website. They need to `#load` `siteModel.fsx` file, and `#r` `Fornax.Core.dll`. They need to define F# record called `Model` which defines additional settings passed to this particular layout, and `generate` function of following signature: `SiteModel -> Model -> Post list -> string -> HtmlElement`. `SiteModel` is type representing global settings of webpage, `Model` is type representing settings for this layout, `Post list` contains simplified information about all available posts in the blog (useful for navigation, creating tag cloud etc.) `string` is main content of post (already compiled to `html`).
-
-Layouts are defined using DSL defined in `Html` module of `Fornax.Core`.
-
-All layouts should be defined in `layouts` folder.
-
-Sample layout:
-
-```fsharp
-#r "../lib/Fornax.Core.dll"
-#load "../siteModel.fsx"
+#r "../_lib/Fornax.Core.dll"
+#if !FORNAX
+#load "../loaders/postloader.fsx"
+#endif
 
 open Html
-open SiteModel
 
-type Model = {
-    Name : string
-    Surname : string
-}
+let generate' (ctx : SiteContents) (_: string) =
+    let posts = ctx.TryGetValues<Postloader.Post> () |> Option.defaultValue Seq.empty
 
-let generate (siteModel : SiteModel) (mdl : Model) (posts: Post list) (content : string) =
+    let psts =
+        posts
+        |> Seq.toList
+        |> List.map (fun p -> span [] [!! p.link] )
+
     html [] [
-        div [] [
-            span [] [ !! ("Hello world " + mdl.Name) ]
-            span [] [ !! content ]
-            span [] [ !! siteModel.SomeGlobalValue ]
-        ]
+        div [] psts
     ]
+
+let generate (ctx : SiteContents) (projectRoot: string) (page: string) =
+    generate' ctx page
+    |> HtmlElement.ToString
 ```
 
-### Page content
+### Configuration
 
-Content files are `.md` files containing page content, and a header with settings (defined using yaml). The header part is parsed, and passed to the layout's `generate` function as `Model`. The content part is compiled to html and also passed to the `generate` function. The header part needs to have the `layout` entry which defines what layout will be used for the page.
+`Configuration` is a F# script file that defines when which analyzers need to be run, and how to save its output. `Config.fsx` file needs to be put in the root of your site project (the place from which you run `fornax` CLI tool)
 
-Sample page:
-
-```markdown
----
-layout: post
-Name: Ja3
-Surname: Ja4
----
-# Something else
-
-Some blog post written in Markdown
 ```
+#r "../_lib/Fornax.Core.dll"
 
-### Post list
+open Config
+open System.IO
 
-Layouts have `Post list` as one of the input parameters that can be used for navigation, creating tag clouds etc. The `Post` is a record of the following structure:
+let postPredicate (projectRoot: string, page: string) =
+    let fileName = Path.Combine(projectRoot,page)
+    let ext = Path.GetExtension page
+    if ext = ".md" then
+        let ctn = File.ReadAllText fileName
+        ctn.Contains("layout: post")
+    else
+        false
 
-```fsharp
-type Post = {
-    link : string
-    title: string
-    author: string option
-    published: System.DateTime option
-    tags: string list
-    content: string
+let staticPredicate (projectRoot: string, page: string) =
+    let ext = Path.GetExtension page
+    if page.Contains "_public" ||
+       page.Contains "_bin" ||
+       page.Contains "_lib" ||
+       page.Contains "_data" ||
+       page.Contains "_settings" ||
+       page.Contains "_config.yml" ||
+       page.Contains ".sass-cache" ||
+       page.Contains ".git" ||
+       page.Contains ".ionide" ||
+       ext = ".fsx"
+    then
+        false
+    else
+        true
+
+let config = {
+    Generators = [
+        {Script = "less.fsx"; Trigger = OnFileExt ".less"; OutputFile = ChangeExtension "css" }
+        {Script = "sass.fsx"; Trigger = OnFileExt ".scss"; OutputFile = ChangeExtension "css" }
+        {Script = "post.fsx"; Trigger = OnFilePredicate postPredicate; OutputFile = ChangeExtension "html" }
+        {Script = "staticfile.fsx"; Trigger = OnFilePredicate staticPredicate; OutputFile = SameFileName }
+        {Script = "index.fsx"; Trigger = Once; OutputFile = NewFileName "index.html" }
+
+    ]
 }
+
 ```
-
-It's filled based on respective entries in `layout` part of the post content file. `link` is using name of the file - it's usually something like `\posts\post1.html`
-
-## FAQ
-
-1. Hmmm... it looks similar to Jekyll, doesn't it?
-
-    * Yes, indeed. But the main advantage over Jekyll is the type safe DSL for defining layouts, which uses a normal programming language - no additional syntax to things like loops or conditional statements, it's also very easy to compose layouts - you just `#load` other layouts and execute them as normal F# functions.
-
-2. What about F# Formatting?
-
-    * F# Formatting is really good project, but it doesn't provide its own rendering / templating engine - it's using Razor for that. Fornax right now is handling *only* rendering / templating - hopefully, it should work pretty well as a rendering engine for F# Formatting.
 
 ## How to contribute
 
