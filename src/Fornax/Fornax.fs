@@ -24,10 +24,18 @@ type FornaxExiter () =
                 exit 1
 
 
+type [<CliPrefix(CliPrefix.DoubleDash)>] WatchOptions =
+    | Port of int
+with
+    interface IArgParserTemplate with
+        member s.Usage =
+            match s with
+            | Port _ -> "Specify a custom port (default: 8080)"
+
 type [<CliPrefix(CliPrefix.None)>] Arguments =
     | New
     | Build
-    | Watch
+    | Watch of ParseResults<WatchOptions>
     | Version
     | Clean
 with
@@ -36,7 +44,7 @@ with
             match s with
             | New -> "Create new web site"
             | Build -> "Build web site"
-            | Watch -> "Start watch mode rebuilding "
+            | Watch _ -> "Start watch mode rebuilding "
             | Version -> "Print version"
             | Clean -> "Clean output and temp files"
 
@@ -73,6 +81,15 @@ let ws (webSocket : WebSocket) (context: HttpContext) =
                 do! webSocket.send Close emptyResponse true
                 contentChanged <- false
     }
+
+let getWebServerConfig port =
+    match port with
+    | Some port ->
+        { defaultConfig with
+            bindings =
+                [ HttpBinding.create Protocol.HTTP Net.IPAddress.Loopback port ] }
+    | None ->
+        defaultConfig
 
 let router basePath =
     choose [
@@ -137,7 +154,7 @@ let main argv =
             | exn ->
                 printfn "An unexpected error happend: %s%s%s" exn.Message Environment.NewLine exn.StackTrace
                 1
-        | Some (Watch) ->
+        | Some (Watch watchOptions) ->
             let mutable lastAccessed = Map.empty<string, DateTime>
             let waitingForChangesMessage = "Generated site with errors. Waiting for changes..."
 
@@ -163,7 +180,8 @@ let main argv =
                         lastAccessed <- lastAccessed.Add(e.FullPath, lastTimeWrite)
                         guardedGenerate ())
 
-            startWebServerAsync defaultConfig (router cwd) |> snd |> Async.Start
+            let webServerConfig = getWebServerConfig (watchOptions.TryPostProcessResult(<@ Port @>, uint16))
+            startWebServerAsync webServerConfig (router cwd) |> snd |> Async.Start
             printfn "[%s] Watch mode started. Press any key to exit." (DateTime.Now.ToString("HH:mm:ss"))
             Console.ReadKey() |> ignore
             printfn "Exiting..."
