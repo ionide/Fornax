@@ -72,12 +72,12 @@ type Page = {
     link: string
 }
 
-let loader (projectRoot: string) (siteContet: SiteContents) =
-    siteContet.Add({title = "Home"; link = "/"})
-    siteContet.Add({title = "About"; link = "/about.html"})
-    siteContet.Add({title = "Contact"; link = "/contact.html"})
+let loader (projectRoot: string) (siteContent: SiteContents) =
+    siteContent.Add({title = "Home"; link = "/"})
+    siteContent.Add({title = "About"; link = "/about.html"})
+    siteContent.Add({title = "Contact"; link = "/contact.html"})
 
-    siteContet
+    siteContent
 ```
 
 **Important note**: You can (and probably should) define multiple loaders - they will all be executed before generation of site, and will propagate information into `SiteContents`
@@ -111,7 +111,7 @@ let generate (ctx : SiteContents) (projectRoot: string) (page: string) =
     |> HtmlElement.ToString
 ```
 
-**Important note**: You can (and probably should) define multiple generators - they will generate different kinds of pages and/or content, such as `post`, `index`, `about`, `rss` etc. 
+**Important note**: You can (and probably should) define multiple generators - they will generate different kinds of pages and/or content, such as `post`, `index`, `about`, `rss` etc.
 
 ### Configuration
 

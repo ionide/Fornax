@@ -93,12 +93,12 @@ let loadFile n =
       tags = tags
       content = content }
 
-let loader (projectRoot: string) (siteContet: SiteContents) =
+let loader (projectRoot: string) (siteContent: SiteContents) =
     let postsPath = System.IO.Path.Combine(projectRoot, "posts")
     System.IO.Directory.GetFiles postsPath
     |> Array.filter (fun n -> n.EndsWith ".md")
     |> Array.map loadFile
-    |> Array.iter (fun p -> siteContet.Add p)
+    |> Array.iter (fun p -> siteContent.Add p)
 
-    siteContet.Add({disableLiveRefresh = false})
-    siteContet
+    siteContent.Add({disableLiveRefresh = false})
+    siteContent
