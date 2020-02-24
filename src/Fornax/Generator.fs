@@ -63,7 +63,7 @@ module EvaluatorHelpers =
             | true ->
                 Some next
         helper f (args |> List.ofSeq )
-        
+
     let internal compileExpression (input : FsiValue) =
         let genExpr = input.ReflectionValue :?> Quotations.Expr
         QuotationEvaluator.CompileUntyped genExpr
@@ -369,12 +369,11 @@ let generateFolder (projectRoot : string) =
             ||> Array.fold (fun state e ->
                 match LoaderEvaluator.evaluate fsi state e projectRoot with
                 | Ok sc ->
-                    printfn "Errors %O" sc.Errors
-                    sc.Errors() |> List.iter (fun er -> printfn "FAILED POST: %s" er.Path)
                     sc
                 | Error er ->
                     printfn "LOADER ERROR: %s" er
                     state)
+        sc.Errors() |> List.iter (fun er -> printfn "BAD FILE: %s" er.Path)
 
 
         let logResult (result : GeneratorResult) =
