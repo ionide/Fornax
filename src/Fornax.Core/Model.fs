@@ -1271,8 +1271,31 @@ type CSSProperties =
 
 open System.Collections.Generic
 
+type SiteErrors = string list
+
+type GenerationPhase = 
+| Loading
+| Generating
+type SiteError = {
+    Path : string
+    Message : string
+    Phase : GenerationPhase
+}
+
 type SiteContents () =
     let container = new System.ComponentModel.Design.ServiceContainer()
+    let errors = new Dictionary<string, SiteError>()
+
+    member __.AddError error =
+        errors.Add(error.Path, error)
+
+    member __.TryGetError path =
+        match errors.TryGetValue path with
+        | true, v -> Some v
+        | _ -> None
+
+    member __.Errors () =
+        List.ofSeq errors.Values    
 
     member __.Add(value:'a) =
         let key = typeof<List<'a>>
