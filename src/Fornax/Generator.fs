@@ -48,20 +48,21 @@ module EvaluatorHelpers =
         path.Replace("\\", "\\\\")
 
     let internal invokeFunction (f : obj) (args : obj seq) =
+        // Recusive partial evaluation of f, terminate when no args are left. 
         let rec helper (next : obj) (args : obj list)  =
-            match args.IsEmpty with
-            | false ->
+            match args with
+            | head::tail ->
                 let fType = next.GetType()
                 if FSharpType.IsFunction fType then
                     let methodInfo =
                         fType.GetMethods()
                         |> Array.filter (fun x -> x.Name = "Invoke" && x.GetParameters().Length = 1)
                         |> Array.head
-                    let res = methodInfo.Invoke(next, [| args.Head |])
-                    helper res args.Tail
-                else None
-            | true ->
-                Some next
+                    let res = methodInfo.Invoke(next, [| head |])
+                    helper res tail
+                else None // Error case, arg exists but can't be applied
+            | [] ->
+                Some next 
         helper f (args |> List.ofSeq )
 
     let internal compileExpression (input : FsiValue) =
