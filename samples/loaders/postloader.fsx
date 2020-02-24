@@ -93,12 +93,15 @@ let loadFile n =
       tags = tags
       content = content }
 
-let loader (projectRoot: string) (siteContet: SiteContents) =
+let loader (projectRoot: string) (siteContent: SiteContents) =
     let postsPath = System.IO.Path.Combine(projectRoot, "posts")
     System.IO.Directory.GetFiles postsPath
     |> Array.filter (fun n -> n.EndsWith ".md")
-    |> Array.map loadFile
-    |> Array.iter (fun p -> siteContet.Add p)
-
-    siteContet.Add({disableLiveRefresh = false})
-    siteContet
+    |> Array.iter 
+        (fun path ->
+            try 
+                siteContent.Add (loadFile path)
+            with _ -> 
+                siteContent.AddError {Path = path; Message = (sprintf "Uable to load post %s" path); Phase = Loading})
+    siteContent.Add({disableLiveRefresh = false})
+    siteContent
