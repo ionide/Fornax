@@ -5,6 +5,6 @@ type CustomConfig = {
 }
 
 
-let loader (projectRoot: string) (siteContet: SiteContents) =
-    siteContet.Add({SomeGlobalValue = "some global per site value"})
-    siteContet
+let loader (projectRoot: string) (siteContent: SiteContents) =
+    siteContent.Add({SomeGlobalValue = "some global per site value"})
+    siteContent
