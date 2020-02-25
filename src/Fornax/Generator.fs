@@ -48,20 +48,21 @@ module EvaluatorHelpers =
         path.Replace("\\", "\\\\")
 
     let internal invokeFunction (f : obj) (args : obj seq) =
+        // Recusive partial evaluation of f, terminate when no args are left. 
         let rec helper (next : obj) (args : obj list)  =
-            match args.IsEmpty with
-            | false ->
+            match args with
+            | head::tail ->
                 let fType = next.GetType()
                 if FSharpType.IsFunction fType then
                     let methodInfo =
                         fType.GetMethods()
                         |> Array.filter (fun x -> x.Name = "Invoke" && x.GetParameters().Length = 1)
                         |> Array.head
-                    let res = methodInfo.Invoke(next, [| args.Head |])
-                    helper res args.Tail
-                else None
-            | true ->
-                Some next
+                    let res = methodInfo.Invoke(next, [| head |])
+                    helper res tail
+                else None // Error case, arg exists but can't be applied
+            | [] ->
+                Some next 
         helper f (args |> List.ofSeq )
 
     let internal compileExpression (input : FsiValue) =
@@ -114,13 +115,12 @@ module LoaderEvaluator =
         runLoader fsi loaderPath
         |> Result.bind (fun ft ->
             let generator = compileExpression ft
-            let res = invokeFunction generator [box projectRoot; box siteContent]
-
-            res
-            |> Option.bind (tryUnbox<SiteContents>)
+            invokeFunction generator [box projectRoot; box siteContent] 
             |> function
-                | Some s -> Ok s
-                | None -> sprintf "The expression for %s couldn't be compiled" loaderPath |> Error)
+                | Some r -> 
+                    try r :?> SiteContents |> Ok
+                    with _ -> sprintf "File loader %s incorrect return type" loaderPath |> Error
+                | None -> sprintf "File loader %s couldn't be compiled" loaderPath |> Error)
 
 module GeneratorEvaluator =
     open FSharp.Compiler.Interactive.Shell
@@ -171,11 +171,11 @@ module GeneratorEvaluator =
         |> Result.bind (fun ft ->
             let generator = compileExpression ft
 
-            invokeFunction generator [box siteContent; box projectRoot; box page ]
+            invokeFunction generator [box siteContent; box projectRoot; box page ] 
             |> Option.bind (tryUnbox<string>)
             |> function
                 | Some s -> Ok s
-                | None -> sprintf "The expression for %s couldn't be compiled" generatorPath |> Error)
+                | None -> sprintf "HTML generator %s couldn't be compiled" generatorPath |> Error)
 
 module ConfigEvaluator =
     open FSharp.Compiler.Interactive.Shell
@@ -230,7 +230,7 @@ module ConfigEvaluator =
                 | Some s ->
                     siteContent.Add s
                     Ok s
-                | None -> sprintf "The expression for %s couldn't be compiled" generatorPath |> Error)
+                | None -> sprintf "Configuration evaluator %s couldn't be compiled" generatorPath |> Error)
 
 exception FornaxGeneratorException of string
 
@@ -242,13 +242,17 @@ type GeneratorResult =
     | GeneratorFailure of GeneratorMessage
 
 let pickGenerator (cfg: Config.Config)  (siteContent : SiteContents) (projectRoot : string) (page: string) =
-    let generator = cfg.Generators |> List.tryFind (fun n ->
-        match n.Trigger with
-        | Once -> false //Once-trigger run globally, not for particular file
-        | OnFile fn -> fn = page
-        | OnFileExt ex -> ex = Path.GetExtension page
-        | OnFilePredicate pred -> pred (projectRoot, page)
-    )
+    let generator = 
+        match siteContent.TryGetError page with
+        | Some _ -> None
+        | None -> 
+            cfg.Generators |> List.tryFind (fun n ->
+                match n.Trigger with
+                | Once -> false //Once-trigger run globally, not for particular file
+                | OnFile fn -> fn = page
+                | OnFileExt ex -> ex = Path.GetExtension page
+                | OnFilePredicate pred -> pred (projectRoot, page)
+            )
     match generator with
     | None -> None
     | Some generator ->
@@ -358,7 +362,7 @@ let generateFolder (projectRoot : string) =
 
     match config with
     | None ->
-        raise (FornaxGeneratorException "Cpuldn't find or load config")
+        raise (FornaxGeneratorException "Couldn't find or load config")
     | Some config ->
         let loaders = Directory.GetFiles(Path.Combine(projectRoot, "loaders"), "*.fsx")
         let sc =
@@ -370,6 +374,7 @@ let generateFolder (projectRoot : string) =
                 | Error er ->
                     printfn "LOADER ERROR: %s" er
                     state)
+        sc.Errors() |> List.iter (fun er -> printfn "BAD FILE: %s" er.Path)
 
 
         let logResult (result : GeneratorResult) =
