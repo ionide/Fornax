@@ -1,3 +1,8 @@
+### 0.11.0 - 02.03.2020
+* Add a port argument to the watch command  (by [@toburger](https://github.com/toburger)
+* Collect and propogate loader errors (by [@jbeeko](https://github.com/jbeeko)
+* Add MultipleFiles as possible generator output (by [@Krzysztof-Cieslak](https://github.com/Krzysztof-Cieslak)
+
 ### 0.10.0 - 20.02.2020
 * Update to .NET Core 3.0
 * Adds tools manifest .config/dotnet-tools.json
