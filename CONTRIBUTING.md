@@ -13,17 +13,17 @@ today! Here are the guidelines we'd like you to follow:
 ## <a name="issue"></a> Found an Issue?
 
 If you find a bug in the source code or a mistake in the documentation, you can help us by
-submitting an issue to our [GitHub Repository](https://github.com/LambdaFactory/Fornax). Even better you can submit a Pull Request
+submitting an issue to our [GitHub Repository](https://github.com/Ionide/Fornax). Even better you can submit a Pull Request
 with a fix.
 
 
 ## <a name="feature"></a> Want a Feature?
 
-You can request a new feature by submitting an issue to our [GitHub Repository](https://github.com/LambdaFactory/Fornax). If you would like to implement a new feature then consider what kind of change it is:
+You can request a new feature by submitting an issue to our [GitHub Repository](https://github.com/Ionide/Fornax). If you would like to implement a new feature then consider what kind of change it is:
 
 * **Major Changes** that you wish to contribute to the project should be discussed first on in the issue so that we can better coordinate our efforts, prevent duplication of work, and help you to craft the change so that it is successfully accepted into the project.
 
-* **Small Changes** can be crafted and submitted to the [GitHub Repository](https://github.com/LambdaFactory/Fornax) as a Pull Request.
+* **Small Changes** can be crafted and submitted to the [GitHub Repository](https://github.com/Ionide/Fornax) as a Pull Request.
 
 ## <a name="docs"></a> Want a Doc Fix?
 

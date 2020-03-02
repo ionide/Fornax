@@ -1,6 +1,6 @@
 # Fornax
 
-![Logo](https://raw.githubusercontent.com/LambdaFactory/Fornax/master/logo/Fornax.png)
+![Logo](https://raw.githubusercontent.com/Ionide/Fornax/master/logo/Fornax.png)
 
 Fornax is a **scriptable static site generator** using type safe F# DSL to define page layouts.
 
@@ -178,7 +178,7 @@ There might be a little voice inside that tells you you're not ready; that you n
 
 I assure you, that's not the case.
 
-This project has some clear Contribution Guidelines and expectations that you can [read here](https://github.com/LambdaFactory/Fornax/blob/master/CONTRIBUTING.md).
+This project has some clear Contribution Guidelines and expectations that you can [read here](https://github.com/Ionide/Fornax/blob/master/CONTRIBUTING.md).
 
 The contribution guidelines outline the process that you'll need to follow to get a patch merged. By making expectations and process explicit, I hope it will make it easier for you to contribute.
 
@@ -196,9 +196,9 @@ Thank you for contributing!
 
 ## Contributing and copyright
 
-The project is hosted on [GitHub](https://github.com/LambdaFactory/Fornax) where you can [report issues](https://github.com/LambdaFactory/Fornax/issues), fork
-the project and submit pull requests. Please read [Contribution Guide](https://github.com/LambdaFactory/Fornax/blob/master/CONTRIBUTING.md)
+The project is hosted on [GitHub](https://github.com/Ionide/Fornax) where you can [report issues](https://github.com/Ionide/Fornax/issues), fork
+the project and submit pull requests. Please read [Contribution Guide](https://github.com/Ionide/Fornax/blob/master/CONTRIBUTING.md)
 
-The library is available under [MIT license](https://github.com/LambdaFactory/Fornax/blob/master/LICENSE.md), which allows modification and redistribution for both commercial and non-commercial purposes.
+The library is available under [MIT license](https://github.com/Ionide/Fornax/blob/master/LICENSE.md), which allows modification and redistribution for both commercial and non-commercial purposes.
 
 Please note that this project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.

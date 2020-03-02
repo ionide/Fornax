@@ -24,7 +24,7 @@ open Fake.Api
 let project = "Fornax"
 let summary = "Fornax is a static site generator using type safe F# DSL to define page layouts"
 
-let gitOwner = "LambdaFactory"
+let gitOwner = "Ionide"
 let gitHome = "https://github.com/" + gitOwner
 let gitName = "Fornax"
 let gitRaw = Environment.environVarOrDefault "gitRaw" ("https://raw.github.com/" + gitOwner)
@@ -52,7 +52,7 @@ let runTool cmd args workingDir =
         |> CreateProcess.fromCommand
         |> CreateProcess.withWorkingDirectory workingDir
         |> Proc.run
-    if r.ExitCode <> 0 then 
+    if r.ExitCode <> 0 then
         failwithf "Error while running '%s' with args: %s" cmd args
 
 let getBuildParam = Environment.environVar
@@ -122,7 +122,7 @@ Target.create "Pack" (fun _ ->
     Environment.setEnvironVar "Description" summary
     Environment.setEnvironVar "PackageReleaseNotes" (release.Notes |> String.toLines)
     Environment.setEnvironVar "PackageTags" "f#, site-generator, html"
-    Environment.setEnvironVar "PackageProjectUrl" "https://github.com/LambdaFactory/Fornax"
+    Environment.setEnvironVar "PackageProjectUrl" "https://github.com/Ionide/Fornax"
     Environment.setEnvironVar "PackageLicenseExpression" "MIT"
 
     DotNet.pack (fun p ->
