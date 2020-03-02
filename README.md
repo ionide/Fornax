@@ -42,7 +42,7 @@ Fornax is using normal F# code (F# script files) to define any of it's core conc
 
 `SiteContents` has several functions in it's public API:
 
-```
+```fsharp
 type A = {a: string}
 type B = {b: int; c: int}
 
@@ -64,7 +64,7 @@ Want to load information from local database, or from internet? Sure, why not. W
 
 `Loaders` are normal F# functions that takes as an input `SiteContents` and absolute path to the page root, and returns `SiteContents`:
 
-```
+```fsharp
 #r "../_lib/Fornax.Core.dll"
 
 type Page = {
@@ -86,7 +86,7 @@ let loader (projectRoot: string) (siteContent: SiteContents) =
 
 `Generator` is an F# script responsible for generating output of the Fornax process. This is usually `.html` file, but can be anything else - actually `generator` API just requires to return `string` that will be saved to file. Generators are, again, plain F# functions that as an input takes `SiteContents`, absolute path to the page root, relative path to the file that's currently processed (may be empty for the global generators) and returns `string`:
 
-```
+```fsharp
 #r "../_lib/Fornax.Core.dll"
 #if !FORNAX
 #load "../loaders/postloader.fsx"
@@ -117,7 +117,7 @@ let generate (ctx : SiteContents) (projectRoot: string) (page: string) =
 
 `Configuration` is a F# script file that defines when which analyzers need to be run, and how to save its output. `Config.fsx` file needs to be put in the root of your site project (the place from which you run `fornax` CLI tool)
 
-```
+```fsharp
 #r "../_lib/Fornax.Core.dll"
 
 open Config
