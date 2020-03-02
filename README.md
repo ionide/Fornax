@@ -4,6 +4,14 @@
 
 Fornax is a **scriptable static site generator** using type safe F# DSL to define page layouts.
 
+Fornax is part of Ionide tooling suite - You can support its development on [Open Collective](https://opencollective.com/ionide).
+
+[![open collective backers](https://img.shields.io/opencollective/backers/ionide.svg?color=blue)](https://opencollective.com/ionide)
+[![open collective sponsors](https://img.shields.io/opencollective/sponsors/ionide.svg?color=blue)](https://opencollective.com/ionide)
+
+[![Open Collective](https://opencollective.com/ionide/donate/button.png?color=blue)](https://opencollective.com/ionide)
+
+
 ## Working features
 
 * Creating custom data loaders using `.fsx` files, meaning you can use as a source of data for your site anything you can imagine, not only predefined `.md` or `.yml` files
