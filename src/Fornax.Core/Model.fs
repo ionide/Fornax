@@ -1273,7 +1273,7 @@ open System.Collections.Generic
 
 type SiteErrors = string list
 
-type GenerationPhase = 
+type GenerationPhase =
 | Loading
 | Generating
 type SiteError = {
@@ -1295,7 +1295,7 @@ type SiteContents () =
         | _ -> None
 
     member __.Errors () =
-        List.ofSeq errors.Values    
+        List.ofSeq errors.Values
 
     member __.Add(value:'a) =
         let key = typeof<List<'a>>
@@ -1337,6 +1337,7 @@ module Config =
         | ChangeExtension of newExtension: string
         | NewFileName of newFileName: string
         | Custom of (string -> string)
+        | MultipleFiles of (string -> string)
 
     type GeneratorConfig = {
         Script: string

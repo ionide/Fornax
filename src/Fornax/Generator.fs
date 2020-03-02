@@ -48,7 +48,7 @@ module EvaluatorHelpers =
         path.Replace("\\", "\\\\")
 
     let internal invokeFunction (f : obj) (args : obj seq) =
-        // Recusive partial evaluation of f, terminate when no args are left. 
+        // Recusive partial evaluation of f, terminate when no args are left.
         let rec helper (next : obj) (args : obj list)  =
             match args with
             | head::tail ->
@@ -62,7 +62,7 @@ module EvaluatorHelpers =
                     helper res tail
                 else None // Error case, arg exists but can't be applied
             | [] ->
-                Some next 
+                Some next
         helper f (args |> List.ofSeq )
 
     let internal compileExpression (input : FsiValue) =
@@ -115,9 +115,9 @@ module LoaderEvaluator =
         runLoader fsi loaderPath
         |> Result.bind (fun ft ->
             let generator = compileExpression ft
-            invokeFunction generator [box projectRoot; box siteContent] 
+            invokeFunction generator [box projectRoot; box siteContent]
             |> function
-                | Some r -> 
+                | Some r ->
                     try r :?> SiteContents |> Ok
                     with _ -> sprintf "File loader %s incorrect return type" loaderPath |> Error
                 | None -> sprintf "File loader %s couldn't be compiled" loaderPath |> Error)
@@ -171,8 +171,22 @@ module GeneratorEvaluator =
         |> Result.bind (fun ft ->
             let generator = compileExpression ft
 
-            invokeFunction generator [box siteContent; box projectRoot; box page ] 
+            invokeFunction generator [box siteContent; box projectRoot; box page ]
             |> Option.bind (tryUnbox<string>)
+            |> function
+                | Some s -> Ok s
+                | None -> sprintf "HTML generator %s couldn't be compiled" generatorPath |> Error)
+
+    ///`generatorPath` - absolute path to `.fsx` file containing the generator
+    ///`projectRoot` - path to root of the site project
+    ///`page` - path to the file that should be transformed
+    let evaluateMultiple (fsi : FsiEvaluationSession) (siteContent : SiteContents) (generatorPath : string) (projectRoot: string) (page: string)  =
+        getGeneratorContent fsi generatorPath
+        |> Result.bind (fun ft ->
+            let generator = compileExpression ft
+
+            invokeFunction generator [box siteContent; box projectRoot; box page ]
+            |> Option.bind (tryUnbox<(string * string) list>)
             |> function
                 | Some s -> Ok s
                 | None -> sprintf "HTML generator %s couldn't be compiled" generatorPath |> Error)
@@ -241,11 +255,15 @@ type GeneratorResult =
     | GeneratorSuccess of GeneratorMessage option
     | GeneratorFailure of GeneratorMessage
 
+type GeneratorPick =
+    | Simple of genartorPath : string * outputPath: string
+    | Multiple of generatorPath: string * outputMapper: (string -> string)
+
 let pickGenerator (cfg: Config.Config)  (siteContent : SiteContents) (projectRoot : string) (page: string) =
-    let generator = 
+    let generator =
         match siteContent.TryGetError page with
         | Some _ -> None
-        | None -> 
+        | None ->
             cfg.Generators |> List.tryFind (fun n ->
                 match n.Trigger with
                 | Once -> false //Once-trigger run globally, not for particular file
@@ -256,16 +274,21 @@ let pickGenerator (cfg: Config.Config)  (siteContent : SiteContents) (projectRoo
     match generator with
     | None -> None
     | Some generator ->
-        let outputPath =
-            let newPage =
-                match generator.OutputFile with
-                | SameFileName -> page
-                | ChangeExtension(newExtension) -> Path.ChangeExtension(page, newExtension)
-                | NewFileName(newFileName) -> newFileName
-                | Custom(handler) -> handler page
-            Path.Combine(projectRoot, "_public", newPage)
         let generatorPath = Path.Combine(projectRoot, "generators", generator.Script)
-        Some(generatorPath, outputPath)
+        match generator.OutputFile with
+        | MultipleFiles mapper ->
+            Some(Multiple (generatorPath, mapper))
+        | _ ->
+            let outputPath =
+                let newPage =
+                    match generator.OutputFile with
+                    | SameFileName -> page
+                    | ChangeExtension(newExtension) -> Path.ChangeExtension(page, newExtension)
+                    | NewFileName(newFileName) -> newFileName
+                    | Custom(handler) -> handler page
+                    | MultipleFiles(_) -> failwith "Shouldn't happen"
+                Path.Combine(projectRoot, "_public", newPage)
+            Some(Simple (generatorPath, outputPath))
 
 
 ///`projectRoot` - path to the root of website
@@ -275,39 +298,9 @@ let generate fsi (cfg: Config.Config) (siteContent : SiteContents) (projectRoot 
     match pickGenerator cfg siteContent projectRoot page with
     | None ->
         GeneratorIgnored
-    | Some (layoutPath, outputPath) ->
+    | Some (Simple(layoutPath, outputPath)) ->
 
-    let result = GeneratorEvaluator.evaluate fsi siteContent layoutPath projectRoot page
-    match result with
-    | Ok r ->
-        let dir = Path.GetDirectoryName outputPath
-        if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
-        File.WriteAllText(outputPath, r)
-        let endTime = DateTime.Now
-        let ms = (endTime - startTime).Milliseconds
-        sprintf "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
-        |> Some
-        |> GeneratorSuccess
-    | Error message ->
-        let endTime = DateTime.Now
-        sprintf "[%s] '%s' generation failed" (endTime.ToString("HH:mm:ss")) outputPath
-        |> (fun s -> message + Environment.NewLine + s)
-        |> GeneratorFailure
-
-let runOnceGenerators fsi (cfg: Config.Config) (siteContent : SiteContents) (projectRoot : string) =
-    cfg.Generators
-    |> List.filter (fun n -> match n.Trigger with | Once -> true | _ -> false)
-    |> List.filter (fun n -> match n.OutputFile with | NewFileName _ -> true | _ -> false)
-    |> List.map (fun generator ->
-        let startTime = DateTime.Now
-        let outputPath =
-            let newPage =
-                match generator.OutputFile with
-                | NewFileName(newFileName) -> newFileName
-                | _ -> failwith "Shouldn't happen"
-            Path.Combine(projectRoot, "_public", newPage)
-        let generatorPath = Path.Combine(projectRoot, "generators", generator.Script)
-        let result = GeneratorEvaluator.evaluate fsi siteContent generatorPath projectRoot ""
+        let result = GeneratorEvaluator.evaluate fsi siteContent layoutPath projectRoot page
         match result with
         | Ok r ->
             let dir = Path.GetDirectoryName outputPath
@@ -323,6 +316,79 @@ let runOnceGenerators fsi (cfg: Config.Config) (siteContent : SiteContents) (pro
             sprintf "[%s] '%s' generation failed" (endTime.ToString("HH:mm:ss")) outputPath
             |> (fun s -> message + Environment.NewLine + s)
             |> GeneratorFailure
+    | Some (Multiple(layoutPath, mapper)) ->
+        let result = GeneratorEvaluator.evaluateMultiple fsi siteContent layoutPath projectRoot page
+        match result with
+        | Ok results ->
+            results |>
+            List.iter (fun (o, r) ->
+                let outputPath = mapper o
+                let outputPath = Path.Combine(projectRoot, "_public", outputPath)
+                let dir = Path.GetDirectoryName outputPath
+                if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
+                File.WriteAllText(outputPath, r)
+            )
+            let endTime = DateTime.Now
+            let ms = (endTime - startTime).Milliseconds
+            sprintf "[%s] multiple files generated in %dms" (endTime.ToString("HH:mm:ss")) ms
+            |> Some
+            |> GeneratorSuccess
+        | Error message ->
+            let endTime = DateTime.Now
+            sprintf "[%s] multiple files generation failed" (endTime.ToString("HH:mm:ss"))
+            |> (fun s -> message + Environment.NewLine + s)
+            |> GeneratorFailure
+
+let runOnceGenerators fsi (cfg: Config.Config) (siteContent : SiteContents) (projectRoot : string) =
+    cfg.Generators
+    |> List.filter (fun n -> match n.Trigger with | Once -> true | _ -> false)
+    |> List.filter (fun n -> match n.OutputFile with | NewFileName _ | MultipleFiles _ -> true | _ -> false)
+    |> List.map (fun generator ->
+        let startTime = DateTime.Now
+        let generatorPath = Path.Combine(projectRoot, "generators", generator.Script)
+        match generator.OutputFile with
+        | NewFileName newFileName ->
+
+            let outputPath = Path.Combine(projectRoot, "_public", newFileName)
+            let result = GeneratorEvaluator.evaluate fsi siteContent generatorPath projectRoot ""
+            match result with
+            | Ok r ->
+                let dir = Path.GetDirectoryName outputPath
+                if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
+                File.WriteAllText(outputPath, r)
+                let endTime = DateTime.Now
+                let ms = (endTime - startTime).Milliseconds
+                sprintf "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
+                |> Some
+                |> GeneratorSuccess
+            | Error message ->
+                let endTime = DateTime.Now
+                sprintf "[%s] '%s' generation failed" (endTime.ToString("HH:mm:ss")) outputPath
+                |> (fun s -> message + Environment.NewLine + s)
+                |> GeneratorFailure
+        | MultipleFiles mapper ->
+            let result = GeneratorEvaluator.evaluateMultiple fsi siteContent generatorPath projectRoot ""
+            match result with
+            | Ok results ->
+                results |>
+                List.iter (fun (o, r) ->
+                    let outputPath = mapper o
+                    let outputPath = Path.Combine(projectRoot, "_public", outputPath)
+                    let dir = Path.GetDirectoryName outputPath
+                    if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
+                    File.WriteAllText(outputPath, r)
+                )
+                let endTime = DateTime.Now
+                let ms = (endTime - startTime).Milliseconds
+                sprintf "[%s] multiple files generated in %dms" (endTime.ToString("HH:mm:ss")) ms
+                |> Some
+                |> GeneratorSuccess
+            | Error message ->
+                let endTime = DateTime.Now
+                sprintf "[%s] multiple files generation failed" (endTime.ToString("HH:mm:ss"))
+                |> (fun s -> message + Environment.NewLine + s)
+                |> GeneratorFailure
+        | _ -> failwith "Shouldn't happen"
     )
 
 // Module to print colored message in the console
