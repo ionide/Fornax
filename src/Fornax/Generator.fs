@@ -148,19 +148,21 @@ module GeneratorEvaluator =
         let layoutErrorMessage =
             tryFormatErrorMessage "Get generator Errors" layoutErrors
 
-        let completeErrorReport =
+        let errors =
             [ loadErrorMessage
               openErrorMessage
               layoutErrorMessage ]
-            |> List.filter (Option.isSome)
-            |> List.map (fun v -> v.Value)
-            |> List.fold (fun state message -> state + Environment.NewLine + message) ""
-            |> (fun s -> s.Trim(Environment.NewLine.ToCharArray()))
+            |> List.choose id
 
-        match funType with
-        | Choice1Of2 (Some ft) ->
+        match errors, funType with
+        | [], Choice1Of2 (Some ft) ->
             Ok (ft)
-        | _ -> Error completeErrorReport
+        | _, _ ->
+            let completeErrorReport =
+                errors
+                |> List.fold (fun state message -> state + Environment.NewLine + message) ""
+                |> fun s -> s.Trim(Environment.NewLine.ToCharArray())
+            Error completeErrorReport
 
 
     ///`generatorPath` - absolute path to `.fsx` file containing the generator
@@ -462,4 +464,3 @@ let generateFolder (projectRoot : string) =
             |> relative projectRoot
             |> generate fsi config sc projectRoot
             |> logResult)
-
