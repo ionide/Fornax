@@ -1,3 +1,7 @@
+### 0.11.1 - 07.04.2020
+* Fix for once generator running even if not found (by [@sasmithjr](https://github.com/sasmithjr)
+* Use exceptions .ToString() when printing error (by [@robertpi](https://github.com/robertpi)
+
 ### 0.11.0 - 02.03.2020
 * Add a port argument to the watch command  (by [@toburger](https://github.com/toburger)
 * Collect and propogate loader errors (by [@jbeeko](https://github.com/jbeeko)
