@@ -165,7 +165,7 @@ let main argv =
                 | FornaxGeneratorException message ->
                     printfn "%s%s%s" message Environment.NewLine waitingForChangesMessage
                 | exn ->
-                    printfn "An unexpected error happend: %s%s%s" exn.Message Environment.NewLine exn.StackTrace
+                    printfn "An unexpected error happend: %O" exn
                     exit 1
 
             guardedGenerate ()
