@@ -3,6 +3,7 @@ module Generator
 
 open System
 open System.IO
+open System.Text
 open Config
 
 module EvaluatorHelpers =
@@ -173,11 +174,19 @@ module GeneratorEvaluator =
         |> Result.bind (fun ft ->
             let generator = compileExpression ft
 
-            invokeFunction generator [box siteContent; box projectRoot; box page ]
+            let result = invokeFunction generator [box siteContent; box projectRoot; box page ]
+
+            result
             |> Option.bind (tryUnbox<string>)
             |> function
-                | Some s -> Ok s
-                | None -> sprintf "HTML generator %s couldn't be compiled" generatorPath |> Error)
+                | Some s -> Ok (Encoding.UTF8.GetBytes s)
+                | None -> 
+                    result
+                    |> Option.bind (tryUnbox<byte[]>)
+                    |> function
+                        | Some bytes -> Ok bytes
+                        | None -> 
+                            sprintf "HTML generator %s couldn't be compiled" generatorPath |> Error)
 
     ///`generatorPath` - absolute path to `.fsx` file containing the generator
     ///`projectRoot` - path to root of the site project
@@ -187,11 +196,17 @@ module GeneratorEvaluator =
         |> Result.bind (fun ft ->
             let generator = compileExpression ft
 
-            invokeFunction generator [box siteContent; box projectRoot; box page ]
+            let result = invokeFunction generator [box siteContent; box projectRoot; box page ]
+            result
             |> Option.bind (tryUnbox<(string * string) list>)
             |> function
-                | Some s -> Ok s
-                | None -> sprintf "HTML generator %s couldn't be compiled" generatorPath |> Error)
+                | Some files -> Ok (files |> List.map (fun (o, r) -> o, Encoding.UTF8.GetBytes r)) 
+                | None ->
+                    result
+                    |> Option.bind (tryUnbox<(string * byte[]) list>)
+                    |> function
+                        | Some s -> Ok s
+                        | None -> sprintf "HTML generator %s couldn't be compiled" generatorPath |> Error)
 
 module ConfigEvaluator =
     open FSharp.Compiler.Interactive.Shell
@@ -307,7 +322,7 @@ let generate fsi (cfg: Config.Config) (siteContent : SiteContents) (projectRoot 
         | Ok r ->
             let dir = Path.GetDirectoryName outputPath
             if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
-            File.WriteAllText(outputPath, r)
+            File.WriteAllBytes(outputPath, r)
             let endTime = DateTime.Now
             let ms = (endTime - startTime).Milliseconds
             sprintf "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
@@ -328,7 +343,7 @@ let generate fsi (cfg: Config.Config) (siteContent : SiteContents) (projectRoot 
                 let outputPath = Path.Combine(projectRoot, "_public", outputPath)
                 let dir = Path.GetDirectoryName outputPath
                 if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
-                File.WriteAllText(outputPath, r)
+                File.WriteAllBytes(outputPath, r)
             )
             let endTime = DateTime.Now
             let ms = (endTime - startTime).Milliseconds
@@ -357,7 +372,7 @@ let runOnceGenerators fsi (cfg: Config.Config) (siteContent : SiteContents) (pro
             | Ok r ->
                 let dir = Path.GetDirectoryName outputPath
                 if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
-                File.WriteAllText(outputPath, r)
+                File.WriteAllBytes(outputPath, r)
                 let endTime = DateTime.Now
                 let ms = (endTime - startTime).Milliseconds
                 sprintf "[%s] '%s' generated in %dms" (endTime.ToString("HH:mm:ss")) outputPath ms
@@ -378,7 +393,7 @@ let runOnceGenerators fsi (cfg: Config.Config) (siteContent : SiteContents) (pro
                     let outputPath = Path.Combine(projectRoot, "_public", outputPath)
                     let dir = Path.GetDirectoryName outputPath
                     if not (Directory.Exists dir) then Directory.CreateDirectory dir |> ignore
-                    File.WriteAllText(outputPath, r)
+                    File.WriteAllBytes(outputPath, r)
                 )
                 let endTime = DateTime.Now
                 let ms = (endTime - startTime).Milliseconds
