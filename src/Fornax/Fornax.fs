@@ -2,6 +2,7 @@ module Fornax
 
 open System
 open System.IO
+open System.Threading
 open Argu
 open Suave
 open Suave.Filters
@@ -51,7 +52,7 @@ with
 /// Used to keep track of when content has changed,
 /// thus triggering the websocket to update
 /// any listeners to refresh.
-let mutable contentChanged = false
+let signalContentChanged = new Event<Choice<unit, Error>>()
 
 let createFileWatcher dir handler =
     let fileSystemWatcher = new FileSystemWatcher()
@@ -64,7 +65,9 @@ let createFileWatcher dir handler =
     fileSystemWatcher.Deleted.Add handler
 
     /// Adding handler to trigger websocket/live refresh
-    let contentChangedHandler _ = contentChanged <- true
+    let contentChangedHandler _ = 
+        signalContentChanged.Trigger(Choice<unit,Error>.Choice1Of2 ())
+    signalContentChanged.Trigger(Choice<unit,Error>.Choice1Of2 ())
     fileSystemWatcher.Created.Add contentChangedHandler
     fileSystemWatcher.Changed.Add contentChangedHandler
     fileSystemWatcher.Deleted.Add contentChangedHandler
@@ -74,12 +77,16 @@ let createFileWatcher dir handler =
 /// Websocket function that a page listens to so it
 /// knows when to refresh.
 let ws (webSocket : WebSocket) (context: HttpContext) =
+    printfn "Opening WebSocket - new handShake"
     socket {
-        while true do
-            let emptyResponse = [||] |> ByteSegment
-            if contentChanged then
+        try
+            while true do
+                do! Async.AwaitEvent signalContentChanged.Publish
+                printfn "Signalling content changed"
+                let emptyResponse = [||] |> ByteSegment
                 do! webSocket.send Close emptyResponse true
-                contentChanged <- false
+        finally
+            printfn "Disconnecting WebSocket"
     }
 
 let getWebServerConfig port =
