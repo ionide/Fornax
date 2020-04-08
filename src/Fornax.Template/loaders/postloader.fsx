@@ -16,6 +16,7 @@ type Post = {
     content: string
 }
 
+let contentDir = "posts"
 
 let markdownPipeline =
     MarkdownPipelineBuilder()
@@ -32,10 +33,19 @@ let getConfig (fileContent : string) =
     let fileContent = fileContent.Split '\n'
     let fileContent = fileContent |> Array.skip 1 //First line must be ---
     let indexOfSeperator = fileContent |> Array.findIndex isSeparator
+    let splitKey (line: string) = 
+        let seperatorIndex = line.IndexOf(':')
+        if seperatorIndex > 0 then
+            let key = line.[.. seperatorIndex - 1].Trim().ToLower()
+            let value = line.[seperatorIndex + 1 ..].Trim() 
+            Some(key, value)
+        else 
+            None
     fileContent
     |> Array.splitAt indexOfSeperator
     |> fst
-    |> String.concat "\n"
+    |> Seq.choose splitKey
+    |> Map.ofSeq
 
 ///`fileContent` - content of page to parse. Usually whole content of `.md` file
 ///returns HTML version of content of the page
@@ -54,36 +64,22 @@ let trimString (str : string) =
 let loadFile n =
     let text = System.IO.File.ReadAllText n
 
-    let config = (getConfig text).Split( '\n') |> List.ofArray
-
+    let config = getConfig text
     let content = getContent text
 
-    let file = System.IO.Path.Combine("posts", (n |> System.IO.Path.GetFileNameWithoutExtension) + ".md").Replace("\\", "/")
-    let link = "/" + System.IO.Path.Combine("posts", (n |> System.IO.Path.GetFileNameWithoutExtension) + ".html").Replace("\\", "/")
+    let file = System.IO.Path.Combine(contentDir, (n |> System.IO.Path.GetFileNameWithoutExtension) + ".md").Replace("\\", "/")
+    let link = "/" + System.IO.Path.Combine(contentDir, (n |> System.IO.Path.GetFileNameWithoutExtension) + ".html").Replace("\\", "/")
 
-    let title = config |> List.find (fun n -> n.ToLower().StartsWith "title" ) |> fun n -> n.Split(':').[1] |> trimString
-
-    let author =
-        try
-            config |> List.tryFind (fun n -> n.ToLower().StartsWith "author" ) |> Option.map (fun n -> n.Split(':').[1] |> trimString)
-        with
-        | _ -> None
-
-    let published =
-        try
-            config |> List.tryFind (fun n -> n.ToLower().StartsWith "published" ) |> Option.map (fun n -> n.Split(':').[1] |> trimString |> System.DateTime.Parse)
-        with
-        | _ -> None
+    let title = config |> Map.find "title" |> trimString
+    let author = config |> Map.tryFind "author" |> Option.map trimString
+    let published = config |> Map.tryFind "published" |> Option.map (trimString >> System.DateTime.Parse)
 
     let tags =
-        try
-            let x =
-                config
-                |> List.tryFind (fun n -> n.ToLower().StartsWith "tags" )
-                |> Option.map (fun n -> n.Split(':').[1] |> trimString |> fun n -> n.Split ',' |> Array.toList )
-            defaultArg x []
-        with
-        | _ -> []
+        let tagsOpt =
+            config
+            |> Map.tryFind "tags"
+            |> Option.map (trimString >> fun n -> n.Split ',' |> Array.toList)
+        defaultArg tagsOpt []
 
     { file = file
       link = link
@@ -94,7 +90,7 @@ let loadFile n =
       content = content }
 
 let loader (projectRoot: string) (siteContent: SiteContents) =
-    let postsPath = System.IO.Path.Combine(projectRoot, "posts")
+    let postsPath = System.IO.Path.Combine(projectRoot, contentDir)
     System.IO.Directory.GetFiles postsPath
     |> Array.filter (fun n -> n.EndsWith ".md")
     |> Array.map loadFile
