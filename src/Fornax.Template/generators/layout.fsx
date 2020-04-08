@@ -82,3 +82,24 @@ let render (ctx : SiteContents) cnt =
   cnt
   |> HtmlElement.ToString
   |> fun n -> if disableLiveRefresh then n else injectWebsocketCode n
+
+let published (post: Postloader.Post) =
+    post.published
+    |> Option.defaultValue System.DateTime.Now
+    |> fun n -> n.ToString("yyyy-MM-dd")
+
+let postLayout (post: Postloader.Post) =
+    div [Class "card article"] [
+        div [Class "card-content"] [
+            div [Class "media-content has-text-centered"] [
+                p [Class "title article-title"; ] [ a [Href post.link] [!! post.title]]
+                p [Class "subtitle is-6 article-subtitle"] [
+                a [Href "#"] [!! (defaultArg post.author "")]
+                !! (sprintf "on %s" (published post))
+                ]
+            ]
+            div [Class "content article-body"] [
+                !! post.content
+            ]
+        ]
+    ]
