@@ -5,13 +5,13 @@ open System.Reflection
 [<assembly: AssemblyTitleAttribute("Fornax")>]
 [<assembly: AssemblyProductAttribute("Fornax")>]
 [<assembly: AssemblyDescriptionAttribute("Fornax is a static site generator using type safe F# DSL to define page layouts")>]
-[<assembly: AssemblyVersionAttribute("0.11.2")>]
-[<assembly: AssemblyFileVersionAttribute("0.11.2")>]
+[<assembly: AssemblyVersionAttribute("0.12.0")>]
+[<assembly: AssemblyFileVersionAttribute("0.12.0")>]
 do ()
 
 module internal AssemblyVersionInformation =
     let [<Literal>] AssemblyTitle = "Fornax"
     let [<Literal>] AssemblyProduct = "Fornax"
     let [<Literal>] AssemblyDescription = "Fornax is a static site generator using type safe F# DSL to define page layouts"
-    let [<Literal>] AssemblyVersion = "0.11.2"
-    let [<Literal>] AssemblyFileVersion = "0.11.2"
+    let [<Literal>] AssemblyVersion = "0.12.0"
+    let [<Literal>] AssemblyFileVersion = "0.12.0"

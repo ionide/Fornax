@@ -1,3 +1,8 @@
+### 0.12.0 - 14.04.2020
+* WebSocket refresh uses excesive CPU (by [@robertpi](https://github.com/robertpi))
+* Allow generate to return a byte array (by [@robertpi](https://github.com/robertpi))
+* Refactor template (by [@robertpi](https://github.com/robertpi))
+
 ### 0.11.1 - 07.04.2020
 * Fix for once generator running even if not found (by [@sasmithjr](https://github.com/sasmithjr))
 * Use exceptions .ToString() when printing error (by [@robertpi](https://github.com/robertpi))
