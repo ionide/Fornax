@@ -109,6 +109,24 @@ Target.create "Test" (fun _ ->
     runTool "dotnet" @"run --project .\test\Fornax.Core.UnitTests\Fornax.Core.UnitTests.fsproj" "."
 )
 
+Target.create "TestTemplate" (fun _ ->
+    let templateDir = __SOURCE_DIRECTORY__ </> "src/Fornax.Template/"
+    let coreDllSource = buildDir </> "Fornax.Core.dll"
+    let coreDllDest = templateDir </> "_lib"  </> "Fornax.Core.dll"
+
+    try
+        System.IO.File.Copy(coreDllSource, coreDllDest, true)
+
+        let newlyBuiltFornax = buildDir </> "Fornax.dll"
+
+        printfn "templateDir: %s" templateDir
+
+        runTool "dotnet" (sprintf "%s watch" newlyBuiltFornax) templateDir
+
+    finally 
+        File.delete coreDllDest
+)
+
 // --------------------------------------------------------------------------------------
 // Release Targets
 // --------------------------------------------------------------------------------------
@@ -191,6 +209,11 @@ Target.create "Release" DoNothing
   ==> "Publish"
   ==> "Test"
   ==> "Default"
+
+"Restore"
+  ==> "Build"
+  ==> "Publish"
+  ==> "TestTemplate"
 
 "Default"
   ==> "Pack"
