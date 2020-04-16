@@ -88,7 +88,7 @@ let published (post: Postloader.Post) =
     |> Option.defaultValue System.DateTime.Now
     |> fun n -> n.ToString("yyyy-MM-dd")
 
-let postLayout (post: Postloader.Post) =
+let postLayout (useSummary: bool) (post: Postloader.Post) =
     div [Class "card article"] [
         div [Class "card-content"] [
             div [Class "media-content has-text-centered"] [
@@ -99,7 +99,8 @@ let postLayout (post: Postloader.Post) =
                 ]
             ]
             div [Class "content article-body"] [
-                !! post.content
+                !! (if useSummary then post.summary else post.content)
+
             ]
         ]
     ]
