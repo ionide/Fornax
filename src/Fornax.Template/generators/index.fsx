@@ -15,7 +15,7 @@ let generate' (ctx : SiteContents) (_: string) =
     posts
     |> Seq.sortByDescending Layout.published
     |> Seq.toList
-    |> List.map Layout.postLayout
+    |> List.map (Layout.postLayout true)
 
   Layout.layout ctx "Home" [
     section [Class "hero is-info is-medium is-bold"] [
