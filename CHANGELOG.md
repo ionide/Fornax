@@ -1,3 +1,8 @@
+### 0.13.0 - 20.04.2020
+* Add way to check developments to the template (by [@robertpi](https://github.com/robertpi))
+* Summarize posts using more marker (by [@robertpi](https://github.com/robertpi))
+* Update to FCS 34.1
+
 ### 0.12.0 - 14.04.2020
 * WebSocket refresh uses excesive CPU (by [@robertpi](https://github.com/robertpi))
 * Allow generate to return a byte array (by [@robertpi](https://github.com/robertpi))
