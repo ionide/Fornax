@@ -421,7 +421,7 @@ module Logger =
     let errorfn str = Printf.kprintf (fun s -> use c = consoleColor ConsoleColor.Red in printfn "%s" s) str
 
 ///`projectRoot` - path to the root of website
-let generateFolder (projectRoot : string) =
+let generateFolder (projectRoot : string) buildType =
 
     let relative toPath fromPath =
         let toUri = Uri(toPath)
@@ -433,7 +433,7 @@ let generateFolder (projectRoot : string) =
         else projectRoot + (string Path.DirectorySeparatorChar)
 
     use fsi = EvaluatorHelpers.fsi ()
-    let sc = SiteContents ()
+    let sc = SiteContents (buildType)
     let config =
         let configPath = Path.Combine(projectRoot, "config.fsx")
         if File.Exists configPath then

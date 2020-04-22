@@ -39,6 +39,8 @@ let release = ReleaseNotes.parse (System.IO.File.ReadAllLines "CHANGELOG.md")
 let packageDir = __SOURCE_DIRECTORY__ </> "out"
 let buildDir = __SOURCE_DIRECTORY__ </> "temp"
 
+let templateTestType = Environment.environVarOrDefault "templateTestType" "watch"
+
 
 // --------------------------------------------------------------------------------------
 // Helpers
@@ -120,8 +122,9 @@ Target.create "TestTemplate" (fun _ ->
         let newlyBuiltFornax = buildDir </> "Fornax.dll"
 
         printfn "templateDir: %s" templateDir
+        printfn "templateTestType: %s" templateTestType
 
-        runTool "dotnet" (sprintf "%s watch" newlyBuiltFornax) templateDir
+        runTool "dotnet" (sprintf "%s %s" newlyBuiltFornax templateTestType) templateDir
 
     finally 
         File.delete coreDllDest

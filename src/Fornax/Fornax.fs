@@ -152,7 +152,7 @@ let main argv =
             0
         | Some Build ->
             try
-                do generateFolder cwd
+                do generateFolder cwd ReleaseBuild
                 0
             with
             | FornaxGeneratorException message ->
@@ -167,7 +167,7 @@ let main argv =
 
             let guardedGenerate () =
                 try
-                    generateFolder cwd
+                    generateFolder cwd WatchBuild
                 with
                 | FornaxGeneratorException message ->
                     printfn "%s%s%s" message Environment.NewLine waitingForChangesMessage

@@ -1273,6 +1273,10 @@ open System.Collections.Generic
 
 type SiteErrors = string list
 
+type BuildType =
+| ReleaseBuild
+| WatchBuild
+
 type GenerationPhase =
 | Loading
 | Generating
@@ -1282,9 +1286,11 @@ type SiteError = {
     Phase : GenerationPhase
 }
 
-type SiteContents () =
+type SiteContents (buildType: BuildType) =
     let container = new System.ComponentModel.Design.ServiceContainer()
     let errors = new Dictionary<string, SiteError>()
+
+    member __.BuildType = buildType
 
     member __.AddError error =
         errors.Add(error.Path, error)

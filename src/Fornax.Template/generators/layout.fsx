@@ -78,7 +78,12 @@ let layout (ctx : SiteContents) active bodyCnt =
     ]
 
 let render (ctx : SiteContents) cnt =
-  let disableLiveRefresh = ctx.TryGetValue<Postloader.PostConfig> () |> Option.map (fun n -> n.disableLiveRefresh) |> Option.defaultValue false
+  let disableLiveRefresh = 
+      ctx.TryGetValue<Postloader.PostConfig> () 
+      |> Option.map (fun n -> n.disableLiveRefresh) 
+      |> Option.defaultValue false
+      || ctx.BuildType = ReleaseBuild
+ 
   cnt
   |> HtmlElement.ToString
   |> fun n -> if disableLiveRefresh then n else injectWebsocketCode n
