@@ -1,7 +1,11 @@
+### 0.13.1 - 24.04.2020
+* Update to FCS 35.0 (by [@Krzysztof-Cieslak](https://github.com/Krzysztof-Cieslak))
+* Pass `WATCH` define in case of watch mode (by [@Krzysztof-Cieslak](https://github.com/Krzysztof-Cieslak))
+
 ### 0.13.0 - 20.04.2020
 * Add way to check developments to the template (by [@robertpi](https://github.com/robertpi))
 * Summarize posts using more marker (by [@robertpi](https://github.com/robertpi))
-* Update to FCS 34.1
+* Update to FCS 34.1 (by [@Krzysztof-Cieslak](https://github.com/Krzysztof-Cieslak))
 
 ### 0.12.0 - 14.04.2020
 * WebSocket refresh uses excesive CPU (by [@robertpi](https://github.com/robertpi))
