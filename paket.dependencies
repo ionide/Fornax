@@ -5,7 +5,7 @@ storage: none
 nuget Expecto
 nuget FSharp.Core
 
-nuget FSharp.Compiler.Service 34.1.0
+nuget FSharp.Compiler.Service 35.0.0
 nuget FSharp.Quotations.Evaluator
 
 nuget Argu
