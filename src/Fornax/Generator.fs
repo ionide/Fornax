@@ -15,7 +15,7 @@ module EvaluatorHelpers =
 
     let private sbOut = StringBuilder()
     let private sbErr = StringBuilder()
-    let internal fsi () =
+    let internal fsi (isWatch: bool) =
         let refs =
             ProjectSystem.FSIRefs.getRefs ()
             |> List.map (fun n -> sprintf "-r:%s" n)
@@ -29,8 +29,9 @@ module EvaluatorHelpers =
             let argv = [|
                 yield! refs
                 yield "--noframework"
-                yield "/temp/fsi.exe";
-                yield "--define:FORNAX"|]
+                if isWatch then  yield "--define:WATCH"
+                yield "--define:FORNAX"
+                yield "/temp/fsi.exe"; |]
             FsiEvaluationSession.Create(fsiConfig, argv, inStream, outStream, errStream)
         with
         | ex ->
@@ -180,12 +181,12 @@ module GeneratorEvaluator =
             |> Option.bind (tryUnbox<string>)
             |> function
                 | Some s -> Ok (Encoding.UTF8.GetBytes s)
-                | None -> 
+                | None ->
                     result
                     |> Option.bind (tryUnbox<byte[]>)
                     |> function
                         | Some bytes -> Ok bytes
-                        | None -> 
+                        | None ->
                             sprintf "HTML generator %s couldn't be compiled" generatorPath |> Error)
 
     ///`generatorPath` - absolute path to `.fsx` file containing the generator
@@ -200,7 +201,7 @@ module GeneratorEvaluator =
             result
             |> Option.bind (tryUnbox<(string * string) list>)
             |> function
-                | Some files -> Ok (files |> List.map (fun (o, r) -> o, Encoding.UTF8.GetBytes r)) 
+                | Some files -> Ok (files |> List.map (fun (o, r) -> o, Encoding.UTF8.GetBytes r))
                 | None ->
                     result
                     |> Option.bind (tryUnbox<(string * byte[]) list>)
@@ -421,7 +422,7 @@ module Logger =
     let errorfn str = Printf.kprintf (fun s -> use c = consoleColor ConsoleColor.Red in printfn "%s" s) str
 
 ///`projectRoot` - path to the root of website
-let generateFolder (projectRoot : string) =
+let generateFolder (projectRoot : string) (isWatch: bool) =
 
     let relative toPath fromPath =
         let toUri = Uri(toPath)
@@ -432,7 +433,7 @@ let generateFolder (projectRoot : string) =
         if projectRoot.EndsWith (string Path.DirectorySeparatorChar) then projectRoot
         else projectRoot + (string Path.DirectorySeparatorChar)
 
-    use fsi = EvaluatorHelpers.fsi ()
+    use fsi = EvaluatorHelpers.fsi (isWatch)
     let sc = SiteContents ()
     let config =
         let configPath = Path.Combine(projectRoot, "config.fsx")

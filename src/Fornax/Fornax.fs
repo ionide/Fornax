@@ -65,7 +65,7 @@ let createFileWatcher dir handler =
     fileSystemWatcher.Deleted.Add handler
 
     /// Adding handler to trigger websocket/live refresh
-    let contentChangedHandler _ = 
+    let contentChangedHandler _ =
         signalContentChanged.Trigger(Choice<unit,Error>.Choice1Of2 ())
     signalContentChanged.Trigger(Choice<unit,Error>.Choice1Of2 ())
     fileSystemWatcher.Created.Add contentChangedHandler
@@ -152,7 +152,7 @@ let main argv =
             0
         | Some Build ->
             try
-                do generateFolder cwd
+                do generateFolder cwd false
                 0
             with
             | FornaxGeneratorException message ->
@@ -167,7 +167,7 @@ let main argv =
 
             let guardedGenerate () =
                 try
-                    generateFolder cwd
+                    do generateFolder cwd true
                 with
                 | FornaxGeneratorException message ->
                     printfn "%s%s%s" message Environment.NewLine waitingForChangesMessage
