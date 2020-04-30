@@ -65,7 +65,7 @@ let createFileWatcher dir handler =
     fileSystemWatcher.Deleted.Add handler
 
     /// Adding handler to trigger websocket/live refresh
-    let contentChangedHandler _ = 
+    let contentChangedHandler _ =
         signalContentChanged.Trigger(Choice<unit,Error>.Choice1Of2 ())
     signalContentChanged.Trigger(Choice<unit,Error>.Choice1Of2 ())
     fileSystemWatcher.Created.Add contentChangedHandler
@@ -159,7 +159,7 @@ let main argv =
                 Console.WriteLine message
                 1
             | exn ->
-                printfn "An unexpected error happend: %s%s%s" exn.Message Environment.NewLine exn.StackTrace
+                printfn "An unexpected error happend: %O" exn
                 1
         | Some (Watch watchOptions) ->
             let mutable lastAccessed = Map.empty<string, DateTime>

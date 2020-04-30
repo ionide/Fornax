@@ -1,6 +1,7 @@
 #r "../_lib/Fornax.Core.dll"
 #r "../_lib/Markdig.dll"
 
+open System.IO
 open Markdig
 
 type PostConfig = {
@@ -38,13 +39,13 @@ let getConfig (fileContent : string) =
     let fileContent = fileContent.Split '\n'
     let fileContent = fileContent |> Array.skip 1 //First line must be ---
     let indexOfSeperator = fileContent |> Array.findIndex isSeparator
-    let splitKey (line: string) = 
+    let splitKey (line: string) =
         let seperatorIndex = line.IndexOf(':')
         if seperatorIndex > 0 then
             let key = line.[.. seperatorIndex - 1].Trim().ToLower()
-            let value = line.[seperatorIndex + 1 ..].Trim() 
+            let value = line.[seperatorIndex + 1 ..].Trim()
             Some(key, value)
-        else 
+        else
             None
     fileContent
     |> Array.splitAt indexOfSeperator
@@ -77,14 +78,23 @@ let getContent (fileContent : string) =
 let trimString (str : string) =
     str.Trim().TrimEnd('"').TrimStart('"')
 
-let loadFile n =
-    let text = System.IO.File.ReadAllText n
+let loadFile (rootDir: string) (n: string) =
+    let text = File.ReadAllText n
 
     let config = getConfig text
     let summary, content = getContent text
 
-    let file = System.IO.Path.Combine(contentDir, (n |> System.IO.Path.GetFileNameWithoutExtension) + ".md").Replace("\\", "/")
-    let link = "/" + System.IO.Path.Combine(contentDir, (n |> System.IO.Path.GetFileNameWithoutExtension) + ".html").Replace("\\", "/")
+    let chopLength =
+        if rootDir.EndsWith("\\") then rootDir.Length
+        else rootDir.Length + 1
+
+    let dirPart =
+        n
+        |> Path.GetDirectoryName
+        |> fun x -> x.[chopLength .. ]
+
+    let file = Path.Combine(dirPart, (n |> Path.GetFileNameWithoutExtension) + ".md").Replace("\\", "/")
+    let link = "/" + Path.Combine(dirPart, (n |> Path.GetFileNameWithoutExtension) + ".html").Replace("\\", "/")
 
     let title = config |> Map.find "title" |> trimString
     let author = config |> Map.tryFind "author" |> Option.map trimString
@@ -107,11 +117,13 @@ let loadFile n =
       summary = summary }
 
 let loader (projectRoot: string) (siteContent: SiteContents) =
-    let postsPath = System.IO.Path.Combine(projectRoot, contentDir)
-    System.IO.Directory.GetFiles postsPath
+    let postsPath = Path.Combine(projectRoot, contentDir)
+    let options = EnumerationOptions(RecurseSubdirectories = true)
+    let files = Directory.GetFiles(postsPath, "*", options)
+    files
     |> Array.filter (fun n -> n.EndsWith ".md")
-    |> Array.map loadFile
-    |> Array.iter (fun p -> siteContent.Add p)
+    |> Array.map (loadFile projectRoot)
+    |> Array.iter siteContent.Add
 
     siteContent.Add({disableLiveRefresh = false})
     siteContent

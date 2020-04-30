@@ -180,12 +180,12 @@ module GeneratorEvaluator =
             |> Option.bind (tryUnbox<string>)
             |> function
                 | Some s -> Ok (Encoding.UTF8.GetBytes s)
-                | None -> 
+                | None ->
                     result
                     |> Option.bind (tryUnbox<byte[]>)
                     |> function
                         | Some bytes -> Ok bytes
-                        | None -> 
+                        | None ->
                             sprintf "HTML generator %s couldn't be compiled" generatorPath |> Error)
 
     ///`generatorPath` - absolute path to `.fsx` file containing the generator
@@ -200,7 +200,7 @@ module GeneratorEvaluator =
             result
             |> Option.bind (tryUnbox<(string * string) list>)
             |> function
-                | Some files -> Ok (files |> List.map (fun (o, r) -> o, Encoding.UTF8.GetBytes r)) 
+                | Some files -> Ok (files |> List.map (fun (o, r) -> o, Encoding.UTF8.GetBytes r))
                 | None ->
                     result
                     |> Option.bind (tryUnbox<(string * byte[]) list>)
