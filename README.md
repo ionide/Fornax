@@ -37,7 +37,7 @@ The main functionality of Fornax comes from CLI applications that lets user scaf
 
 ## Getting started
 
-Easiest way to get started with `fornax` is running `fornax new` and than `fornax watch` - this will create fairly minimal blog site template, start `fornax` in watch mode and start webserver. Then you can go to the `localhost:8080` in your browser to see the page, and edit the scaffolded files in editor to make changes.
+Easiest way to get started with `fornax` is running `fornax new` and then `fornax watch` - this will create fairly minimal blog site template, start `fornax` in watch mode and start webserver. Then you can go to the `localhost:8080` in your browser to see the page, and edit the scaffolded files in editor to make changes.
 Additionally, you can take a look at `samples` folder in this repository - it have couple more `loaders` and `generators` that you can potentially use in your website.
 
 ## Website definition
