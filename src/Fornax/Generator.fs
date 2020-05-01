@@ -2,6 +2,8 @@
 module Generator
 
 open System
+open System.Collections.Concurrent
+open System.Diagnostics
 open System.IO
 open System.Text
 open Config
@@ -166,15 +168,30 @@ module GeneratorEvaluator =
                 |> fun s -> s.Trim(Environment.NewLine.ToCharArray())
             Error completeErrorReport
 
+    let private generatorCache = new ConcurrentDictionary<_,_>()
+
+    /// allows the cache to be cleared when running in watch mode and a change is detected
+    let removeItemFromGeneratorCache() =
+        generatorCache.Clear()
 
     ///`generatorPath` - absolute path to `.fsx` file containing the generator
     ///`projectRoot` - path to root of the site project
     ///`page` - path to the file that should be transformed
     let evaluate (fsi : FsiEvaluationSession) (siteContent : SiteContents) (generatorPath : string) (projectRoot: string) (page: string)  =
-        getGeneratorContent fsi generatorPath
-        |> Result.bind (fun ft ->
-            let generator = compileExpression ft
 
+        let ok, generator = generatorCache.TryGetValue(generatorPath)
+        let generator =
+            if ok then
+                generator
+            else
+                let generator =
+                    getGeneratorContent fsi generatorPath
+                    |> Result.bind (compileExpression >> Ok)
+                generatorCache.AddOrUpdate(generatorPath, generator, fun key value -> value) |> ignore
+                generator
+
+        generator
+        |> Result.bind (fun generator ->
             let result = invokeFunction generator [box siteContent; box projectRoot; box page ]
 
             result
@@ -423,6 +440,7 @@ module Logger =
 
 ///`projectRoot` - path to the root of website
 let generateFolder (projectRoot : string) (isWatch: bool) =
+    let sw = Stopwatch.StartNew()
 
     let relative toPath fromPath =
         let toUri = Uri(toPath)
@@ -480,3 +498,5 @@ let generateFolder (projectRoot : string) (isWatch: bool) =
             |> relative projectRoot
             |> generate fsi config sc projectRoot
             |> logResult)
+
+        Logger.informationfn "Generation time: %A" sw.Elapsed
