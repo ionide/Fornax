@@ -67,6 +67,8 @@ let createFileWatcher dir handler =
     /// Adding handler to trigger websocket/live refresh
     let contentChangedHandler _ =
         signalContentChanged.Trigger(Choice<unit,Error>.Choice1Of2 ())
+        GeneratorEvaluator.removeItemFromGeneratorCache()
+
     signalContentChanged.Trigger(Choice<unit,Error>.Choice1Of2 ())
     fileSystemWatcher.Created.Add contentChangedHandler
     fileSystemWatcher.Changed.Add contentChangedHandler
