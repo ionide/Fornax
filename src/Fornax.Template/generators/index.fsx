@@ -6,16 +6,17 @@ open Html
 let generate' (ctx : SiteContents) (_: string) =
   let posts = ctx.TryGetValues<Postloader.Post> () |> Option.defaultValue Seq.empty
   let siteInfo = ctx.TryGetValue<Globalloader.SiteInfo> ()
-  let desc =
+  let desc, postPageSize =
     siteInfo
-    |> Option.map (fun si -> si.description)
-    |> Option.defaultValue ""
+    |> Option.map (fun si -> si.description, si.postPageSize)
+    |> Option.defaultValue ("", 10)
+
 
   let psts =
     posts
     |> Seq.sortByDescending Layout.published
     |> Seq.toList
-    |> List.chunkBySize 5
+    |> List.chunkBySize postPageSize
     |> List.map (List.map (Layout.postLayout true))
 
   let pages = List.length psts
