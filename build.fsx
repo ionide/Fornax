@@ -123,7 +123,7 @@ Target.create "TestTemplate" (fun _ ->
 
         runTool "dotnet" (sprintf "%s watch" newlyBuiltFornax) templateDir
 
-    finally 
+    finally
         File.delete coreDllDest
 )
 

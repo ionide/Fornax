@@ -159,7 +159,7 @@ let main argv =
                 Console.WriteLine message
                 1
             | exn ->
-                printfn "An unexpected error happend: %s%s%s" exn.Message Environment.NewLine exn.StackTrace
+                printfn "An unexpected error happend: %O" exn
                 1
         | Some (Watch watchOptions) ->
             let mutable lastAccessed = Map.empty<string, DateTime>
