@@ -62,6 +62,12 @@ html,body {
     line-height: 1.4;
     margin: 0 6rem;
   }
+  @media screen and (max-width: 991px) {
+    .article-body {
+      line-height: 1.4;
+      margin: 0;
+    }
+  }
   .promo-block .container {
     margin: 1rem 5rem;
   }
