@@ -118,11 +118,22 @@ let getOutputDirectory (output : option<string>) (cwd : string) =
     | None ->
         cwd
 
+// Recursively unset read-only attributes inside a folder 
+// Like, say, .git
+let normalizeFiles directory =
+    Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories)
+    |> Seq.iter (fun path -> File.SetAttributes(path, FileAttributes.Normal))
+
+    directory
+
+let deleteDirectory directory =
+    Directory.Delete(directory, true)
+
 let deleteGit (gitDirectory : string) =
     let test = Directory.Exists gitDirectory
 
     match test with
-    | true -> Directory.Delete(gitDirectory, true)
+    | true -> gitDirectory |> normalizeFiles |> deleteDirectory  
     | false -> ()
         
 let copyDirectories (input : string) (output : string) = 
@@ -176,8 +187,6 @@ let main argv =
 
         match result with
         | Some (New newOptions) ->
-            Console.WriteLine(newOptions)
-
             // The path of Fornax.Core.dll, which is located where the dotnet tool is installed.
             let corePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Fornax.Core.dll")
 
@@ -190,7 +199,9 @@ let main argv =
             // Create the _lib directory in the current folder.  It holds
             // Fornax.Core.dll, which is used to provide Intellisense/autocomplete
             // in the .fsx files.
-            Directory.CreateDirectory(Path.Combine(outputDirectory, "_lib")) |> ignore
+            Path.Combine(outputDirectory, "_lib")
+            |> Directory.CreateDirectory
+            |> ignore
 
             // Copy the Fornax.Core.dll into _lib
             // Some/most times Fornax.Core.dll already exists
