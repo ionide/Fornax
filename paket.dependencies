@@ -10,6 +10,7 @@ nuget FSharp.Quotations.Evaluator
 
 nuget Argu
 nuget Suave
+nuget LibGit2Sharp
 
 group Build
   source https://www.nuget.org/api/v2

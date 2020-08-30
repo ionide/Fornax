@@ -8,6 +8,7 @@ open Suave
 open Suave.Filters
 open Suave.Operators
 
+open LibGit2Sharp
 open Suave.Sockets
 open Suave.Sockets.Control
 open Suave.WebSocket
@@ -33,8 +34,18 @@ with
             match s with
             | Port _ -> "Specify a custom port (default: 8080)"
 
+type [<CliPrefix(CliPrefix.DoubleDash)>] NewOptions =
+    | [<AltCommandLine("-t")>] Template of string
+    | [<AltCommandLine("-o")>] Output of string
+with
+    interface IArgParserTemplate with
+        member s.Usage = 
+            match s with
+            | Template _ -> "Specify a template from an HTTPS git repo or local folder"
+            | Output _ -> "Specify an output folder"
+
 type [<CliPrefix(CliPrefix.None)>] Arguments =
-    | New
+    | New of ParseResults<NewOptions>
     | Build
     | Watch of ParseResults<WatchOptions>
     | Version
@@ -43,7 +54,7 @@ with
     interface IArgParserTemplate with
         member s.Usage =
             match s with
-            | New -> "Create new web site"
+            | New _ -> "Create new web site"
             | Build -> "Build web site"
             | Watch _ -> "Start watch mode rebuilding "
             | Version -> "Print version"
@@ -100,6 +111,44 @@ let getWebServerConfig port =
     | None ->
         defaultConfig
 
+let getOutputDirectory (output : option<string>) (cwd : string) = 
+    match output with
+    | Some output ->
+        output
+    | None ->
+        cwd
+
+let deleteGit (gitDirectory : string) =
+    let test = Directory.Exists gitDirectory
+
+    match test with
+    | true -> Directory.Delete(gitDirectory, true)
+    | false -> ()
+        
+let copyDirectories (input : string) (output : string) = 
+    // Copy the folders from the template directory into the current folder.
+    Directory.GetDirectories(input, "*", SearchOption.AllDirectories)
+    |> Seq.iter (fun p -> Directory.CreateDirectory(p.Replace(input, output)) |> ignore)
+
+    // Copy the files from the template directory into the current folder.
+    Directory.GetFiles(input, "*.*", SearchOption.AllDirectories)
+    |> Seq.iter (fun p -> File.Copy(p, p.Replace(input, output)))
+
+let handleTemplate (template : option<string>) (outputDirectory : string) : unit = 
+    match template with
+    | Some template ->
+        let uriTest, _ = Uri.TryCreate(template, UriKind.Absolute)
+
+        match uriTest with
+        | true  -> Repository.Clone(template, outputDirectory) |> ignore
+                   Path.Combine(outputDirectory, ".git") |> deleteGit
+        | false -> copyDirectories template outputDirectory
+                   Path.Combine(outputDirectory, ".git") |> deleteGit
+    | None ->
+        // The default path of the directory that holds the scaffolding for a new website.
+        let path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "blogTemplate")
+        copyDirectories path outputDirectory
+
 let router basePath =
     choose [
         path "/" >=> Redirection.redirect "/index.html"
@@ -126,31 +175,27 @@ let main argv =
         let cwd = Directory.GetCurrentDirectory ()
 
         match result with
-        | Some New ->
-            // The path of the directory that holds the scaffolding for a new website.
-            let newTemplateDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "blogTemplate")
+        | Some (New newOptions) ->
+            Console.WriteLine(newOptions)
 
             // The path of Fornax.Core.dll, which is located where the dotnet tool is installed.
             let corePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Fornax.Core.dll")
 
-            // Copy the folders from the template directory into the current folder.
-            Directory.GetDirectories(newTemplateDir, "*", SearchOption.AllDirectories)
-            |> Seq.iter (fun p -> Directory.CreateDirectory(p.Replace(newTemplateDir, cwd)) |> ignore)
+            // Parse output flag and create a folder in the cwd to copy files to
+            let outputDirectory = getOutputDirectory (newOptions.TryPostProcessResult(<@ Output @>, string)) cwd
 
-            // Copy the files from the template directory into the current folder.
-            Directory.GetFiles(newTemplateDir, "*.*", SearchOption.AllDirectories)
-            |> Seq.iter (fun p -> File.Copy(p, p.Replace(newTemplateDir, cwd)))
+            // Handle the template used to scaffold a new website
+            handleTemplate (newOptions.TryPostProcessResult(<@ Template @>, string)) (outputDirectory)
 
-            // Create the _bin directory in the current folder.  It holds
+            // Create the _lib directory in the current folder.  It holds
             // Fornax.Core.dll, which is used to provide Intellisense/autocomplete
             // in the .fsx files.
-            Directory.CreateDirectory(Path.Combine(cwd, "_lib")) |> ignore
+            Directory.CreateDirectory(Path.Combine(outputDirectory, "_lib")) |> ignore
 
-            // Copy the Fornax.Core.dll into _bin
-            File.Copy(corePath, "./_lib/Fornax.Core.dll")
-
+            // Copy the Fornax.Core.dll into _lib
+            // Some/most times Fornax.Core.dll already exists
+            File.Copy(corePath, outputDirectory + "/_lib/Fornax.Core.dll", true)
             printfn "New project successfully created."
-
             0
         | Some Build ->
             try
