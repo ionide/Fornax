@@ -1,12 +1,14 @@
-version 5.241.2
+version 5.257.0
 source https://www.nuget.org/api/v2
 storage: none
 
 nuget Expecto
 nuget FSharp.Core
 
-nuget FSharp.Compiler.Service 36.0.3
+nuget FSharp.Compiler.Service 38.0.2
 nuget FSharp.Quotations.Evaluator
+
+nuget Microsoft.Build.Utilities.Core
 
 nuget Argu
 nuget Suave
