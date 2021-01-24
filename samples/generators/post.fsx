@@ -39,7 +39,7 @@ let generate' (ctx : SiteContents) (page: string) =
         |> List.map (fun p -> span [] [!! p.link] )
 
     let siteModel = ctx.TryGetValue<Customloader.CustomConfig> ()
-    let gv = siteModel |> Option.map (fun s -> s.SomeGlobalValue) |> Option.defaultValue "NO DEAFULT"
+    let gv = siteModel |> Option.map (fun s -> s.SomeGlobalValue) |> Option.defaultValue "NO DEFAULT"
 
     html [] [
         div [] [
