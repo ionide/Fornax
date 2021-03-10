@@ -188,8 +188,8 @@ Thank you for contributing!
 
 ## Build process
 
- * You need [.NET Core 3.0 SDK](https://dotnet.microsoft.com/download/dotnet-core/3.0)
- * Run `dotnet tool restore` to restore the .NET Core 3 local tools defined at .config/dotnet-tools.json
+ * You need [.NET Core 5.0 SDK](https://dotnet.microsoft.com/download/dotnet/5.0)
+ * Run `dotnet tool restore` to restore the .NET 5 local tools defined at .config/dotnet-tools.json
  * To build the project run `dotnet fake build`
  * To run unit tests run `dotnet fake build -t Test`
 
