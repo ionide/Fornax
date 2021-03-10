@@ -236,7 +236,20 @@ let main argv =
             guardedGenerate ()
 
             use watcher = createFileWatcher cwd (fun e ->
-                if not (e.FullPath.Contains "_public") && not (e.FullPath.Contains ".sass-cache") && not (e.FullPath.Contains ".git") && not (e.FullPath.Contains ".ionide") then
+                let pathDirectories = 
+                    Path.GetRelativePath(cwd,e.FullPath)
+                        .Split(Path.DirectorySeparatorChar)
+                
+                let shouldHandle =
+                    pathDirectories
+                    |> Array.exists (fun fragment ->
+                        fragment = "_public" ||     
+                        fragment = ".sass-cache" ||    
+                        fragment = ".git" ||           
+                        fragment = ".ionide")
+                    |> not
+
+                if shouldHandle then
                     let lastTimeWrite = File.GetLastWriteTime(e.FullPath)
                     match lastAccessed.TryFind e.FullPath with
                     | Some lt when Math.Abs((lt - lastTimeWrite).Seconds) < 1 -> ()
