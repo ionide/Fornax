@@ -458,13 +458,13 @@ let generateFolder (projectRoot : string) (isWatch: bool) =
         if File.Exists configPath then
             match ConfigEvaluator.evaluate fsi sc configPath with
             | Ok cfg -> Some cfg
-            | _ -> None
+            | Error error -> raise (FornaxGeneratorException error)
         else
             None
 
     match config with
     | None ->
-        raise (FornaxGeneratorException "Couldn't find or load config")
+        raise (FornaxGeneratorException "Couldn't find config.fsx")
     | Some config ->
         let loaders = Directory.GetFiles(Path.Combine(projectRoot, "loaders"), "*.fsx")
         let sc =
@@ -477,7 +477,6 @@ let generateFolder (projectRoot : string) (isWatch: bool) =
                     printfn "LOADER ERROR: %s" er
                     state)
         sc.Errors() |> List.iter (fun er -> printfn "BAD FILE: %s" er.Path)
-
 
         let logResult (result : GeneratorResult) =
             match result with
