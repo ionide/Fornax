@@ -4,7 +4,7 @@
 
 Fornax is a **scriptable static site generator** using type safe F# DSL to define page layouts.
 
-Fornax is part of Ionide tooling suite - You can support its development on [Open Collective](https://opencollective.com/ionide).
+Fornax is part of the Ionide tooling suite - You can support its development on [Open Collective](https://opencollective.com/ionide).
 
 [![open collective backers](https://img.shields.io/opencollective/backers/ionide.svg?color=blue)](https://opencollective.com/ionide)
 [![open collective sponsors](https://img.shields.io/opencollective/sponsors/ionide.svg?color=blue)](https://opencollective.com/ionide)
@@ -14,7 +14,7 @@ Fornax is part of Ionide tooling suite - You can support its development on [Ope
 
 ## Working features
 
-* Creating custom data loaders using `.fsx` files, meaning you can use as a source of data for your site anything you can imagine, not only predefined `.md` or `.yml` files
+* Creating custom data loaders using `.fsx` files, meaning you can use anything you can imagine as a source of data for your site, not only predefined `.md` or `.yml` files
 * Creating custom generators using `.fsx` files, meaning you can generate any type of output you want
 * Dynamic configuration using `.fsx` file
 * Watch mode that rebuilds your page whenever you change data, or any script file.
@@ -28,25 +28,25 @@ Fornax is released as a global .Net Core tool. You can install it with `dotnet t
 
 The main functionality of Fornax comes from CLI applications that lets user scaffold, and generate webpages.
 
-* `fornax new` - scaffolds new blog in current working directory using really simple template
+* `fornax new` - scaffolds new blog in current working directory using a really simple template
 * `fornax build` - builds webpage, puts output to `_public` folder
 * `fornax watch` - starts a small webserver that hosts your generated site, and a background process that recompiles the site whenever any changes are detected. This is the recommended way of working with Fornax.
-* `fornax clean` - removes output directory and any temp files
+* `fornax clean` - removes the output directory and any temp files
 * `fornax version` - prints out the currently-installed version of Fornax
 * `fornax help` - prints out help
 
 ## Getting started
 
-Easiest way to get started with `fornax` is running `fornax new` and then `fornax watch` - this will create fairly minimal blog site template, start `fornax` in watch mode and start webserver. Then you can go to the `localhost:8080` in your browser to see the page, and edit the scaffolded files in editor to make changes.
-Additionally, you can take a look at `samples` folder in this repository - it have couple more `loaders` and `generators` that you can potentially use in your website.
+Easiest way to get started with `fornax` is running `fornax new` and then `fornax watch` - this will create a fairly minimal blog site template, start `fornax` in watch mode and then start a webserver. Then you can go to `localhost:8080` in your browser to see the page, and edit the scaffolded files in an editor to make changes.
+Additionally, you can take a look at the `samples` folder in this repository - it has a couple more `loaders` and `generators` that you may use in your website.
 
 ## Website definition
 
-Fornax is using normal F# code (F# script files) to define any of it's core concepts: `loaders`, `generators` and `config`.
+Fornax is using normal F# code (F# script files) to define any of its core concepts: `loaders`, `generators` and `config`.
 
 ### SiteContents
 
-`SiteContents` is fairly simple type that provides access to any information available to the Fornax. The information is put into it by using `loaders` and then can be accessed in the `generators`.
+`SiteContents` is a fairly simple type that provides access to any information available to Fornax. The information is provided by using `loaders` and can then be accessed in `generators`.
 
 `SiteContents` has several functions in it's public API:
 
@@ -61,14 +61,14 @@ sc.Add({a = "test3"})
 
 sc.Add({b = 1; c = 3}) //You can add objects of different types, `Add` method is generic.
 
-let as = sc.TryGetValues<A>() //This will return option of sequence of all added elements for given type - in this case it will be 3 elements
-let b = sc.TryGetValue<B>() //This will return option of element for given type
+let as = sc.TryGetValues<A>() //This will return an option of sequence of all added elements for a given type - in this case it will be 3 elements
+let b = sc.TryGetValue<B>() //This will return an option of element for given type
 ```
 
 ### Loaders
 
 `Loader` is an F# script responsible for loading external data into generation context. The data typically includes things like content of `.md` files, some global site configuration, etc. But since those are normal F# functions, you can do whatever you need.
-Want to load information from local database, or from internet? Sure, why not. Want to use World Bank TP to include some of the World Bank statistics? That's also possible - you can use in `loader` any dependency as in normal F# script.
+Want to load information from local database, or from the internet? Sure, why not. Want to use the [World Bank type provider](https://fsprojects.github.io/FSharp.Data/library/WorldBank.html) to include some of the World Bank statistics? That's also possible - you can use any dependency in `loader`, just as in a normal F# script.
 
 `Loaders` are normal F# functions that takes as an input `SiteContents` and absolute path to the page root, and returns `SiteContents`:
 
@@ -88,11 +88,11 @@ let loader (projectRoot: string) (siteContent: SiteContents) =
     siteContent
 ```
 
-**Important note**: You can (and probably should) define multiple loaders - they will all be executed before generation of site, and will propagate information into `SiteContents`
+**Important note**: You can (and probably should) define multiple loaders - they will all be executed before site generation, and will propagate information into `SiteContents`
 
 ### Generators
 
-`Generator` is an F# script responsible for generating output of the Fornax process. This is usually `.html` file, but can be anything else - actually `generator` API just requires to return `string` that will be saved to file. Generators are, again, plain F# functions that as an input takes `SiteContents`, absolute path to the page root, relative path to the file that's currently processed (may be empty for the global generators) and returns `string`:
+`Generator` is an F# script responsible for generating output of the Fornax process. This is usually `.html` file, but can be anything else - actually `generator` API just requires to return `string` that will be saved to a file. Generators are, again, plain F# functions that as input takes `SiteContents`, absolute path to the page root, relative path to the file that's currently processed (may be empty for the global generators) and returns `string`:
 
 ```fsharp
 #r "../_lib/Fornax.Core.dll"
@@ -123,7 +123,7 @@ let generate (ctx : SiteContents) (projectRoot: string) (page: string) =
 
 ### Configuration
 
-`Configuration` is a F# script file that defines when which analyzers need to be run, and how to save its output. `Config.fsx` file needs to be put in the root of your site project (the place from which you run `fornax` CLI tool)
+`Configuration` is an F# script file that defines when which analyzers need to be run, and how to save its output. A `Config.fsx` file needs to be put in the root of your site project (the place from which you run the `fornax` CLI tool)
 
 ```fsharp
 #r "../_lib/Fornax.Core.dll"
