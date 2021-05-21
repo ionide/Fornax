@@ -170,6 +170,22 @@ let config = {
 
 ```
 
+Possible Generator Triggers are:
+- `Once` : Runs once, globally.
+- `OnFile filename`: Run once for the given filename.
+- `OnFileExt extension` : Runs once for each file with the given extension.
+- `OnFilePredicate predicate` : Runs once for each file satisfying the predicate (`string -> string`).
+
+Possible Generator Outputs are:
+- `SameFileName` :  Output has the same filename as input file.
+- `ChangeExtension newExtension` : Output has the same filename but with extention change to `newExtension`.
+- `NewFileName newFileName` : Output filename is `newFileName`.
+- `Custom mapper` : Output filename is the result of applying the mapper to the input filename.
+- `MultipleFiles mapper` : Outputs multiple files, the names of which are a result of applying the mapper to the first string output of the generator.
+
+**Note**: For `MultipleFiles` the `generate` function *must* output a `list<string * string>`.
+
+
 ## How to contribute
 
 *Imposter syndrome disclaimer*: I want your help. No really, I do.
