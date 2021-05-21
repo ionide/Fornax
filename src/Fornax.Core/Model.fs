@@ -1327,17 +1327,23 @@ module Config =
         | Once
         ///Generator runs once, for given filename (file name is relative to project root, for example `post/post.md`). It runs only if the given file exist.
         | OnFile of filename : string
-        ///Generator runs for any file with given extension (for example `md`)
+        ///Generator runs for any file with given extension (for example `md`).
         | OnFileExt of extension: string
-        ///Generator runs for any file matching predicate. Parameters of predicate are absolut path to project root, and path to the file relative to project root.
+        ///Generator runs for any file matching predicate. Parameters of predicate are absolute path to project root, and path to the file relative to project root.
         | OnFilePredicate of predicate: ((string * string) -> bool)
 
     type GeneratorOutput =
+        ///Generates a file with the same name.
         | SameFileName
+        ///Generates a file with the same base name but with the extension changed.
         | ChangeExtension of newExtension: string
+        ///Generates a file with name `newFileName`.
         | NewFileName of newFileName: string
-        | Custom of (string -> string)
-        | MultipleFiles of (string -> string)
+        ///Generates a file with the name as the result of `mapper orignalFileName`.
+        | Custom of mapper: (string -> string)
+        ///Generates multiple files with each name being the result of applying the mapper to the first string of the generator output.
+        ///The generator must have a type `SiteContents -> string -> string -> list<string * string>`
+        | MultipleFiles of mapper: (string -> string)
 
     type GeneratorConfig = {
         Script: string
