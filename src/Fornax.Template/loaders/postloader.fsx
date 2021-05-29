@@ -85,7 +85,7 @@ let loadFile (rootDir: string) (n: string) =
     let summary, content = getContent text
 
     let chopLength =
-        if rootDir.EndsWith("\\") then rootDir.Length
+        if rootDir.EndsWith(Path.DirectorySeparatorChar) then rootDir.Length
         else rootDir.Length + 1
 
     let dirPart =
