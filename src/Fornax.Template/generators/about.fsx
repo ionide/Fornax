@@ -13,7 +13,7 @@ let generate' (ctx : SiteContents) (_: string) =
     |> Option.defaultValue ""
 
 
-  Layout.layout ctx "Home" [
+  Layout.layout ctx "About" [
     section [Class "hero is-info is-medium is-bold"] [
       div [Class "hero-body"] [
         div [Class "container has-text-centered"] [
