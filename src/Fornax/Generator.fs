@@ -177,11 +177,15 @@ module GeneratorEvaluator =
     ///`generatorPath` - absolute path to `.fsx` file containing the generator
     ///`projectRoot` - path to root of the site project
     ///`page` - path to the file that should be transformed
-    let evaluate (fsi : FsiEvaluationSession) (siteContent : SiteContents) (generatorPath : string) (projectRoot: string) (page: string)  =
+    ///`isWatch` - status of watch mode
+    let evaluate (fsi : FsiEvaluationSession) (siteContent : SiteContents) (generatorPath : string) (projectRoot: string) (page: string) (isWatch: bool) =
 
         let ok, generator = generatorCache.TryGetValue(generatorPath)
+        let pageExt = (Path.GetExtension page).ToLower()
+        let skipCache = isWatch && List.contains pageExt [".md"; ".mkd"; ".markdown"]
+
         let generator =
-            if ok then
+            if ok && not skipCache then
                 generator
             else
                 let generator =
@@ -328,14 +332,14 @@ let pickGenerator (cfg: Config.Config)  (siteContent : SiteContents) (projectRoo
 
 ///`projectRoot` - path to the root of website
 ///`page` - path to page that should be generated
-let generate fsi (cfg: Config.Config) (siteContent : SiteContents) (projectRoot : string) (page : string) =
+let generate fsi (cfg: Config.Config) (siteContent : SiteContents) (projectRoot : string) (page : string) (isWatch: bool) =
     let startTime = DateTime.Now
     match pickGenerator cfg siteContent projectRoot page with
     | None ->
         GeneratorIgnored
     | Some (Simple(layoutPath, outputPath)) ->
 
-        let result = GeneratorEvaluator.evaluate fsi siteContent layoutPath projectRoot page
+        let result = GeneratorEvaluator.evaluate fsi siteContent layoutPath projectRoot page isWatch
         match result with
         | Ok r ->
             let dir = Path.GetDirectoryName outputPath
@@ -385,7 +389,7 @@ let runOnceGenerators fsi (cfg: Config.Config) (siteContent : SiteContents) (pro
         | NewFileName newFileName ->
 
             let outputPath = Path.Combine(projectRoot, "_public", newFileName)
-            let result = GeneratorEvaluator.evaluate fsi siteContent generatorPath projectRoot ""
+            let result = GeneratorEvaluator.evaluate fsi siteContent generatorPath projectRoot "" false
             match result with
             | Ok r ->
                 let dir = Path.GetDirectoryName outputPath
@@ -493,9 +497,8 @@ let generateFolder (projectRoot : string) (isWatch: bool) =
 
         Directory.GetFiles(projectRoot, "*", SearchOption.AllDirectories)
         |> Array.iter (fun filePath ->
-            filePath
-            |> relative projectRoot
-            |> generate fsi config sc projectRoot
+            (relative projectRoot filePath, isWatch)
+            ||> generate fsi config sc projectRoot
             |> logResult)
 
         Logger.informationfn "Generation time: %A" sw.Elapsed
