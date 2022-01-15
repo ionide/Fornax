@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
-        dotnet: [5.0.102]
+        dotnet: [6.0.100]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -23,3 +23,7 @@ jobs:
       run: dotnet paket restore
     - name: Build
       run: dotnet fake run build.fsx
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v2.3.1
+      with:
+        path: out
