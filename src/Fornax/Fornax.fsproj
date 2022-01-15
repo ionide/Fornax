@@ -13,7 +13,7 @@
     <Compile Include="FSIRefs.fs" />
     <Compile Include="Generator.fs" />
     <Compile Include="Fornax.fs" />
-    <Content Include="../Fornax.Template/**" Exclude="../Fornax.Template/_public/**" LinkBase="blogTemplate" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../Fornax.Template/**" Pack="true" Exclude="../Fornax.Template/_public/**" PackagePath="blogTemplate" CopyToOutputDirectory="PreserveNewest" />
     <None Include="paket.references" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

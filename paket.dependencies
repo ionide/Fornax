@@ -3,7 +3,7 @@ source https://www.nuget.org/api/v2
 storage: none
 
 nuget Expecto
-nuget FSharp.Core
+nuget FSharp.Core content: none
 
 nuget FSharp.Compiler.Service ~> 41.0
 nuget FSharp.Quotations.Evaluator
@@ -31,3 +31,4 @@ group Build
   nuget Fake.IO.FileSystem
   nuget Fake.DotNet.MsBuild
   nuget Fake.Api.GitHub
+  nuget MSBuild.StructuredLogger

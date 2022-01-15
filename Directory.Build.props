@@ -1,0 +1,11 @@
+<Project>
+    <PropertyGroup>
+        <Product>Fornax</Product>
+        <Description>Fornax is a static site generator using type safe F# DSL to define page layouts.</Description>
+        <Authors>Krzysztof Cieslak</Authors>
+        <PackageTags>f#, site-generator, html</PackageTags>
+        <PackageProjectUrl>https://github.com/Ionide/Fornax</PackageProjectUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <ChangelogFile>$(MSBuildThisFileDirectory)CHANGELOG.md</ChangelogFile>
+    </PropertyGroup>
+</Project>

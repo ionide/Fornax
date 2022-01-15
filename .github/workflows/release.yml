@@ -1,0 +1,41 @@
+name: Release
+
+on:
+  push:
+    tags:
+    - 'v*'
+
+jobs:
+  release:
+    strategy:
+      matrix:
+        dotnet: [6.0.100]
+
+    runs-on: ubuntu-20.04
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.head_ref }}
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: ${{ matrix.dotnet }}
+    - name: Restore tools
+      run: dotnet tool restore
+    - name: Restore
+      run: dotnet restore
+    - name: build and push packages
+      run: dotnet fake build -t Push
+      env:
+        nuget-key: ${{ secrets.NUGET_KEY }}
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v2.3.1
+      with:
+        path: out
+    - name: Create Release
+      uses: ncipollo/release-action@v1
+      with:
+        artifacts: out/*.nupkg
+        token: ${{ secrets.GITHUB_TOKEN }}
+        generateReleaseNotes: true
