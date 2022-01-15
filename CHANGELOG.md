@@ -1,8 +1,33 @@
 # Changelog
 
+## 0.14.0 - 15.01.2022
+
+### Added
+
+* Update to FCS 41
+* Add Sourcelink to the core library
+* Support .NET 5 and .NET 6
+* typo fix for the About page
+* Trim file paths with a platform-agnostic path separator (#91)
+* Add some Generator documentation.
+* Minor readme grammatical fixes (#83)
+* Misc fixes (#80)
+* Watch mode enhancement (#79)
+* Update to .NET 5 (#78)
+* Change after testing on Windows Directory.Delete throws exception on files with read-only attribute.
+* Add LibGit2Sharp, add sub commands to fornax new
+* Update FCS, fake-cli and paket. (#73)
+* Add GitHub Actions build (#74)
+* Improve mobile layout
+* allow the user to configure pages size in the global loader
+* Add support for paging
+* Improve perf by caching generators (#65)
+* Default template does not support on sub-dirs (#64)
+* fix typo (#62)
+
 ## 0.13.1 - 24.04.2020
 
-### ADDED
+### Added
 * Update to FCS 35.0 (by [@Krzysztof-Cieslak](https://github.com/Krzysztof-Cieslak))
 * Pass `WATCH` define in case of watch mode (by [@Krzysztof-Cieslak](https://github.com/Krzysztof-Cieslak))
 
