@@ -42,7 +42,7 @@ NUGET
     FSharp.Core (6.0.1) - content: none
     FSharp.Quotations.Evaluator (2.1)
       FSharp.Core (>= 4.3.1) - restriction: >= netstandard2.0
-    Ionide.KeepAChangelog.Tasks (0.1) - copy_local: true
+    Ionide.KeepAChangelog.Tasks (0.1.1) - copy_local: true
     LibGit2Sharp (0.26.2)
       LibGit2Sharp.NativeBinaries (2.0.306) - restriction: || (>= net46) (>= netstandard2.0)
     LibGit2Sharp.NativeBinaries (2.0.306) - restriction: || (>= net46) (>= netstandard2.0)
