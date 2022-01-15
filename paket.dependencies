@@ -5,10 +5,12 @@ storage: none
 nuget Expecto
 nuget FSharp.Core
 
-nuget FSharp.Compiler.Service 38.0.2
+nuget FSharp.Compiler.Service ~> 41.0
 nuget FSharp.Quotations.Evaluator
 
 nuget Microsoft.Build.Utilities.Core
+nuget Ionide.KeepAChangelog.Tasks copy_local: true
+nuget Dotnet.ReproducibleBuilds copy_local: true
 
 nuget Argu
 nuget Suave

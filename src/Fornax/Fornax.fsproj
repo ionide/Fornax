@@ -4,6 +4,7 @@
     <TargetFramework>net5.0</TargetFramework>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>fornax</ToolCommandName>
+    <RollForward>LatestMajor</RollForward>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Fornax.Core\Fornax.Core.fsproj" />

@@ -66,33 +66,6 @@ Target.create "Clean" (fun _ ->
     Shell.cleanDirs [buildDir; packageDir]
 )
 
-Target.create "AssemblyInfo" (fun _ ->
-    let getAssemblyInfoAttributes projectName =
-        [ AssemblyInfo.Title projectName
-          AssemblyInfo.Product project
-          AssemblyInfo.Description summary
-          AssemblyInfo.Version release.AssemblyVersion
-          AssemblyInfo.FileVersion release.AssemblyVersion ]
-
-    let getProjectDetails projectPath =
-        let projectName = System.IO.Path.GetFileNameWithoutExtension(projectPath)
-        ( projectPath,
-          projectName,
-          System.IO.Path.GetDirectoryName(projectPath),
-          (getAssemblyInfoAttributes projectName)
-        )
-
-    !! "src/**/*.??proj"
-    |> Seq.map getProjectDetails
-    |> Seq.iter (fun (projFileName, _, folderName, attributes) ->
-        match projFileName with
-        | proj when proj.EndsWith("fsproj") -> AssemblyInfoFile.createFSharp (folderName </> "AssemblyInfo.fs") attributes
-        | proj when proj.EndsWith("csproj") -> AssemblyInfoFile.createCSharp ((folderName </> "Properties") </> "AssemblyInfo.cs") attributes
-        | proj when proj.EndsWith("vbproj") -> AssemblyInfoFile.createVisualBasic ((folderName </> "My Project") </> "AssemblyInfo.vb") attributes
-        | _ -> ()
-        )
-)
-
 Target.create "Restore" (fun _ ->
     DotNet.restore id ""
 )
@@ -132,17 +105,6 @@ Target.create "TestTemplate" (fun _ ->
 // --------------------------------------------------------------------------------------
 
 Target.create "Pack" (fun _ ->
-
-    //Pack Fornax global tool
-    Environment.setEnvironVar "PackageVersion" release.NugetVersion
-    Environment.setEnvironVar "Version" release.NugetVersion
-    Environment.setEnvironVar "Authors" "Krzysztof Cieslak"
-    Environment.setEnvironVar "Description" summary
-    Environment.setEnvironVar "PackageReleaseNotes" (release.Notes |> String.toLines)
-    Environment.setEnvironVar "PackageTags" "f#, site-generator, html"
-    Environment.setEnvironVar "PackageProjectUrl" "https://github.com/Ionide/Fornax"
-    Environment.setEnvironVar "PackageLicenseExpression" "MIT"
-
     DotNet.pack (fun p ->
         { p with
             OutputPath = Some packageDir
@@ -203,7 +165,6 @@ Target.create "Default" DoNothing
 Target.create "Release" DoNothing
 
 "Clean"
-  ==> "AssemblyInfo"
   ==> "Restore"
   ==> "Build"
   ==> "Publish"
