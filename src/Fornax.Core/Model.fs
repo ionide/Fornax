@@ -973,6 +973,8 @@ type CSSProperties =
         | Text of props: HtmlProperties list * children: HtmlElement list
         | Tspan of props: HtmlProperties list * children: HtmlElement list
         | String of string
+        // https://github.com/ionide/Fornax/issues/104
+        | Custom of tagName: string * props: HtmlProperties list * children: HtmlElement list
 
         static member ToString tag =
             let rec format tag (props : HtmlProperties list) (children : HtmlElement list) level =
@@ -1129,6 +1131,7 @@ type CSSProperties =
                 | Text (props, children) -> format "text" props children level
                 | Tspan (props, children) -> format "tspan" props children level
                 | String str -> str
+                | Custom (name, props, children) -> format name props children level
 
             helper 1 tag
 
@@ -1266,6 +1269,7 @@ type CSSProperties =
         let tspan (props : HtmlProperties list) (children: HtmlElement list) = HtmlElement.Tspan(props,children)
         let string str = HtmlElement.String str
         let (!!) str = HtmlElement.String str
+        let custom (tagName : string) (props : HtmlProperties list) (children : HtmlElement list) = HtmlElement.Custom(tagName,props,children)
 
 
 
