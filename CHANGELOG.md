@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.14.1 - 29.04.2022
+
+### Added
+
+* [A new case for the `HtmlElement` type was added for custom tags](https://github.com/ionide/Fornax/pull/106) (thanks @Freymaurer!)
+
 ## 0.14.0 - 15.01.2022
 
 ### Added
