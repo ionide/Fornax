@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.14.2 - 07.05.2022
+
+### Fixed
+
+* [improved support for watch mode](https://github.com/ionide/Fornax/pull/103) (thanks @bigjonroberts!)
+
 ## 0.14.1 - 29.04.2022
 
 ### Added
