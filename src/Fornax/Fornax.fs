@@ -12,6 +12,7 @@ open LibGit2Sharp
 open Suave.Sockets
 open Suave.Sockets.Control
 open Suave.WebSocket
+open System.Reflection
 
 type FornaxExiter () =
     interface IExiter with
@@ -268,8 +269,10 @@ let main argv =
             Console.ReadKey() |> ignore
             printfn "Exiting..."
             0
-        | Some Version ->
-            printfn "%s" AssemblyVersionInformation.AssemblyVersion
+        | Some Version -> 
+            let assy = Assembly.GetExecutingAssembly()
+            let v = assy.GetCustomAttributes<AssemblyVersionAttribute>() |> Seq.head
+            printfn "%s" v.Version
             0
         | Some Clean ->
             let publ = Path.Combine(cwd, "_public")
