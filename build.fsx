@@ -23,7 +23,7 @@ open Fake.Api
 
 let project = "Fornax"
 let summary = "Fornax is a static site generator using type safe F# DSL to define page layouts"
-
+let nugetOrg = "https://api.nuget.org/v3/index.json"
 let gitOwner = "Ionide"
 let gitHome = "https://github.com/" + gitOwner
 let gitName = "Fornax"
@@ -119,7 +119,8 @@ Target.create "Push" (fun _ ->
     DotNet.nugetPush (fun p ->
         { p with
             PushParams = { p.PushParams with
-                                ApiKey = Some key } }
+                                ApiKey = Some key
+                                Source = Some nugetOrg } }
     ) $"{packageDir}/*.nupkg"
 )
 
