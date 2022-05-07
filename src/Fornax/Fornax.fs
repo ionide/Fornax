@@ -210,7 +210,8 @@ let main argv =
             0
         | Some Build ->
             try
-                do generateFolder cwd false
+                let sc = SiteContents ()
+                do generateFolder sc cwd false
                 0
             with
             | FornaxGeneratorException message ->
@@ -223,9 +224,12 @@ let main argv =
             let mutable lastAccessed = Map.empty<string, DateTime>
             let waitingForChangesMessage = "Generated site with errors. Waiting for changes..."
 
+            let sc = SiteContents ()
+
+
             let guardedGenerate () =
                 try
-                    do generateFolder cwd true
+                    do generateFolder sc cwd true
                 with
                 | FornaxGeneratorException message ->
                     printfn "%s%s%s" message Environment.NewLine waitingForChangesMessage
