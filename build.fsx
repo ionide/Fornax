@@ -116,7 +116,12 @@ Target.create "Push" (fun _ ->
         match getBuildParam "nuget-key" with
         | s when not (isNullOrWhiteSpace s) -> s
         | _ -> UserInput.getUserPassword "NuGet Key: "
-    Paket.push (fun p -> { p with WorkingDir = packageDir; ApiKey = key }))
+    DotNet.nugetPush (fun p ->
+        { p with
+            PushParams = { p.PushParams with
+                                ApiKey = Some key } }
+    ) $"{packageDir}/*.nupkg"
+)
 
 // --------------------------------------------------------------------------------------
 // Build order
