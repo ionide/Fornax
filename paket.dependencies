@@ -3,12 +3,14 @@ source https://www.nuget.org/api/v2
 storage: none
 
 nuget Expecto
-nuget FSharp.Core
+nuget FSharp.Core content: none
 
-nuget FSharp.Compiler.Service 38.0.2
+nuget FSharp.Compiler.Service ~> 41.0
 nuget FSharp.Quotations.Evaluator
 
 nuget Microsoft.Build.Utilities.Core
+nuget Ionide.KeepAChangelog.Tasks copy_local: true
+nuget Dotnet.ReproducibleBuilds copy_local: true
 
 nuget Argu
 nuget Suave
@@ -29,3 +31,4 @@ group Build
   nuget Fake.IO.FileSystem
   nuget Fake.DotNet.MsBuild
   nuget Fake.Api.GitHub
+  nuget MSBuild.StructuredLogger

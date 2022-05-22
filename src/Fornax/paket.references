@@ -5,3 +5,6 @@ FSharp.Compiler.Service
 FSharp.Quotations.Evaluator
 LibGit2Sharp
 Microsoft.Build.Utilities.Core
+
+Ionide.KeepAChangelog.Tasks
+Dotnet.ReproducibleBuilds

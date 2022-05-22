@@ -439,7 +439,7 @@ module Logger =
     let errorfn str = Printf.kprintf (fun s -> use c = consoleColor ConsoleColor.Red in printfn "%s" s) str
 
 ///`projectRoot` - path to the root of website
-let generateFolder (projectRoot : string) (isWatch: bool) =
+let generateFolder (sc : SiteContents) (projectRoot : string) (isWatch: bool) =
     let sw = Stopwatch.StartNew()
 
     let relative toPath fromPath =
@@ -450,50 +450,44 @@ let generateFolder (projectRoot : string) (isWatch: bool) =
         else projectRoot + (string Path.DirectorySeparatorChar)
 
     use fsi = EvaluatorHelpers.fsi (isWatch)
-    let sc = SiteContents ()
     let config =
         let configPath = Path.Combine(projectRoot, "config.fsx")
-        if File.Exists configPath then
-            match ConfigEvaluator.evaluate fsi sc configPath with
-            | Ok cfg -> Some cfg
-            | Error error -> raise (FornaxGeneratorException error)
-        else
-            None
+        if not (File.Exists configPath) then
+            raise (FornaxGeneratorException "Couldn't find config.fsx")
+        match ConfigEvaluator.evaluate fsi sc configPath with
+        | Ok cfg -> cfg
+        | Error error -> raise (FornaxGeneratorException error)
 
-    match config with
-    | None ->
-        raise (FornaxGeneratorException "Couldn't find config.fsx")
-    | Some config ->
-        let loaders = Directory.GetFiles(Path.Combine(projectRoot, "loaders"), "*.fsx")
-        let sc =
-            (sc, loaders)
-            ||> Array.fold (fun state e ->
-                match LoaderEvaluator.evaluate fsi state e projectRoot with
-                | Ok sc ->
-                    sc
-                | Error er ->
-                    printfn "LOADER ERROR: %s" er
-                    state)
-        sc.Errors() |> List.iter (fun er -> printfn "BAD FILE: %s" er.Path)
+    let loaders = Directory.GetFiles(Path.Combine(projectRoot, "loaders"), "*.fsx")
+    let sc =
+        (sc, loaders)
+        ||> Array.fold (fun state e ->
+            match LoaderEvaluator.evaluate fsi state e projectRoot with
+            | Ok sc ->
+                sc
+            | Error er ->
+                printfn "LOADER ERROR: %s" er
+                state)
+    sc.Errors() |> List.iter (fun er -> printfn "BAD FILE: %s" er.Path)
 
-        let logResult (result : GeneratorResult) =
-            match result with
-            | GeneratorIgnored -> ()
-            | GeneratorSuccess None -> ()
-            | GeneratorSuccess (Some message) ->
-                Logger.informationfn "%s" message
-            | GeneratorFailure message ->
-                // if one generator fails we want to exit early and report the problem to the operator
-                raise (FornaxGeneratorException message)
+    let logResult (result : GeneratorResult) =
+        match result with
+        | GeneratorIgnored -> ()
+        | GeneratorSuccess None -> ()
+        | GeneratorSuccess (Some message) ->
+            Logger.informationfn "%s" message
+        | GeneratorFailure message ->
+            // if one generator fails we want to exit early and report the problem to the operator
+            raise (FornaxGeneratorException message)
 
-        runOnceGenerators fsi config sc projectRoot
-        |> List.iter logResult
+    runOnceGenerators fsi config sc projectRoot
+    |> List.iter logResult
 
-        Directory.GetFiles(projectRoot, "*", SearchOption.AllDirectories)
-        |> Array.iter (fun filePath ->
-            filePath
-            |> relative projectRoot
-            |> generate fsi config sc projectRoot
-            |> logResult)
+    Directory.GetFiles(projectRoot, "*", SearchOption.AllDirectories)
+    |> Array.iter (fun filePath ->
+        filePath
+        |> relative projectRoot
+        |> generate fsi config sc projectRoot
+        |> logResult)
 
-        Logger.informationfn "Generation time: %A" sw.Elapsed
+    Logger.informationfn "Generation time: %A" sw.Elapsed

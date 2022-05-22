@@ -12,6 +12,7 @@ open LibGit2Sharp
 open Suave.Sockets
 open Suave.Sockets.Control
 open Suave.WebSocket
+open System.Reflection
 
 type FornaxExiter () =
     interface IExiter with
@@ -210,7 +211,8 @@ let main argv =
             0
         | Some Build ->
             try
-                do generateFolder cwd false
+                let sc = SiteContents ()
+                do generateFolder sc cwd false
                 0
             with
             | FornaxGeneratorException message ->
@@ -223,9 +225,12 @@ let main argv =
             let mutable lastAccessed = Map.empty<string, DateTime>
             let waitingForChangesMessage = "Generated site with errors. Waiting for changes..."
 
+            let sc = SiteContents ()
+
+
             let guardedGenerate () =
                 try
-                    do generateFolder cwd true
+                    do generateFolder sc cwd true
                 with
                 | FornaxGeneratorException message ->
                     printfn "%s%s%s" message Environment.NewLine waitingForChangesMessage
@@ -264,8 +269,10 @@ let main argv =
             Console.ReadKey() |> ignore
             printfn "Exiting..."
             0
-        | Some Version ->
-            printfn "%s" AssemblyVersionInformation.AssemblyVersion
+        | Some Version -> 
+            let assy = Assembly.GetExecutingAssembly()
+            let v = assy.GetCustomAttributes<AssemblyVersionAttribute>() |> Seq.head
+            printfn "%s" v.Version
             0
         | Some Clean ->
             let publ = Path.Combine(cwd, "_public")

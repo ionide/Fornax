@@ -6,7 +6,6 @@
     <TargetFrameWork>netstandard2.0</TargetFrameWork>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Model.fs" />
     <None Include="paket.references" />
   </ItemGroup>
