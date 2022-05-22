@@ -443,9 +443,7 @@ let generateFolder (sc : SiteContents) (projectRoot : string) (isWatch: bool) =
     let sw = Stopwatch.StartNew()
 
     let relative toPath fromPath =
-        let toUri = Uri(toPath)
-        let fromUri = Uri(fromPath)
-        toUri.MakeRelativeUri(fromUri).OriginalString
+        Path.GetRelativePath(toPath, fromPath).Replace("\\","/")
 
     let projectRoot =
         if projectRoot.EndsWith (string Path.DirectorySeparatorChar) then projectRoot
