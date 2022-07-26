@@ -445,7 +445,8 @@ let generateFolder (sc : SiteContents) (projectRoot : string) (isWatch: bool) =
     let relative toPath fromPath =
         let toUri = Uri(toPath)
         let fromUri = Uri(fromPath)
-        toUri.MakeRelativeUri(fromUri).OriginalString
+        let relativeUri = toUri.MakeRelativeUri(fromUri).OriginalString
+        Uri.UnescapeDataString(relativeUri)
 
     let projectRoot =
         if projectRoot.EndsWith (string Path.DirectorySeparatorChar) then projectRoot
