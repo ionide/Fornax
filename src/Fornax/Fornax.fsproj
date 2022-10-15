@@ -10,6 +10,7 @@
     <ProjectReference Include="..\Fornax.Core\Fornax.Core.fsproj" />
 
     <Compile Include="FSIRefs.fs" />
+    <Compile Include="Logger.fs" />
     <Compile Include="Generator.fs" />
     <Compile Include="Fornax.fs" />
     <!-- we want the include the raw template files
