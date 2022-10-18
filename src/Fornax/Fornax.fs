@@ -13,17 +13,18 @@ open Suave.Sockets
 open Suave.Sockets.Control
 open Suave.WebSocket
 open System.Reflection
+open Logger
 
 type FornaxExiter () =
     interface IExiter with
         member x.Name = "fornax exiter"
         member x.Exit (msg, errorCode) =
             if errorCode = ErrorCode.HelpText then
-                printfn "%s" msg
+                printf "%s" msg
                 exit 0
             else
-                printfn "Error with code %A received - exiting." errorCode
-                printfn "%s" msg
+                errorfn "Error with code %A received - exiting." errorCode
+                printf "%s" msg
                 exit 1
 
 
@@ -91,16 +92,16 @@ let createFileWatcher dir handler =
 /// Websocket function that a page listens to so it
 /// knows when to refresh.
 let ws (webSocket : WebSocket) (context: HttpContext) =
-    printfn "Opening WebSocket - new handShake"
+    informationfn "Opening WebSocket - new handShake"
     socket {
         try
             while true do
                 do! Async.AwaitEvent signalContentChanged.Publish
-                printfn "Signalling content changed"
+                informationfn "Signalling content changed"
                 let emptyResponse = [||] |> ByteSegment
                 do! webSocket.send Close emptyResponse true
         finally
-            printfn "Disconnecting WebSocket"
+            informationfn "Disconnecting WebSocket"
     }
 
 let getWebServerConfig port =
@@ -175,11 +176,11 @@ let main argv =
     let results = parser.ParseCommandLine(inputs = argv).GetAllResults()
 
     if List.isEmpty results then
-        printfn "No arguments provided.  Try 'fornax help' for additional details."
+        errorfn "No arguments provided.  Try 'fornax help' for additional details."
         printfn "%s" <| parser.PrintUsage()
         1
     elif List.length results > 1 then
-        printfn "More than one command was provided.  Please provide only a single command.  Try 'fornax help' for additional details."
+        errorfn "More than one command was provided.  Please provide only a single command.  Try 'fornax help' for additional details."
         printfn "%s" <| parser.PrintUsage()
         1
     else
@@ -207,7 +208,7 @@ let main argv =
             // Copy the Fornax.Core.dll into _lib
             // Some/most times Fornax.Core.dll already exists
             File.Copy(corePath, outputDirectory + "/_lib/Fornax.Core.dll", true)
-            printfn "New project successfully created."
+            okfn "New project successfully created."
             0
         | Some Build ->
             try
@@ -216,10 +217,10 @@ let main argv =
                 0
             with
             | FornaxGeneratorException message ->
-                Console.WriteLine message
+                message |> stringFormatter |> errorfn
                 1
             | exn ->
-                printfn "An unexpected error happend: %O" exn
+                errorfn "An unexpected error happend: %O" exn
                 1
         | Some (Watch watchOptions) ->
             let mutable lastAccessed = Map.empty<string, DateTime>
@@ -233,9 +234,10 @@ let main argv =
                     do generateFolder sc cwd true
                 with
                 | FornaxGeneratorException message ->
-                    printfn "%s%s%s" message Environment.NewLine waitingForChangesMessage
+                    message |> stringFormatter |> errorfn 
+                    waitingForChangesMessage |> stringFormatter |> informationfn
                 | exn ->
-                    printfn "An unexpected error happend: %O" exn
+                    errorfn "An unexpected error happend: %O" exn
                     exit 1
 
             guardedGenerate ()
@@ -259,15 +261,16 @@ let main argv =
                     match lastAccessed.TryFind e.FullPath with
                     | Some lt when Math.Abs((lt - lastTimeWrite).Seconds) < 1 -> ()
                     | _ ->
-                        printfn "[%s] Changes detected: %s" (DateTime.Now.ToString("HH:mm:ss")) e.FullPath
+                        informationfn "[%s] Changes detected: %s" (DateTime.Now.ToString("HH:mm:ss")) e.FullPath
                         lastAccessed <- lastAccessed.Add(e.FullPath, lastTimeWrite)
                         guardedGenerate ())
 
             let webServerConfig = getWebServerConfig (watchOptions.TryPostProcessResult(<@ Port @>, uint16))
             startWebServerAsync webServerConfig (router cwd) |> snd |> Async.Start
-            printfn "[%s] Watch mode started. Press any key to exit." (DateTime.Now.ToString("HH:mm:ss"))
+            okfn "[%s] Watch mode started." (DateTime.Now.ToString("HH:mm:ss"))
+            informationfn "Press any key to exit."
             Console.ReadKey() |> ignore
-            printfn "Exiting..."
+            informationfn "Exiting..."
             0
         | Some Version -> 
             let assy = Assembly.GetExecutingAssembly()
@@ -277,13 +280,16 @@ let main argv =
         | Some Clean ->
             let publ = Path.Combine(cwd, "_public")
             let sassCache = Path.Combine(cwd, ".sass-cache")
+            let deleter folder = 
+                match Directory.Exists(folder) with
+                | true -> Directory.Delete(folder, true)
+                | _ -> () 
             try
-                Directory.Delete(publ, true)
-                Directory.Delete(sassCache, true)
+                [publ ; sassCache] |> List.iter deleter
                 0
             with
             | _ -> 1
         | None ->
-            printfn "Unknown argument"
+            errorfn "Unknown argument"
             printfn "%s" <| parser.PrintUsage()
             1

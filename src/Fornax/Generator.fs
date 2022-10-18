@@ -7,6 +7,7 @@ open System.Diagnostics
 open System.IO
 open System.Text
 open Config
+open Logger
 
 module EvaluatorHelpers =
     open FSharp.Quotations.Evaluator
@@ -37,9 +38,9 @@ module EvaluatorHelpers =
             FsiEvaluationSession.Create(fsiConfig, argv, inStream, outStream, errStream)
         with
         | ex ->
-            printfn "Error: %A" ex
-            printfn "Inner: %A" ex.InnerException
-            printfn "ErrorStream: %s" (errStream.ToString())
+            errorfn "Error: %A" ex
+            errorfn "Inner: %A" ex.InnerException
+            errorfn "ErrorStream: %s" (errStream.ToString())
             raise ex
 
 
@@ -325,7 +326,6 @@ let pickGenerator (cfg: Config.Config)  (siteContent : SiteContents) (projectRoo
                 Path.Combine(projectRoot, "_public", newPage)
             Some(Simple (generatorPath, outputPath))
 
-
 ///`projectRoot` - path to the root of website
 ///`page` - path to page that should be generated
 let generate fsi (cfg: Config.Config) (siteContent : SiteContents) (projectRoot : string) (page : string) =
@@ -426,17 +426,6 @@ let runOnceGenerators fsi (cfg: Config.Config) (siteContent : SiteContents) (pro
         | _ -> failwith "Shouldn't happen"
     )
 
-// Module to print colored message in the console
-module Logger =
-    let consoleColor (fc : ConsoleColor) =
-        let current = Console.ForegroundColor
-        Console.ForegroundColor <- fc
-        { new IDisposable with
-              member x.Dispose() = Console.ForegroundColor <- current }
-
-    let informationfn str = Printf.kprintf (fun s -> use c = consoleColor ConsoleColor.Green in printfn "%s" s) str
-    let error str = Printf.kprintf (fun s -> use c = consoleColor ConsoleColor.Red in printf "%s" s) str
-    let errorfn str = Printf.kprintf (fun s -> use c = consoleColor ConsoleColor.Red in printfn "%s" s) str
 
 ///`projectRoot` - path to the root of website
 let generateFolder (sc : SiteContents) (projectRoot : string) (isWatch: bool) =
@@ -469,16 +458,16 @@ let generateFolder (sc : SiteContents) (projectRoot : string) (isWatch: bool) =
             | Ok sc ->
                 sc
             | Error er ->
-                printfn "LOADER ERROR: %s" er
+                errorfn "LOADER ERROR: %s" er
                 state)
-    sc.Errors() |> List.iter (fun er -> printfn "BAD FILE: %s" er.Path)
+    sc.Errors() |> List.iter (fun er -> errorfn "BAD FILE: %s" er.Path)
 
     let logResult (result : GeneratorResult) =
         match result with
         | GeneratorIgnored -> ()
         | GeneratorSuccess None -> ()
         | GeneratorSuccess (Some message) ->
-            Logger.informationfn "%s" message
+            okfn "%s" message
         | GeneratorFailure message ->
             // if one generator fails we want to exit early and report the problem to the operator
             raise (FornaxGeneratorException message)
@@ -493,4 +482,4 @@ let generateFolder (sc : SiteContents) (projectRoot : string) (isWatch: bool) =
         |> generate fsi config sc projectRoot
         |> logResult)
 
-    Logger.informationfn "Generation time: %A" sw.Elapsed
+    informationfn "Generation time: %A" sw.Elapsed
