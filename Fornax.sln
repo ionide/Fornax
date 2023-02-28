@@ -1,17 +1,35 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26124.0
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33414.496
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{69C50C6B-BF41-47FC-9237-B75F4D37AA3F}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Fornax", "src\Fornax\Fornax.fsproj", "{7FC34D4F-ECF8-41E7-AC7D-0E87A231C763}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Fornax", "src\Fornax\Fornax.fsproj", "{7FC34D4F-ECF8-41E7-AC7D-0E87A231C763}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Fornax.Core", "src\Fornax.Core\Fornax.Core.fsproj", "{D3405270-64D1-4767-8504-1DACA863715F}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Fornax.Core", "src\Fornax.Core\Fornax.Core.fsproj", "{D3405270-64D1-4767-8504-1DACA863715F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{E91F7551-B025-4B91-A2D2-66A02A531F41}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Fornax.Core.UnitTests", "test\Fornax.Core.UnitTests\Fornax.Core.UnitTests.fsproj", "{C5C16B9D-4CC9-4BD9-AD9D-996E670189BA}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Fornax.Core.UnitTests", "test\Fornax.Core.UnitTests\Fornax.Core.UnitTests.fsproj", "{C5C16B9D-4CC9-4BD9-AD9D-996E670189BA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "project", "project", "{E7E971DB-8665-49C3-9841-20711BA2BD5A}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		CHANGELOG.md = CHANGELOG.md
+		CODE_OF_CONDUCT.md = CODE_OF_CONDUCT.md
+		CONTRIBUTING.md = CONTRIBUTING.md
+		Directory.Build.props = Directory.Build.props
+		.config\dotnet-tools.json = .config\dotnet-tools.json
+		global.json = global.json
+		LICENSE.md = LICENSE.md
+		.github\workflows\main.yml = .github\workflows\main.yml
+		paket.dependencies = paket.dependencies
+		README.md = README.md
+		.github\workflows\release.yml = .github\workflows\release.yml
+	EndProjectSection
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "build", "build.fsproj", "{4CCF7454-9142-469D-AD5D-463F2919540D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,9 +39,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{7FC34D4F-ECF8-41E7-AC7D-0E87A231C763}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -62,10 +77,28 @@ Global
 		{C5C16B9D-4CC9-4BD9-AD9D-996E670189BA}.Release|x64.Build.0 = Release|Any CPU
 		{C5C16B9D-4CC9-4BD9-AD9D-996E670189BA}.Release|x86.ActiveCfg = Release|Any CPU
 		{C5C16B9D-4CC9-4BD9-AD9D-996E670189BA}.Release|x86.Build.0 = Release|Any CPU
+		{4CCF7454-9142-469D-AD5D-463F2919540D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4CCF7454-9142-469D-AD5D-463F2919540D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4CCF7454-9142-469D-AD5D-463F2919540D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4CCF7454-9142-469D-AD5D-463F2919540D}.Debug|x64.Build.0 = Debug|Any CPU
+		{4CCF7454-9142-469D-AD5D-463F2919540D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4CCF7454-9142-469D-AD5D-463F2919540D}.Debug|x86.Build.0 = Debug|Any CPU
+		{4CCF7454-9142-469D-AD5D-463F2919540D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4CCF7454-9142-469D-AD5D-463F2919540D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4CCF7454-9142-469D-AD5D-463F2919540D}.Release|x64.ActiveCfg = Release|Any CPU
+		{4CCF7454-9142-469D-AD5D-463F2919540D}.Release|x64.Build.0 = Release|Any CPU
+		{4CCF7454-9142-469D-AD5D-463F2919540D}.Release|x86.ActiveCfg = Release|Any CPU
+		{4CCF7454-9142-469D-AD5D-463F2919540D}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{7FC34D4F-ECF8-41E7-AC7D-0E87A231C763} = {69C50C6B-BF41-47FC-9237-B75F4D37AA3F}
 		{D3405270-64D1-4767-8504-1DACA863715F} = {69C50C6B-BF41-47FC-9237-B75F4D37AA3F}
 		{C5C16B9D-4CC9-4BD9-AD9D-996E670189BA} = {E91F7551-B025-4B91-A2D2-66A02A531F41}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {67D2AC79-0181-4183-961A-770B1CDC6CD5}
 	EndGlobalSection
 EndGlobal

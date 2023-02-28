@@ -128,10 +128,12 @@ let netCoreRefs dotnetRoot sdkVersion runtimeVersion tfm useFsiAuxLib =
 let tfmForRuntime =
   let netcore31 = NugetVersion(3, 1, 100, "")
   let net5 = NugetVersion(5,0,102, "")
+  let net6 = NugetVersion(6,0,102, "")
   fun (sdkVersion: NugetVersion) ->
     match compareNugetVersion sdkVersion netcore31 with
     | 1 | 0 when compareNugetVersion sdkVersion net5 = -1 -> "netcoreapp3.1"
-    | 1 | 0 -> "net5.0"
+    | 1 | 0 when compareNugetVersion sdkVersion net6 = -1 -> "net6.0"
+    | 1 | 0 -> "net6.0"
     | _ -> "netcoreapp3.0"
 
 let private maxVersionWithThreshold (minVersion: NugetVersion) (versions: NugetVersion []) =
@@ -163,8 +165,8 @@ let latest3xRuntimeVersion sdkRoot =
     )
 
 let getRefs () =
-    let sdkVersion = NugetVersion(5,0,102, "") //latest3xSdkVersion defaultDotNetSDKRoot
-    let runtimeVersion = NugetVersion(5,0,0, "")//latest3xRuntimeVersion defaultDotNetSDKRoot
+    let sdkVersion = NugetVersion(6,0,102, "") //latest6xSdkVersion defaultDotNetSDKRoot
+    let runtimeVersion = NugetVersion(6,0,0, "")//latest6xRuntimeVersion defaultDotNetSDKRoot
     let tfm = tfmForRuntime sdkVersion
     let refs = netCoreRefs defaultDotNetSDKRoot (string sdkVersion) (string runtimeVersion) tfm false
     refs

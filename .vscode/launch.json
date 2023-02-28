@@ -15,7 +15,7 @@
              "type": "coreclr",
              "request": "launch",
              "preLaunchTask": "build",
-             "program": "${workspaceFolder}/src/Fornax/bin/Debug/net5.0/Fornax.dll",
+             "program": "${workspaceFolder}/src/Fornax/bin/Debug/net6.0/Fornax.dll",
              "args": [],
              "cwd": "${workspaceFolder}",
              "stopAtEntry": false,

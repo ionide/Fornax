@@ -1,13 +1,4 @@
-// --------------------------------------------------------------------------------------
-// FAKE build script
-// --------------------------------------------------------------------------------------
-#r "paket: groupref build //"
-#load ".fake/build.fsx/intellisense.fsx"
-#if !FAKE
-  #r "netstandard"
-  #r "Facades/netstandard.dll"
-#endif
-
+﻿
 open Fake.Core
 open Fake.DotNet
 open Fake.Tools
@@ -16,6 +7,10 @@ open Fake.IO.FileSystemOperators
 open Fake.IO.Globbing.Operators
 open Fake.Core.TargetOperators
 open Fake.Api
+
+open Helpers
+
+initializeContext()
 
 // --------------------------------------------------------------------------------------
 // Information about the project to be used at NuGet and in AssemblyInfo files
@@ -67,11 +62,11 @@ Target.create "Clean" (fun _ ->
 )
 
 Target.create "Restore" (fun _ ->
-    DotNet.restore id ""
+    DotNet.restore id "Fornax.sln"
 )
 
 Target.create "Build" (fun _ ->
-    DotNet.build id ""
+    DotNet.build id "Fornax.sln"
 )
 
 Target.create "Publish" (fun _ ->
@@ -131,21 +126,25 @@ Target.create "Push" (fun _ ->
 Target.create "Default" DoNothing
 Target.create "Release" DoNothing
 
-"Clean"
-  ==> "Restore"
-  ==> "Build"
-  ==> "Publish"
-  ==> "Test"
-  ==> "Default"
+let dependencies = [
+    "Clean"
+      ==> "Restore"
+      ==> "Build"
+      ==> "Publish"
+      ==> "Test"
+      ==> "Default"
 
-"Restore"
-  ==> "Build"
-  ==> "Publish"
-  ==> "TestTemplate"
+    "Restore"
+      ==> "Build"
+      ==> "Publish"
+      ==> "TestTemplate"
 
-"Default"
-  ==> "Pack"
-  ==> "Push"
-  ==> "Release"
+    "Default"
+      ==> "Pack"
+      ==> "Push"
+      ==> "Release"
+]
 
-Target.runOrDefault "Pack"
+[<EntryPoint>]
+let main args = 
+    runOrDefault "Pack" args
