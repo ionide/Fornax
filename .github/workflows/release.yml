@@ -23,8 +23,8 @@ jobs:
         dotnet-version: ${{ matrix.dotnet }}
     - name: Restore tools
       run: dotnet tool restore
-    - name: Restore
-      run: dotnet restore
+    - name: Paket restore
+      run: dotnet paket restore
     - name: build and push packages
       run: dotnet run Push
       env:
