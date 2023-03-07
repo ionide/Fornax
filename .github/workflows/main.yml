@@ -22,7 +22,7 @@ jobs:
     - name: Paket restore
       run: dotnet paket restore
     - name: Build
-      run: dotnet fake run build.fsx
+      run: dotnet run
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.3.1
       with:

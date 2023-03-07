@@ -204,10 +204,10 @@ Thank you for contributing!
 
 ## Build process
 
- * You need [.NET Core 5.0 SDK](https://dotnet.microsoft.com/download/dotnet/5.0)
- * Run `dotnet tool restore` to restore the .NET 5 local tools defined at .config/dotnet-tools.json
- * To build the project run `dotnet fake build`
- * To run unit tests run `dotnet fake build -t Test`
+ * You need [.NET 6.0 SDK](https://dotnet.microsoft.com/download/dotnet/6.0)
+ * Run `dotnet tool restore` to restore the .NET 6 local tools defined at .config/dotnet-tools.json
+ * To build the project run `dotnet run` (this will run the `build.fsproj` project that contains the FAKE build pipeline.)
+ * To run unit tests run `dotnet run Test`
 
 
 ## Contributing and copyright

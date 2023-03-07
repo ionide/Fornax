@@ -1,7 +1,6 @@
-version 5.257.0
+version 7.2.0
 source https://www.nuget.org/api/v2
 storage: none
-
 nuget Expecto
 nuget FSharp.Core content: none
 
@@ -19,16 +18,12 @@ nuget LibGit2Sharp
 group Build
   source https://www.nuget.org/api/v2
   storage: none
-  nuget Fake.Core.Target
-  nuget Fake.Core.Process
-  nuget Fake.DotNet.Cli
-  nuget Fake.Core.ReleaseNotes
-  nuget Fake.DotNet.AssemblyInfoFile
-  nuget Fake.DotNet.Paket
-  nuget Fake.Tools.Git
-  nuget Fake.Core.Environment
-  nuget Fake.Core.UserInput
-  nuget Fake.IO.FileSystem
-  nuget Fake.DotNet.MsBuild
-  nuget Fake.Api.GitHub
-  nuget MSBuild.StructuredLogger
+  nuget Fake.Api.Github ~> 6
+  nuget Fake.Core.Process ~> 6
+  nuget Fake.Core.UserInput ~> 6
+  nuget Fake.Core.ReleaseNotes ~> 6
+  nuget Fake.Core.Target ~> 6
+  nuget Fake.DotNet.Cli ~> 6
+  nuget Fake.DotNet.MSBuild ~> 6
+  nuget Fake.IO.FileSystem ~> 6
+  nuget Fake.Tools.Git ~> 6
