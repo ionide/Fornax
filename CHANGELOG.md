@@ -1,7 +1,7 @@
 # Changelog
 
 
-## 0.15.1-beta001 - 07.03.2023
+## 0.15.1-beta002 - 07.03.2023
 
 ### Fixed
 * [Support file with spaces in the name](https://github.com/ionide/Fornax/pull/116) (thanks @MangelMaxime!)
