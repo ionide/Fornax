@@ -1,5 +1,15 @@
 # Changelog
 
+
+## 0.15.0 - 07.03.2023
+
+### Fixed
+* [Support file with spaces in the name](https://github.com/ionide/Fornax/pull/116) (thanks @MangelMaxime!)
+
+### Changed
+* [Add colors to error/success/info messages](https://github.com/ionide/Fornax/pull/118) (thanks @drewknab!)
+* [Update to .NET 6, use project-based FAKE build instead of script](https://github.com/ionide/Fornax/pull/122) (thanks @kMutagene!)
+
 ## 0.14.3 - 07.05.2022
 
 ### Fixed
