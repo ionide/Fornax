@@ -100,11 +100,16 @@ Target.create "TestTemplate" (fun _ ->
 // --------------------------------------------------------------------------------------
 
 Target.create "Pack" (fun _ ->
-    DotNet.pack (fun p ->
-        { p with
-            OutputPath = Some packageDir
-            Configuration = DotNet.BuildConfiguration.Release
-        }) "src/Fornax"
+    [
+        "src/Fornax"
+        "src/Fornax.Core"
+    ]
+    |> List.iter(
+        DotNet.pack (fun p ->
+            { p with
+                OutputPath = Some packageDir
+                Configuration = DotNet.BuildConfiguration.Release
+            }))
 )
 
 Target.create "Push" (fun _ ->
