@@ -1,23 +1,25 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Helpers.fs" />
     <Compile Include="Build.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Fake.Api.Github" Version="6.0.0" />
-    <PackageReference Include="Fake.Core.Process" Version="6.0.0" />
-    <PackageReference Include="Fake.Core.ReleaseNotes" Version="6.0.0" />
-    <PackageReference Include="Fake.Core.UserInput" Version="6.0.0" />
-    <PackageReference Include="Fake.Core.Target" Version="6.0.0" />
-    <PackageReference Include="Fake.DotNet.Cli" Version="6.0.0" />
-    <PackageReference Include="Fake.DotNet.MSBuild" Version="6.0.0" />
-    <PackageReference Include="Fake.IO.FileSystem" Version="6.0.0" />
-    <PackageReference Include="Fake.Tools.Git" Version="6.0.0" />
-    <PackageReference Update="FSharp.Core" Version="6.*" />
+    <PackageReference Include="Fake.Api.Github" />
+    <PackageReference Include="Fake.Core.Process" />
+    <PackageReference Include="Fake.Core.ReleaseNotes" />
+    <PackageReference Include="Fake.Core.UserInput" />
+    <PackageReference Include="Fake.Core.Target" />
+    <PackageReference Include="Fake.DotNet.Cli" />
+    <PackageReference Include="Fake.DotNet.MSBuild" />
+    <PackageReference Include="Fake.IO.FileSystem" />
+    <PackageReference Include="Fake.Tools.Git" />
+    <PackageReference Include="FSharp.Core" />
+    <PackageReference Include="MSBuild.StructuredLogger" />
   </ItemGroup>
 </Project>

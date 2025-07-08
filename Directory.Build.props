@@ -11,5 +11,10 @@
     </PropertyGroup>
     <ItemGroup Condition="'$(IsPackable)' =='true'">
         <None Include="$(MSBuildThisFileDirectory)/README.md" Pack="true" PackagePath="/" />
+        <PackageReference Include="Ionide.KeepAChangelog.Tasks" PrivateAssets="all" />
+        <PackageReference Include="DotNet.ReproducibleBuilds">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
     </ItemGroup>
 </Project>

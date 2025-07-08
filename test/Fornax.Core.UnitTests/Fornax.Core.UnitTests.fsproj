@@ -3,13 +3,15 @@
   <PropertyGroup>
     <AssemblyName>Fornax.Core.UnitTests</AssemblyName>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
+	<IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Fornax.Core\Fornax.Core.fsproj" />
     <Compile Include="Tests.fs" />
     <Compile Include="Main.fs" />
-    <None Include="paket.references" />
   </ItemGroup>
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
+  <ItemGroup>
+    <PackageReference Include="Expecto" />
+  </ItemGroup>
 </Project>

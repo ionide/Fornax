@@ -1,7 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>fornax</ToolCommandName>
     <RollForward>LatestMajor</RollForward>
@@ -18,13 +18,16 @@
           but not pack the files (it would end up in the content directory by default if we did)
           copy them to the project output
           but copy them to the `blogTemplate` folder under the output so we cna find it at runtime -->
-    <Content Include="../Fornax.Template/**"
-      Exclude="../Fornax.Template/_public/**"
-      Pack="false"
-      CopyToOutputDirectory="PreserveNewest"
-      LinkBase="blogTemplate"
-    />
-    <None Include="paket.references" />
+    <Content Include="../Fornax.Template/**" Exclude="../Fornax.Template/_public/**" Pack="false" CopyToOutputDirectory="PreserveNewest" LinkBase="blogTemplate" />
   </ItemGroup>
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
+
+  <ItemGroup>
+    <PackageReference Include="Argu" />
+    <PackageReference Include="FSharp.Core" />
+    <PackageReference Include="FSharp.Compiler.Service" />
+    <PackageReference Include="FSharp.Quotations.Evaluator" />
+    <PackageReference Include="LibGit2Sharp"  />
+    <PackageReference Include="Suave" />
+  </ItemGroup>
+	
 </Project>
