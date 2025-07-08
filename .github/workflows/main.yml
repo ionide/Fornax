@@ -24,6 +24,7 @@ jobs:
     - name: Build
       run: dotnet run
     - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v2.3.1
+      uses: actions/upload-artifact@v4
       with:
+        name: fornax-artifacts-${{ matrix.os }}
         path: out
