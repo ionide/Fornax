@@ -18,7 +18,7 @@ jobs:
       with:
         ref: ${{ github.head_ref }}
     - name: Setup .NET Core
-      uses: actions/setup-dotnet@4.3
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ matrix.dotnet }}
     - name: Restore tools
