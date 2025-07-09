@@ -274,8 +274,13 @@ let main argv =
             0
         | Some Version -> 
             let assy = Assembly.GetExecutingAssembly()
-            let v = assy.GetCustomAttributes<AssemblyVersionAttribute>() |> Seq.head
-            printfn "%s" v.Version
+            let version = 
+                 assy.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+                 |> Option.ofObj
+                 |> Option.map _.InformationalVersion
+                 |> Option.defaultValue (assy.GetName().Version.ToString())
+
+            printfn "%s" version
             0
         | Some Clean ->
             let publ = Path.Combine(cwd, "_public")

@@ -7,7 +7,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Model.fs" />
-    <None Include="paket.references" />
   </ItemGroup>
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
+  <ItemGroup>
+    <PackageReference Include="FSharp.Core" />
+  </ItemGroup>
 </Project>

@@ -9,28 +9,28 @@ jobs:
   release:
     strategy:
       matrix:
-        dotnet: [6.0.100]
+        dotnet: [8.0.100]
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
 
     steps:
     - uses: actions/checkout@v2
       with:
         ref: ${{ github.head_ref }}
     - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@4.3
       with:
         dotnet-version: ${{ matrix.dotnet }}
     - name: Restore tools
       run: dotnet tool restore
-    - name: Paket restore
-      run: dotnet paket restore
+    - name: NuGet restore
+      run: dotnet restore Fornax.sln
     - name: build and push packages
       run: dotnet run Push
       env:
         nuget-key: ${{ secrets.NUGET_KEY }}
     - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v2.3.1
+      uses: actions/upload-artifact@v4
       with:
         path: out
     - name: Create Release

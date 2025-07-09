@@ -1,0 +1,28 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <RestorePackagesWithLockFile>false</RestorePackagesWithLockFile>
+    <DisableImplicitFSharpCoreReference>true</DisableImplicitFSharpCoreReference>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageVersion Include="FSharp.Core" Version="[8.0.100]" />
+    <PackageVersion Include="FSharp.Compiler.Service" Version="[43.8.100]" />
+    <PackageVersion Include="Fake.Api.Github" Version="6.0.0" />
+    <PackageVersion Include="Fake.Core.Process" Version="6.0.0" />
+    <PackageVersion Include="Fake.Core.ReleaseNotes" Version="6.0.0" />
+    <PackageVersion Include="Fake.Core.UserInput" Version="6.0.0" />
+    <PackageVersion Include="Fake.Core.Target" Version="6.0.0" />
+    <PackageVersion Include="Fake.DotNet.Cli" Version="6.0.0" />
+    <PackageVersion Include="Fake.DotNet.MSBuild" Version="6.0.0" />
+    <PackageVersion Include="Fake.IO.FileSystem" Version="6.0.0" />
+    <PackageVersion Include="Fake.Tools.Git" Version="6.0.0" />
+    <PackageVersion Include="Argu" Version="6.2.5" />
+    <PackageVersion Include="DotNet.ReproducibleBuilds" Version="1.2.25" />
+    <PackageVersion Include="Expecto" Version="10.2.3" />
+    <PackageVersion Include="FSharp.Quotations.Evaluator" Version="2.1.0" />
+    <PackageVersion Include="Ionide.KeepAChangelog.Tasks" Version="0.1.8" />
+    <PackageVersion Include="LibGit2Sharp" Version="0.31.0" />
+    <PackageVersion Include="MSBuild.StructuredLogger" Version="2.3.17" />
+    <PackageVersion Include="Suave" Version="2.6.2" />
+  </ItemGroup>
+</Project>
