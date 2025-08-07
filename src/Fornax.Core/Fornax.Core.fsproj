@@ -9,6 +9,6 @@
     <Compile Include="Model.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="FSharp.Core" />
+    <PackageReference Include="FSharp.Core" VersionOverride="$(FornaxCoreFSharpCoreVersion)" />
   </ItemGroup>
 </Project>
