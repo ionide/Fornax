@@ -3,6 +3,8 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <RestorePackagesWithLockFile>false</RestorePackagesWithLockFile>
     <DisableImplicitFSharpCoreReference>true</DisableImplicitFSharpCoreReference>
+    <!-- Fornax.Core doesn't use FCS, so we don't need to pin FSharp.Core to a matching version -->
+    <FornaxCoreFSharpCoreVersion>6.0.7</FornaxCoreFSharpCoreVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="FSharp.Core" Version="[8.0.100]" />
