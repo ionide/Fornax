@@ -1,9 +1,10 @@
 # Changelog
 
-## [0.16.0-beta002] - 2025-07-08
+## 0.16.0-beta003 - 08.09.2025
 
 ### Changed
 - [Update to .NET 8](https://github.com/ionide/Fornax/pull/127) (thanks @Numpsy!)
+- [Allow Fornax.Core to use FSharp.Core 6.0.7 or newer](https://github.com/ionide/Fornax/pull/129) (thanks @Numpsy!)
 
 ## [0.15.1] - 2023-03-07
 
