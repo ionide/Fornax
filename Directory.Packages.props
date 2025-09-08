@@ -20,7 +20,7 @@
     <PackageVersion Include="DotNet.ReproducibleBuilds" Version="1.2.25" />
     <PackageVersion Include="Expecto" Version="10.2.3" />
     <PackageVersion Include="FSharp.Quotations.Evaluator" Version="2.1.0" />
-    <PackageVersion Include="Ionide.KeepAChangelog.Tasks" Version="0.1.8" />
+    <PackageVersion Include="Ionide.KeepAChangelog.Tasks" Version="0.3.0" />
     <PackageVersion Include="LibGit2Sharp" Version="0.31.0" />
     <PackageVersion Include="MSBuild.StructuredLogger" Version="2.3.17" />
     <PackageVersion Include="Suave" Version="2.6.2" />
