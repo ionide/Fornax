@@ -14,6 +14,7 @@ open Suave.Sockets.Control
 open Suave.WebSocket
 open System.Reflection
 open Logger
+open Suave.Writers
 
 type FornaxExiter () =
     interface IExiter with
@@ -105,13 +106,23 @@ let ws (webSocket : WebSocket) (context: HttpContext) =
     }
 
 let getWebServerConfig port =
+    let mimeTypes =
+        defaultMimeTypesMap @@
+            (function
+            | ".webp" -> createMimeType "image/webp" false
+            | _ -> None
+            )
+
+    let webServerConfig =
+        { defaultConfig with mimeTypesMap = mimeTypes }
+        
     match port with
     | Some port ->
-        { defaultConfig with
+        { webServerConfig with
             bindings =
                 [ HttpBinding.create Protocol.HTTP Net.IPAddress.Loopback port ] }
     | None ->
-        defaultConfig
+        webServerConfig
 
 let getOutputDirectory (output : option<string>) (cwd : string) = 
     match output with
