@@ -1,10 +1,12 @@
 # Changelog
 
-## [0.16.0-beta005] - 2025-09-08
+## [0.16.0-beta006] - 2025-11-09
 
 ### Changed
 - [Update to .NET 8](https://github.com/ionide/Fornax/pull/127) (thanks @Numpsy!)
 - [Allow Fornax.Core to use FSharp.Core 6.0.7 or newer](https://github.com/ionide/Fornax/pull/129) (thanks @Numpsy!)
+- [feat: Add the webp mime type based on the .webp extension](https://github.com/ionide/Fornax/pull/132) (thanks @YanikCeulemans!)
+- [Update FAKE to 6.1.4](https://github.com/ionide/Fornax/pull/133) (thanks @Numpsy!)
 
 ## [0.15.1] - 2023-03-07
 
