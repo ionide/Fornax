@@ -19,7 +19,7 @@
     <PackageReference Include="Fake.DotNet.MSBuild" />
     <PackageReference Include="Fake.IO.FileSystem" />
     <PackageReference Include="Fake.Tools.Git" />
-    <PackageReference Include="FSharp.Core" />
+    <PackageReference Include="FSharp.Core" VersionOverride="8.0.400" />
     <PackageReference Include="MSBuild.StructuredLogger" />
   </ItemGroup>
 </Project>
