@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.16.0-beta006] - 2025-11-09
+## [0.16.0] - 2025-11-09
 
 ### Changed
 - [Update to .NET 8](https://github.com/ionide/Fornax/pull/127) (thanks @Numpsy!)
